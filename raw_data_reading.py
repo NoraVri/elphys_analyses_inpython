@@ -4,17 +4,17 @@ Created on Wed Mar 18 20:02:46 2020
 
 @author: neert
 
-This file defines a class for importing and looking at raw data I recorded, 
+This file defines a class for importing and looking at raw data I recorded,
 whether in pClamp or SutterPatch (or LabView - to be added)
 
 In my naming convention, a 'signal' is a set of traces that are recorded together;
-in other words, a 'signal' is a single column of datapoints for each of the channels 
-active in the recording. 
+in other words, a 'signal' is a single column of datapoints for each of the channels
+active in the recording.
 
 Each signal has at least two channel_indexes: the voltage (V) and current (I) channels.
 Additional channel_indexes can be used for other signals, for example carrying TTL pulse times.
 
-In my raw recordings, there are two types of files containing RawData signals: 
+In my raw recordings, there are two types of files containing RawData signals:
 "GapFree" and "Fixed-length" (following pClamp conventions).
 
 A GapFree signal is acquired continuously; it is a single set of (V and I) traces of arbitrary length.
@@ -35,29 +35,31 @@ that can be called on the raw data contained in the class instance
 # %% imports
 import os
 from neo import io
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # %% the SingleNeuron_RawData class definition:
 class SingleNeuron_RawData:
     """
-    This class imports raw data I recorded using my conventions, independent of 
-    the software used for acquisition. 
-    
-    Some of the main differences between acquisition systems that my code accounts for:
-        
-    An singleneuron_name pxp-file recorded in SutterPatch corresponds to 
+    This class imports raw data I recorded using my conventions, consistently,
+    independent of the software used for acquisition.
+    It also has some attached plotting functions for displaying the raw data.
+
+    Some of the main differences between acquisition systems and how I use them:
+
+    An singleneuron_name pxp-file recorded in SutterPatch corresponds to
     an singleneuron_name folder containing all recorded files for a single neuron in pClamp.
-    
-    The 'continuous-mode' recording setting in SutterPatch corresponds to 
-    'gap-free' mode in pClamp, though data have to be redimensioned (from matrix to single trace) 
+
+    The 'continuous-mode' recording setting in SutterPatch corresponds to
+    'gap-free' mode in pClamp, though data have to be redimensioned (from matrix to single trace)
     to look the same.
-    
+
     Grouping of signals and assignment of channel_indexes
     is built into Neo/AxonIO to happen systematically per file,
     whereas Neo/IgorIO reads only individual traces and requires grouping into signals
     following my conventions.
     """
-    
     # init
     def __init__(self, singleneuron_name, path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive\\elphysData_recordedByMe"):
     # path should be to a folder containing sub-folders containing raw data.
@@ -67,8 +69,8 @@ class SingleNeuron_RawData:
         self.type = None #raw data file(s) type; gets updated once data files are found
         self.rawdata_blocks = []
         self.get_singleneuron_rawdata()
-    
-    def get_singleneuron_rawdata(self):    
+
+    def get_singleneuron_rawdata(self):
     # this function uses neuron_name to find a path to the raw data file(s) recorded for that neuron;
     # once the right path(s) are found, it calls on files_reader to read the data in as Neo blocks.
     # !! it currently only works for single-cell recordings in abf format !!
@@ -77,25 +79,26 @@ class SingleNeuron_RawData:
             if self.name in os.listdir(subdirectory_path):
                 self.type = 'abf'
                 self.file_path = subdirectory_path+'\\'+self.name
-                self.rawdata_blocks = self.files_reader_abf()
+                self.files_reader_abf()
+
             elif (self.name + '.pxp') in os.listdir(subdirectory_path):
                 self.type = 'pxp'
                 self.file_path = subdirectory_path
-                self.rawdata_blocks = self.files_reader_pxp()
+                self.files_reader_pxp()
             else:
                 continue
             break
         if not self.type:
             print('files matching neuron name exactly were not found')
-        
-            
+
+
 
     # the actual reading in of raw data from files
     def files_reader_abf(self):
         """This function changes the current directory to the folder containing
-        the .abf raw data files recorded for singleneuron, and returns the 
+        the .abf raw data files recorded for singleneuron, and returns the
         recorded data as a list of neo blocks.
-        
+
         reading abf-files using Neo.io:
         by my convention, files are recorded either in Gap-free mode or in Fixed-length mode.
         A file recorded in Gap-free mode contains a single set (V and I) of signals (of indefinite length)
@@ -107,30 +110,52 @@ class SingleNeuron_RawData:
         for file in os.listdir():
             if file.endswith(".abf"):
                 reader = io.AxonIO(filename=file)
-                
+
                 block = reader.read()[0] #the general read function returns one block per file, with segments/channel_indexes assigned automatically.
                 epoch_infos = reader._axon_info['dictEpochInfoPerDAC'] #returns some more metadata on stimulus waveforms
                 block.annotate(epoch_infos=epoch_infos)
-                
+
                 self.rawdata_blocks.append(block)
-    
+
     def files_reader_pxp(self):
         """This function changes the current directory to the folder containing
-        the .pxp raw data file recorded for singleneuron, and returns the 
+        the .pxp raw data file recorded for singleneuron, and returns the
         recorded data as a list of neo blocks.
-        
+
         reading pxp-files using Neo.io:
         by my convention, files are recorded with 'consecutive-mode' on or off.
         each pxp-subdirectory contains a single signal (either V, I or other AuxIn);
         it is stored in a matrix form, with each row (?!!) in the matrix representing a consecutive segment.
         GapFree signals are constructed by redimensioning matrices of data acquired in 'continuous mode'.
-        
+
         Information on segments and channel_indexes needs to be deduced from available metadata. Some things about subdirectory naming are systematic:
         Simultaneously acquired signals can be recognized by matching run indices (_R1_,_R2_,...)
         Signal names are systematic (_S1_ is V, _S2_ is C, _S3_ is AuxIn (!check correctness))
         Each subdirectory name starts with a protocol (P) number and name.
-        
+
         """
         os.chdir(self.file_path)
         file_name = self.file_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
+        print('this code is under construction')
+
+
+    def allrawdata_plotter(self):
+        """ takes a list of neo blocks; plots all raw traces per block,
+        in separate subplots for each channel.
+        """
+        for block in self.rawdata_blocks:
+            #getting the time axis all traces have in common
+            time_axis = block.channel_indexes[0].analogsignals[0].times
+            time_axis = time_axis.rescale('ms')
+            #making one subplot per active recording channel
+            nsubplots = len(block.channel_indexes)
+            figure,axes = plt.subplots(nrows=nsubplots,ncols=1,sharex=True)
+            for i in range(nsubplots):
+                traces = np.transpose(np.squeeze(np.array(list(iter(
+                                        block.channel_indexes[i].analogsignals)))))
+                traces_unit = block.channel_indexes[i].analogsignals[0].units
+                axes[i].plot(time_axis,traces)
+                axes[i].set_xlabel('time (ms)')
+                axes[i].set_ylabel(str(traces_unit))
+            plt.suptitle(self.name+' raw data file '+block.file_origin)

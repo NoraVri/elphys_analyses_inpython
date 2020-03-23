@@ -39,7 +39,7 @@ that can be called on the raw data contained in the class instance
 # %% imports
 import os
 from neo import io
-from neo.core import Block, Segment, ChannelIndex
+#from neo.core import Block, Segment, ChannelIndex
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -167,6 +167,7 @@ class SingleNeuron_RawData:
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
 
+    @staticmethod
     def plot_block(block):
         """ takes a block and plots all analogsignals, one subplot per channel_index.
         """
@@ -189,7 +190,7 @@ class SingleNeuron_RawData:
         one figure per block, separate subplots for each channel_index.
         """
         for block in self.rawdata_blocks:
-            plot_block(block)
+            SingleNeuron_RawData.plot_block(block)
             plt.suptitle(self.name+' raw data file '+block.file_origin)
 
     def plot_block_byname(self,block_file_origin):
@@ -198,7 +199,7 @@ class SingleNeuron_RawData:
         """
         for block in self.rawdata_blocks:
             if block.file_origin == block_file_origin:
-                plot_block(block)
+                SingleNeuron_RawData.plot_block(block)
                 plt.suptitle(self.name+' raw data file '+block.file_origin)
 
 

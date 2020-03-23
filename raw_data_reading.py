@@ -5,7 +5,11 @@ Created on Wed Mar 18 20:02:46 2020
 @author: neert
 
 This file defines a class for importing and looking at raw data I recorded,
-whether in pClamp or SutterPatch (or LabView - to be added)
+whether in pClamp (or SutterPatch or LabView - under construction)
+
+Right now it works for single-neuron recordings done in pClamp.
+
+
 
 In my naming convention, a 'signal' is a set of traces that are recorded together;
 in other words, a 'signal' is a single column of datapoints for each of the channels
@@ -35,6 +39,7 @@ that can be called on the raw data contained in the class instance
 # %% imports
 import os
 from neo import io
+from neo.core import Block, Segment, ChannelIndex
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -92,7 +97,6 @@ class SingleNeuron_RawData:
             print('files matching neuron name exactly were not found')
 
 
-
     # the actual reading in of raw data from files
     def files_reader_abf(self):
         """This function changes the current directory to the folder containing
@@ -137,25 +141,65 @@ class SingleNeuron_RawData:
         os.chdir(self.file_path)
         file_name = self.file_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
+
+        #first, read the experimentstructure file somehow and
+        #reconstruct from it what the run names are
+
+        #then, write code for going over the runs and group them same as pClamp files (with all the right annotations)
+        # !!notes on things that are important for consistency:
+            #segments and channel_indexes - indexes and units (on analogsignals)
+            #block.file_origin as a unique pointer to the original raw data files
         print('this code is under construction')
 
 
-    def allrawdata_plotter(self):
-        """ takes a list of neo blocks; plots all raw traces per block,
-        in separate subplots for each channel.
+    def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
+    #this function takes a file name and the number of the channel
+    #that singleneuron is not recorded on (1 or 2, following my home rig conventions),
+    #and removes superfluous traces from the corresponding block's channel_indexes and segments
+        for block in self.rawdata_blocks:
+            if block.file_origin == file_origin:
+                if non_recording_channel == 1:
+                    block.channel_indexes[0:2] = []
+                    for segment in block.segments:
+                        segment.analogsignals[0:2] = []
+                elif non_recording_channel == 2:
+                    block.channel_indexes[2:4] = []
+                    for segment in block.segments:
+                        segment.analogsignals[2:4] = []
+
+    def plot_block(block):
+        """ takes a block and plots all analogsignals, one subplot per channel_index.
+        """
+        #getting the time axis all traces have in common
+        time_axis = block.channel_indexes[0].analogsignals[0].times
+        time_axis = time_axis.rescale('ms')
+        #making one subplot per active recording channel
+        nsubplots = len(block.channel_indexes)
+        figure,axes = plt.subplots(nrows=nsubplots,ncols=1,sharex=True)
+        for i in range(nsubplots):
+            traces = np.transpose(np.squeeze(np.array(list(iter(
+                                    block.channel_indexes[i].analogsignals)))))
+            traces_unit = block.channel_indexes[i].analogsignals[0].units
+            axes[i].plot(time_axis,traces)
+            axes[i].set_xlabel('time (ms)')
+            axes[i].set_ylabel(str(traces_unit))
+
+    def plot_allrawdata(self):
+        """plots all blocks of raw traces imported for singleneuron;
+        one figure per block, separate subplots for each channel_index.
         """
         for block in self.rawdata_blocks:
-            #getting the time axis all traces have in common
-            time_axis = block.channel_indexes[0].analogsignals[0].times
-            time_axis = time_axis.rescale('ms')
-            #making one subplot per active recording channel
-            nsubplots = len(block.channel_indexes)
-            figure,axes = plt.subplots(nrows=nsubplots,ncols=1,sharex=True)
-            for i in range(nsubplots):
-                traces = np.transpose(np.squeeze(np.array(list(iter(
-                                        block.channel_indexes[i].analogsignals)))))
-                traces_unit = block.channel_indexes[i].analogsignals[0].units
-                axes[i].plot(time_axis,traces)
-                axes[i].set_xlabel('time (ms)')
-                axes[i].set_ylabel(str(traces_unit))
+            plot_block(block)
             plt.suptitle(self.name+' raw data file '+block.file_origin)
+
+    def plot_block_byname(self,block_file_origin):
+        """takes the name of the file from which the rawdata_block was created
+        and plots only that block (separate subplots for each channel_index).
+        """
+        for block in self.rawdata_blocks:
+            if block.file_origin == block_file_origin:
+                plot_block(block)
+                plt.suptitle(self.name+' raw data file '+block.file_origin)
+
+
+    #TODO: plotting code that takes a specific subset of the list of blocks

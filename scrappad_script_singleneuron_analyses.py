@@ -28,10 +28,10 @@ cell20190814A_Analyses = SingleNeuron_Analyses(cell20190814A_RawData.name)
 #on a single, representative segment for that neuron/block and play with parameters (min_event_amplitude and peak_height)
 #until the results look good (plotting of detected peaks is built in.)
 #Repeat for other data blocks to see consistency.
-SingleNeuron_Analyses.singlevoltagetrace_find_depolarizingevents_peaksidcs(cell20190814A_RawData.rawdata_blocks[0].segments[0])
+#SingleNeuron_Analyses.singlevoltagetrace_find_depolarizingevents_peaksidcs(cell20190814A_RawData.rawdata_blocks[0].segments[0])
 
 #then, call SingleNeuronName_Analyses.get_depolarizingevents_fromRawData()
-cell20190814A_Analyses.get_depolarizingevents_fromRawData(cell20190814A_RawData)
+cell20190814A_Analyses.get_depolarizingevents_fromRawData(cell20190814A_RawData,min_event_amplitude=0.2)
 
 
 

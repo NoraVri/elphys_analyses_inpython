@@ -12,6 +12,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sgnl
+import quantities as pq
 # %%
 class SingleNeuron_Analyses:
 
@@ -30,8 +31,7 @@ class SingleNeuron_Analyses:
         """
         for folder_name in os.listdir(self.path):
             if folder_name.startswith('myResults'):
-                os.chdir(self.path+folder_name)
-
+                os.chdir(self.path+'\\'+folder_name)
                 for file in os.listdir():
                     if self.name in file:
                         with open(f'{self.name}.json','r') as file:
@@ -43,6 +43,9 @@ class SingleNeuron_Analyses:
                             if data.get('input_resistance'):
                                 self.input_resistance = data['input_resistance']
 
+    def write_results(self):
+        #TODO: look into using pandas to encode things into jsons
+        print('code under construction')
 
     def get_depolarizingevents_fromRawData(self,
                                            SingleNeuron_RawData,
@@ -63,20 +66,18 @@ class SingleNeuron_Analyses:
                                                 min_event_amplitude = min_event_amplitude,
                                                 peakheight = peak_height,
                                                 plotting = plot)
+                depolarizingevents_peaksidcs_withmeasures = SingleNeuron_Analyses.singlevoltagetrace_get_depolarizingevents_measures(
+                                                            segment,
+                                                            depolarizingevents_peaksidcs)
 
                 dictionary.update(
                     {f'file {segment.file_origin} trace {str(i)}' :
-                     {'peaks_indices' : depolarizingevents_peaksidcs,
+                     {'peaks_indices' : depolarizingevents_peaksidcs_withmeasures,
                       'param_mineventamp' : min_event_amplitude,
                       'param_peakheight' : peak_height}
                      })
 
         self.depolarizing_events = dictionary
-
-
-
-
-
 
     @staticmethod
     #function for finding depolarizing events in a single voltage trace
@@ -205,3 +206,51 @@ class SingleNeuron_Analyses:
             figure.suptitle(single_segment.file_origin)
 
         return depolarizingevents_peaksidcs
+
+
+    def singlevoltagetrace_get_depolarizingevents_measures(single_segment,
+                                                           depolarizingevents_peaksidcs):
+
+        voltage_recording = np.squeeze(single_segment.analogsignals[0])
+        voltage_recording = voltage_recording.rescale('mV')
+        sampling_rate = float(single_segment.analogsignals[0].sampling_rate)
+
+        #windows and other static parameters
+        window_10ms = int(sampling_rate*10/1000) #the 10 ms before the peak-point
+        window_6ms = int(sampling_rate*6/1000)
+        window_3ms = int(sampling_rate*3/1000)
+        mV_2 = 2 * pq.mV
+
+        depolarizingevents_withmeasures_dictionary = {}
+        #finding measures to go with each peakidx, but only if measures pass tests for being 'clean'
+        for peakidx in depolarizingevents_peaksidcs:
+            baseline = None
+            amp = None
+            rise_time = None
+            decay_time = None
+
+            if peakidx - window_10ms < 0:
+                #skip any peaks that are less than 10ms from trace start
+                continue
+
+            peak_v = voltage_recording[peakidx]
+            vsnippet_inprepeakwindow = voltage_recording[peakidx - window_10ms : peakidx - window_3ms]
+            minv_inprepeakwindow = np.amin(vsnippet_inprepeakwindow)
+            if peak_v < minv_inprepeakwindow:
+                #v in the window 10 - 3 ms before event-peak is higher than event-peak
+                continue
+
+            vsnippet_inbaselinewindow = voltage_recording[peakidx - window_6ms : peakidx - window_3ms]
+            baseline_v = np.mean(vsnippet_inbaselinewindow)
+            if (baseline_v > (minv_inprepeakwindow - mV_2)) & (baseline_v < (minv_inprepeakwindow + mV_2)):
+                #mean_v 6-3ms before the peak is +/- 2mV from min_v 10-3 ms before the peak
+                baseline = baseline_v
+                amp = peak_v - baseline_v
+
+            #code for getting rise_time and decay_time goes here
+
+            depolarizingevents_withmeasures_dictionary[peakidx] = {'baseline_v' : baseline ,
+                                              'amplitude' : amp,
+                                              'risetime' : rise_time,
+                                              'decaytime' : decay_time}
+        return depolarizingevents_withmeasures_dictionary

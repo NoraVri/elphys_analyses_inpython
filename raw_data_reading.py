@@ -49,24 +49,26 @@ class SingleNeuron_RawData:
     """
     This class imports raw data I recorded using my conventions, consistently,
     independent of the software used for acquisition.
-    It also has some attached plotting functions for displaying the raw data.
 
-    Some of the main differences between acquisition systems and how I use them:
+    Grouping of signals and assignment of channel_indexes will always follow
+    the conventions set by pClamp and Neo/AxonIO:
+        - one block = one file, where a file is either:
+            - one GapFree signal (of indefinite length; block has only one segment), or
+            - a set of Fixed-length signals (all of the same length; block has multiple segments).
+        - channel_indexes[0] is voltage in mV,
+        - channel_indexes[1] is current in pA.
+        - channel_indexes[n] where n>1 represent timing of stimuli applied (usually, TTL high for the duration of stimulus)
 
-    An singleneuron_name pxp-file recorded in SutterPatch corresponds to
-    an singleneuron_name folder containing all recorded files for a single neuron in pClamp.
+    It currently works only for data I acquired in pClamp.
 
-    The 'continuous-mode' recording setting in SutterPatch corresponds to
-    'gap-free' mode in pClamp, though data have to be redimensioned (from matrix to single trace)
-    to look the same.
+    The rawdata_remove_nonrecordingchannel method is intended for clipping away
+    any recording channels that are active but not actually recording from a neuron. (This happens a lot when double-patch attempts go awry.)
 
-    Grouping of signals and assignment of channel_indexes
-    is built into Neo/AxonIO to happen systematically per file,
-    whereas Neo/IgorIO reads only individual traces and requires grouping into signals
-    following my conventions.
+    The class also has attached plotting functions for displaying the raw data,
+    in various configurations.
     """
     # init
-    def __init__(self, singleneuron_name, path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive\\elphysData_recordedByMe"):
+    def __init__(self, singleneuron_name, path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
     # path should be to a folder containing sub-folders containing raw data.
     # path gets updated to absolute path of the folder/file containing the raw data recorded for singleneuron
         self.name = singleneuron_name
@@ -103,12 +105,16 @@ class SingleNeuron_RawData:
         the .abf raw data files recorded for singleneuron, and returns the
         recorded data as a list of neo blocks.
 
-        reading abf-files using Neo.io:
-        by my convention, files are recorded either in Gap-free mode or in Fixed-length mode.
-        A file recorded in Gap-free mode contains a single set (V and I) of signals (of indefinite length)
-        and is read by Neo.AxonIO as a single segment with two channel_indexes (V and I).
-        A file recorded in Fixed-length mode contains multiple sets (V, I and possibly other) signals (of fixed length)
-        and is read by Neo.AxonIO as consecutive segments, each with two or more channel_indexes (V, I and other [usually TTL]).
+        By my conventions, all abf-files recorded from a neuron are stored together
+        in a folder named SingleNeuron_name (or DoubleNeuron_name, but code does not deal with that for now.)
+        and are recorded either in Gap-free or in Fixed-length mode.
+
+        By the pClamp and Neo/AxonIO conventions, one abf-file is read as one block;
+        each block has at least two channel_indexes where
+            channel_index[0] is voltage in mV and
+            channel_index[1] is current in pA;
+        and Gap-free blocks have only one segment (of indefinite length) while
+            Fixed-length blocks can have multiple segments (where each segment has the same length)
         """
         os.chdir(self.file_path)
         for file in os.listdir():
@@ -141,7 +147,7 @@ class SingleNeuron_RawData:
         os.chdir(self.file_path)
         file_name = self.file_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
-
+        # TODO:
         #first, read the experimentstructure file somehow and
         #reconstruct from it what the run names are
 

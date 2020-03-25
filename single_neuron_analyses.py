@@ -14,7 +14,7 @@ import numpy as np
 import scipy.signal as sgnl
 import quantities as pq
 # %%
-class SingleNeuron_Analyses:
+class SingleNeuron_Analyses():
 
     def __init__(self, singleneuron_name, path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
         self.name = singleneuron_name
@@ -48,7 +48,7 @@ class SingleNeuron_Analyses:
         print('code under construction')
 
     def get_depolarizingevents_fromRawData(self,
-                                           SingleNeuron_RawData,
+                                           singleneuron_RawData,
                                            min_event_amplitude = 0.5,
                                            peak_height = 0.15,
                                            plot='off'):
@@ -59,7 +59,7 @@ class SingleNeuron_Analyses:
         as well as the corresponding depolarizingevents_measures (amplitude, baseline_v, ...)
         """
         dictionary = {}
-        for block in SingleNeuron_RawData.rawdata_blocks:
+        for block in singleneuron_RawData.rawdata_blocks:
             for i, segment in enumerate(block.segments):
                 depolarizingevents_peaksidcs = SingleNeuron_Analyses.singlevoltagetrace_find_depolarizingevents_peaksidcs(
                                                 segment,
@@ -78,6 +78,9 @@ class SingleNeuron_Analyses:
                      })
 
         self.depolarizing_events = dictionary
+        #TODO: write code that returns this in a Pandas dataframe instead
+        #use the dataframe to make nice plots of things, starting with events baselined
+        #use Pandas to save the results in json format.
 
     @staticmethod
     #function for finding depolarizing events in a single voltage trace

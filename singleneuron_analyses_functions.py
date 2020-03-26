@@ -7,7 +7,6 @@ Created on Mon Mar 23 20:33:29 2020
 This file defines a class for working with depolarizing events.
 """
 # %% imports
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sgnl

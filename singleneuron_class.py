@@ -19,7 +19,8 @@ class SingleNeuron:
     # path should be to a folder that contains data and results beloning to SingleNeuron's project.
     # path gets updated to absolute path of the folder/file containing the raw data recorded for singleneuron
         self.name = singleneuron_name
-        self.path = path #gets updated by get_singleneuron_rawdata
+        self.path = path #folder containing folders with data and folder with 'myResults'
+        self.rawdata_path = []
         self.rawdata_recordingtype = None #raw data file(s) type; gets updated once data files are found
         self.rawdata_blocks = [] #all recorded raw data, as a list of neo block objects (one block per file)
 
@@ -36,21 +37,22 @@ class SingleNeuron:
         """
         results_file_path = self.get_results_file_path()
         if results_file_path:
-            data = load_file(results_file_path)
-            if data.get('rawdata_reading_notes'):
-                rawdata_reading_notes = data['rawdata_reading_notes']#or whichever other way this will be accessed
-                #reading_notes will be a list of file_origin / nonrecording channel pairs
-                self.rawdata_blocks = self.get_rawdata_withadjustments(self.name,rawdata_reading_notes)
-            else:
-                self.rawdata_blocks = self.get_singleneuron_rawdata()
-            if data.get('depolarizing_events'):
-                self.depolarizing_events = data['depolarizing_events']
-            if data.get('subthreshold_oscillations'):
-                self.subthreshold_oscillations = data['subthreshold_oscillations']
-            if data.get('input_resistance'):
-                self.input_resistance = data['input_resistance']
+            data = {} #TODO: put code here that actually reads a file
+            print('no actual results file opened')
+            # if data.get('rawdata_reading_notes'):
+            #     rawdata_reading_notes = data['rawdata_reading_notes']#or whichever other way this will be accessed
+            #     #reading_notes will be a list of file_origin / nonrecording channel pairs
+            #     #self.get_rawdata_withadjustments(self.name,rawdata_reading_notes)
+            # else:
+            #     #self.get_singleneuron_rawdata()
+            # if data.get('depolarizing_events'):
+            #     self.depolarizing_events = data['depolarizing_events']
+            # if data.get('subthreshold_oscillations'):
+            #     self.subthreshold_oscillations = data['subthreshold_oscillations']
+            # if data.get('input_resistance'):
+            #     self.input_resistance = data['input_resistance']
         else:
-            self.rawdata_blocks = self.get_singleneuron_rawdata()
+            self.get_singleneuron_rawdata()
 
     def get_results_file_path(self):
         results_file_path = None
@@ -69,21 +71,21 @@ class SingleNeuron:
     # this function uses neuron_name to find a path to the raw data file(s) recorded for that neuron;
     # once the right path(s) are found, it calls on files_reader to read the data in as Neo blocks.
     # !! it currently only works for single-cell recordings in abf format !!
-        for folder_name in os.listdir(self.file_path):
-            subdirectory_path = self.file_path + '\\' + folder_name
+        for folder_name in os.listdir(self.path):
+            subdirectory_path = self.path + '\\' + folder_name
             if self.name in os.listdir(subdirectory_path):
                 self.rawdata_recordingtype = 'abf'
-                self.file_path = subdirectory_path+'\\'+self.name
+                self.rawdata_path = subdirectory_path+'\\'+self.name
                 self.files_reader_abf()
 
             elif (self.name + '.pxp') in os.listdir(subdirectory_path):
                 self.rawdata_recordingtype = 'pxp'
-                self.file_path = subdirectory_path
+                self.rawdata_path = subdirectory_path
                 self.files_reader_pxp()
             else:
                 continue
             break
-        if not self.type:
+        if not self.rawdata_path:
             print('files matching neuron name exactly were not found')
 
     def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
@@ -130,7 +132,6 @@ class SingleNeuron:
 # %% functions for analyzing raw data:
 # %% depolarizing events
     def get_depolarizingevents_fromRawData(self,
-                                           singleneuron_RawData,
                                            min_event_amplitude = 0.5,
                                            peak_height = 0.15,
                                            plot='off'):
@@ -141,7 +142,7 @@ class SingleNeuron:
         as well as the corresponding depolarizingevents_measures (amplitude, baseline_v, ...)
         """
         dictionary = {}
-        for block in singleneuron_RawData.rawdata_blocks:
+        for block in self.rawdata_blocks:
             for i, segment in enumerate(block.segments):
                 depolarizingevents_peaksidcs = snafs.singlevoltagetrace_find_depolarizingevents_peaksidcs(
                                                 segment,
@@ -181,9 +182,10 @@ class SingleNeuron:
         and Gap-free blocks have only one segment (of indefinite length) while
             Fixed-length blocks can have multiple segments (where each segment has the same length)
         """
-        os.chdir(self.file_path)
+        os.chdir(self.rawdata_path)
         for file in os.listdir():
             if file.endswith(".abf"):
+                print(self.rawdata_path+'file'+file)
                 reader = io.AxonIO(filename=file)
 
                 block = reader.read()[0] #the general read function returns one block per file, with segments/channel_indexes assigned automatically.
@@ -209,7 +211,7 @@ class SingleNeuron:
         Each subdirectory name starts with a protocol (P) number and name.
 
         """
-        os.chdir(self.file_path)
+        os.chdir(self.rawdata_path)
         file_name = self.file_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
         # TODO:

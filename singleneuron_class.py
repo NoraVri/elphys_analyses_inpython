@@ -7,9 +7,11 @@ Created on Wed Mar 25 20:14:57 2020
 # %% imports
 import os
 from neo import io
+import matplotlib.pyplot as plt
 
 #imports of functions I wrote
 import singleneuron_plotting_functions as plots
+import singleneuron_analyses_functions as snafs
 # %%
 class SingleNeuron:
      # init
@@ -98,6 +100,7 @@ class SingleNeuron:
                     block.channel_indexes[2:4] = []
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
+                #code that saves changes made goes here
 
     def get_rawdata_withadjustments(self, rawdata_reading_notes):
         all_raw_data = self.get_singleneuron_rawdata(self.name)
@@ -114,7 +117,7 @@ class SingleNeuron:
             plots.plot_block(block)
             plt.suptitle(self.name+' raw data file '+block.file_origin)
 
-   def plot_block_byname(self, block_file_origin):
+    def plot_block_byname(self, block_file_origin):
         """takes the name of the file from which the rawdata_block was created
         and plots only that block (separate subplots for each channel_index).
         """
@@ -126,7 +129,40 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
+    def get_depolarizingevents_fromRawData(self,
+                                           singleneuron_RawData,
+                                           min_event_amplitude = 0.5,
+                                           peak_height = 0.15,
+                                           plot='off'):
+        """This function takes the raw data belonging to SingleNeuron (in the form of a SingleNeuron_RawData class instance)
+        and peakfinding parameters (minimal amplitude and 'peak height').
 
+        It outputs a dictionary containing the idcs of depolarizingevents_peaks by block&trace no,
+        as well as the corresponding depolarizingevents_measures (amplitude, baseline_v, ...)
+        """
+        dictionary = {}
+        for block in singleneuron_RawData.rawdata_blocks:
+            for i, segment in enumerate(block.segments):
+                depolarizingevents_peaksidcs = snafs.singlevoltagetrace_find_depolarizingevents_peaksidcs(
+                                                segment,
+                                                min_event_amplitude = min_event_amplitude,
+                                                peakheight = peak_height,
+                                                plotting = plot)
+                depolarizingevents_peaksidcs_withmeasures = snafs.singlevoltagetrace_get_depolarizingevents_measures(
+                                                            segment,
+                                                            depolarizingevents_peaksidcs)
+
+                dictionary.update(
+                    {f'file {segment.file_origin} trace {str(i)}' :
+                     {'peaks_indices' : depolarizingevents_peaksidcs_withmeasures,
+                      'param_mineventamp' : min_event_amplitude,
+                      'param_peakheight' : peak_height}
+                     })
+
+        self.depolarizing_events = dictionary
+        #TODO: write code that returns this in a Pandas dataframe instead
+        #use the dataframe to make nice plots of things, starting with events baselined
+        #use Pandas to save the results in json format.
 
 # %% the actual reading in of raw data from files
     def files_reader_abf(self):

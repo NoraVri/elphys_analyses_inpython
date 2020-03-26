@@ -13,6 +13,59 @@ import scipy.signal as sgnl
 import quantities as pq
 
 # %%
+def get_depolarizingevents_and_measures(single_segment,plotting='on'):
+    # getting all the relevant data from the Neo/Segment object
+    single_voltage_trace = single_segment.analogsignals[0]
+    time_axis = single_voltage_trace.times
+    time_axis = time_axis.rescale('ms').magnitude
+    voltage_recording = np.squeeze(single_voltage_trace)
+    current_recording = np.squeeze(single_segment.analogsignals[1])
+
+    sampling_rate = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
+    samples_per_ms = int(sampling_rate / 1000)
+    #parameter settings
+    downsamplingfactor_number = [1, 2, 5, 10, 20]#1000
+    downsamplingfactor_inms = downsamplingfactor_number * samples_per_ms
+
+    for downsamplingfactor in downsamplingfactor_inms:
+
+        peakwindow_inms = 5 #window from detected depolarization to depolarization peak
+        peakwindow = int(sampling_rate*peakwindow_inms/1000)
+        currentwindow_inms = 100 #event peak within 100ms from DC current change is probably something else
+        currentwindow = int(sampling_rate*currentwindow_inms/1000)
+        peakheight = 0.1
+
+        # getting a differentiated voltage trace from which fast depolarizations can be picked up
+        voltage_downsampled = sgnl.decimate(voltage_recording, downsamplingfactor)
+        time_axis_downsampled = time_axis[0::downsamplingfactor]
+        voltage_downsampled_derivative = np.diff(voltage_downsampled,append=voltage_downsampled[-1]) #appending the last value keeps the derivative-trace the same length as the original
+        voltage_downsampled_derivative = np.where(voltage_downsampled_derivative<0,0,voltage_downsampled_derivative) #replacing all negative values with 0
+        voltage_downsampled_secondderivative = np.diff(voltage_downsampled_derivative,append=voltage_downsampled_derivative[-1])
+        #using findpeaks on differentiated voltage to pick up candidates for depolarizing events
+        depolarizingevents_idcs_indownsampledtrace = sgnl.find_peaks(voltage_downsampled_secondderivative,
+                                                                      height=peakheight)[0]
+
+        depolarizingevents_idcs = depolarizingevents_idcs_indownsampledtrace * downsamplingfactor
+
+        #plotting the voltagetrace with detected peaks, and the difftrace to see that things went well
+        if plotting == 'on':
+            figure,axes = plt.subplots(2,1,sharex=True)
+            axes[0].plot(time_axis,voltage_recording,color='blue')
+            axes[0].plot(time_axis_downsampled,voltage_downsampled,color='black')
+            #axes[0].scatter(time_axis[depolarizingevents_peaksidcs],voltage_recording[depolarizingevents_peaksidcs],color='red')
+            axes[0].scatter(time_axis[depolarizingevents_idcs],voltage_recording[depolarizingevents_idcs],color='green')
+            axes[0].set_ylabel('voltage (mV)')
+            axes[0].set_title('voltage trace (black: smoothed)')
+            axes[1].plot(time_axis_downsampled,voltage_downsampled_derivative,color='blue')
+            axes[1].plot(time_axis_downsampled,voltage_downsampled_secondderivative,color='black')
+            axes[1].scatter(time_axis_downsampled[depolarizingevents_idcs_indownsampledtrace],
+                            voltage_downsampled_secondderivative[depolarizingevents_idcs_indownsampledtrace],color='green')
+            axes[1].set_xlabel('time (ms)')
+            axes[1].set_title('first (blue) and second (black) derivative of voltage')
+            figure.suptitle(single_segment.file_origin+'downsamplingfactor='+str(downsamplingfactor))
+
+
+# %%
 #function for finding depolarizing events in a single voltage trace
 def singlevoltagetrace_find_depolarizingevents_peaksidcs(single_segment,
                                                          min_event_amplitude=0.5,

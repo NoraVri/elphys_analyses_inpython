@@ -61,17 +61,3 @@ cell20190805Asegment_withblockers_depolarizingevents = get_depolarizingevents(ce
 # cell20190805A.plot_allrawdata()
 # # %% cleanup
 
-# # %% fast-events analyses
-
-
-
-# # %%
-
-# # %% pxp files
-# cell20200310F_RawData = SingleNeuron_RawData("20200310F")
-# os.chdir(cell20200310F_RawData.file_path)
-# # %%
-# from neo import io
-# import igor
-# file_name = cell20200310F_RawData.file_path+'\\'+cell20200310F_RawData.name+'.pxp'
-# reader = io.IgorIO(filename=file_name)

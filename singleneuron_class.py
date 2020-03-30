@@ -6,8 +6,12 @@ Created on Wed Mar 25 20:14:57 2020
 """
 # %% imports
 import os
+import re
+from igor import packed
 from neo import io
+from neo.core import Block, Segment, ChannelIndex
 import matplotlib.pyplot as plt
+import numpy as np
 
 #imports of functions I wrote
 import singleneuron_plotting_functions as plots
@@ -199,27 +203,79 @@ class SingleNeuron:
         the .pxp raw data file recorded for singleneuron, and returns the
         recorded data as a list of neo blocks.
 
-        reading pxp-files using Neo.io:
-        by my convention, files are recorded with 'consecutive-mode' on or off.
-        each pxp-subdirectory contains a single signal (either V, I or other AuxIn);
-        it is stored in a matrix form, with each row (?!!) in the matrix representing a consecutive segment.
-        GapFree signals are constructed by redimensioning matrices of data acquired in 'continuous mode'.
+        By my conventions, all raw data recorded from a neuron is stored together
+        in one pxp-file named SingleNeuron_name,
+        and are recorded with 'consecutive-mode' either on or off. (Consecutive-mode 'on' corresponds to gap-free mode in pClamp, 'off' to fixed-length mode.)
 
-        Information on segments and channel_indexes needs to be deduced from available metadata. Some things about subdirectory naming are systematic:
-        Simultaneously acquired signals can be recognized by matching run indices (_R1_,_R2_,...)
-        Signal names are systematic (_S1_ is V, _S2_ is C, _S3_ is AuxIn (!check correctness))
-        Each subdirectory name starts with a protocol (P) number and name.
-
+        By the IgorPro and Neo/IgorIO conventions, one pxp-file contains subdirectories,
+        where each subdirectory is read as analogsignals and contains traces from a single recording channel only.
+        Correspondences between channel_indexes and segments are reconstructed from
+            the subdirectory names, and are set up here so that the resulting rawdata_blocks list
+            matches those obtained for pClamp data.
         """
         os.chdir(self.rawdata_path)
-        file_name = self.file_path+'\\'+self.name+'.pxp'
+        file_name = self.rawdata_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
-        # TODO:
-        #first, read the experimentstructure file somehow and
-        #reconstruct from it what the run names are
-
-        #then, write code for going over the runs and group them same as pClamp files (with all the right annotations)
-        # !!notes on things that are important for consistency:
+        _, filesystem = packed.load(file_name)
+        #getting the names of the subderictories that contain recorded data
+        subdirectories_list = []
+        for key, value in filesystem['root'][b'SutterPatch'][b'Data'].items():
+            key_converted = key.decode("utf-8")
+            result = re.search(r'R([0-9]*)_S([0-9]*)_', key_converted)
+            if result:
+                subdirectories_list.append(key_converted)
+        #get the number of unique runs, and import data as one block per run
+        runs_list = [item[0:2] for item in subdirectories_list]
+        unique_runs = list(set(runs_list))
+        #getting one block per run
+        for run in unique_runs:
+            block = self.get_bwgroup_as_block(run, subdirectories_list, reader=reader)
+            self.rawdata_blocks.append(block)
             #segments and channel_indexes - indexes and units (on analogsignals)
             #block.file_origin as a unique pointer to the original raw data files
-        print('this code is under construction')
+
+    @staticmethod
+    def get_bwgroup_as_block(run, subdirectories_list, reader):
+        traces_names = [item for item in subdirectories_list if item.startswith(run)]
+
+        vtrace_name = [name for name in traces_names if 'S1' in name][0]
+        itrace_name = [name for name in traces_names if 'S2' in name][0]
+
+        block_name = vtrace_name[0:4] + vtrace_name[7:]
+        block = Block(file_origin=block_name)
+
+        vsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+vtrace_name)
+        isignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+itrace_name)
+        if len(traces_names) == 3:
+            auxtrace_name = [name for name in traces_names if 'S3' in name][0]
+            auxsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+auxtrace_name)
+
+        no_of_segments = len(vsignals[1,:])
+        for idx in range(no_of_segments):
+            segment = Segment(name=block_name+str(idx))
+            block.segments.append(segment) #block now has the same number of (empty) segments as there are traces in the subdirectory-file
+
+        voltage_channel = ChannelIndex(index=np.arange(no_of_segments))
+        current_channel = ChannelIndex(index=np.arange(no_of_segments))
+        block.channel_indexes.append(voltage_channel)
+        block.channel_indexes.append(current_channel)
+        if len(traces_names) == 3:
+            aux_channel = ChannelIndex(index=np.arange(no_of_segments))
+            block.channel_indexes.append(aux_channel)
+
+        for idx, segment in enumerate(block.segments):
+            single_v_analogsignal = vsignals[:,idx]
+            single_v_analogsignal.channel_index = 0
+            block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
+            single_i_analogsignal = isignals[:,idx]
+            single_i_analogsignal.channel_index = 1
+            block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
+            if len(traces_names) == 3:
+                single_aux_analogsignal = auxsignals[:,idx]
+                single_aux_analogsignal.channel_index = 2
+                block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
+
+        return block
+
+
+

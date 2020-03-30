@@ -29,29 +29,30 @@ def get_depolarizingevents(single_segment,plotting='on'):
     filterartifact_window_inms = 4
     filterartifact_window = int(sampling_rate/1000 * filterartifact_window_inms)
 #depolarization condition: wherever diff(filtered_voltage) > 0 for >0.5 ms
-#and there is a minimal change in voltage of 0.2mV in the 10ms window around the marked idx
+#and there is a minimal change in voltage of 0.1mV in the 10ms window around the marked idx
     consistentdepolarization_duration_inms = 0.5
     consistentdepolarization_duration = int(sampling_rate/1000 * consistentdepolarization_duration_inms -1)#-1 to account for taking derivative
     consistentdepolarization_vchangewindow_inms = 5
     consistentdepolarization_vchangewindow = int(sampling_rate/1000 * consistentdepolarization_vchangewindow_inms)
-    consistentdepolarization_minvchange = 0.2
+    consistentdepolarization_minvchange = 0.1
 
     voltage_filtered_derivative = np.diff(voltage_filtered,append=voltage_filtered[-1])
-    derivativeconsistentlypositive_idcs = []
+    derivativeconsistentlypositive_idcs = [] #any idx in voltage_filtered_derivative where the next ... idcs also have a positive value.
     for i, idx in enumerate(voltage_filtered_derivative):
         if idx >= 0 and i+consistentdepolarization_duration < len(voltage_filtered_derivative):
             if np.amin(voltage_filtered_derivative[i:i+consistentdepolarization_duration]) >= 0:
                 derivativeconsistentlypositive_idcs.append(i)
     depolarizingevents_candidates = []
     for idx in derivativeconsistentlypositive_idcs:
-        vsnippet1 = voltage_filtered[idx-consistentdepolarization_vchangewindow:idx]
-        vsnippet2 = voltage_filtered[idx:idx+consistentdepolarization_vchangewindow]
-        # print(np.mean(vsnippet))
-        if np.amax(vsnippet1) - np.amin(vsnippet1) > consistentdepolarization_minvchange and
-        np.amax(vsnippet2) - np.amin(vsnippet2) > consistentdepolarization_minvchange:
-            maxv_insnippet_idx = np.argmax(voltage_filtered[idx-consistentdepolarization_vchangewindow:idx+consistentdepolarization_vchangewindow])
-            eventpeakcandidate_idx = idx - consistentdepolarization_vchangewindow + maxv_insnippet_idx
-            depolarizingevents_candidates.append(eventpeakcandidate_idx)
+        if idx+consistentdepolarization_vchangewindow < len(voltage_recording) and idx-consistentdepolarization_vchangewindow >= 0:
+            # print('idx = '+str(idx))
+            vsnippet1 = voltage_recording[idx-consistentdepolarization_vchangewindow:idx]
+            vsnippet2 = voltage_recording[idx:idx+consistentdepolarization_vchangewindow]
+            # print(np.mean(vsnippet))
+            if np.amax(vsnippet1) - np.amin(vsnippet1) > consistentdepolarization_minvchange and np.amax(vsnippet2) - np.amin(vsnippet2) > consistentdepolarization_minvchange:
+                maxv_insnippet_idx = np.argmax(voltage_recording[idx-consistentdepolarization_vchangewindow:idx+consistentdepolarization_vchangewindow])
+                eventpeakcandidate_idx = idx - consistentdepolarization_vchangewindow + maxv_insnippet_idx
+                depolarizingevents_candidates.append(eventpeakcandidate_idx)
     depolarizingevents_candidates = list(set(depolarizingevents_candidates))
 
     if plotting == 'on':

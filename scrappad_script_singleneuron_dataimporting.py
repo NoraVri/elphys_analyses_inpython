@@ -11,7 +11,7 @@ import numpy as np
 import scipy.signal as sgnl
 import quantities as pq
 from neo import io
-from neo.core import Block, ChannelIndex, Segment
+from neo.core import Block, ChannelIndex, Segment, AnalogSignal
 
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron

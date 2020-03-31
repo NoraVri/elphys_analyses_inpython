@@ -9,7 +9,7 @@ import os
 import re
 from igor import packed
 from neo import io
-from neo.core import Block, Segment, ChannelIndex
+from neo.core import Block, Segment, ChannelIndex, AnalogSignal
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -236,46 +236,73 @@ class SingleNeuron:
 
     @staticmethod
     def get_bwgroup_as_block(run, subdirectories_list, reader):
+        #getting the traces belonging to this run
         traces_names = [item for item in subdirectories_list if item.startswith(run)]
+        #setting up an empty block with the right number of channel_indexes:
+        block = Block()
+        for i in range(len(traces_names)):
+            chidx = ChannelIndex(index=i,channel_names=['Channel Group '+str(i)])
+            block.channel_indexes.append(chidx)
 
+        #importing the raw analogsignals for each channel
         vtrace_name = [name for name in traces_names if 'S1' in name][0]
         itrace_name = [name for name in traces_names if 'S2' in name][0]
-
-        block_name = vtrace_name[0:4] + vtrace_name[7:]
-        block = Block(file_origin=block_name)
-
-        vsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+vtrace_name)
-        isignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+itrace_name)
         if len(traces_names) == 3:
             auxtrace_name = [name for name in traces_names if 'S3' in name][0]
             auxsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+auxtrace_name)
+        vsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+vtrace_name)
+        isignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+itrace_name)
 
+        #setting up the block with right number of segments
+        block.file_origin = vtrace_name[0:3] + vtrace_name[6:]
         no_of_segments = len(vsignals[1,:])
-        for idx in range(no_of_segments):
-            segment = Segment(name=block_name+str(idx))
-            block.segments.append(segment) #block now has the same number of (empty) segments as there are traces in the subdirectory-file
+        for i in range(no_of_segments):
+            segment = Segment(name=block.file_origin+str(i))
+            block.segments.append(segment)
 
-        voltage_channel = ChannelIndex(index=np.arange(no_of_segments))
-        current_channel = ChannelIndex(index=np.arange(no_of_segments))
-        block.channel_indexes.append(voltage_channel)
-        block.channel_indexes.append(current_channel)
-        if len(traces_names) == 3:
-            aux_channel = ChannelIndex(index=np.arange(no_of_segments))
-            block.channel_indexes.append(aux_channel)
 
         for idx, segment in enumerate(block.segments):
-            single_v_analogsignal = vsignals[:,idx]
-            single_v_analogsignal.channel_index = 0
+            single_v_analogsignal = vsignals[:,idx].rescale('mV')
+            segment.analogsignals.append(single_v_analogsignal)
+            single_v_analogsignal.channel_index = block.channel_indexes[0]
             block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
-            single_i_analogsignal = isignals[:,idx]
-            single_i_analogsignal.channel_index = 1
+
+            single_i_analogsignal = isignals[:,idx].rescale('pA')
+            segment.analogsignals.append(single_i_analogsignal)
+            single_i_analogsignal.channel_index = block.channel_indexes[1]
             block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
+
             if len(traces_names) == 3:
                 single_aux_analogsignal = auxsignals[:,idx]
-                single_aux_analogsignal.channel_index = 2
+                segment.analogsignals.append(single_aux_analogsignal)
+                single_aux_analogsignal.channel_index = block.channel_indexes[2]
                 block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
 
         return block
 
 
 
+# >>> # create a Block with 3 Segment and 2 ChannelIndex objects
+# >>> blk = Block()
+# >>> for ind in range(3):
+# ...     seg = Segment(name='segment %d' % ind, index=ind)
+# ...     blk.segments.append(seg)
+# ...
+# >>> for ind in range(2):
+# ...     channel_ids=np.arange(64)+ind
+# ...     chx = ChannelIndex(name='Array probe %d' % ind,
+# ...                        index=np.arange(64),
+# ...                        channel_ids=channel_ids,
+# ...                        channel_names=['Channel %i' % chid
+# ...                                       for chid in channel_ids])
+# ...     blk.channel_indexes.append(chx)
+# ...
+# >>> # Populate the Block with AnalogSignal objects
+# >>> for seg in blk.segments:
+# ...     for chx in blk.channel_indexes:
+# ...         a = AnalogSignal(np.random.randn(10000, 64)*nA,
+# ...                          sampling_rate=10*kHz)
+# ...         # link AnalogSignal and ID providing channel_index
+# ...         a.channel_index = chx
+# ...         chx.analogsignals.append(a)
+# ...         seg.analogsignals.append(a)

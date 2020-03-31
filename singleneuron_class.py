@@ -225,8 +225,9 @@ class SingleNeuron:
             if result:
                 subdirectories_list.append(key_converted)
         #get the number of unique runs, and import data as one block per run
-        runs_list = [item[0:2] for item in subdirectories_list]
+        runs_list = [item[0:3] for item in subdirectories_list]
         unique_runs = list(set(runs_list))
+        unique_runs.sort()
         #getting one block per run
         for run in unique_runs:
             block = self.get_bwgroup_as_block(run, subdirectories_list, reader=reader)
@@ -255,12 +256,18 @@ class SingleNeuron:
 
         #setting up the block with right number of segments
         block.file_origin = vtrace_name[0:3] + vtrace_name[6:]
-        no_of_segments = len(vsignals[1,:])
+        if 'spontactivity' in block.file_origin: #by my conventions, spontactivity protocols are the only ones using 'continuous mode', and these never have a third recording channel.
+            no_of_segments = 1
+            vsignals = np.transpose(vsignals).reshape(-1,1)
+            isignals = np.transpose(isignals).reshape(-1,1)
+        else:
+            no_of_segments = len(vsignals[1,:])
+
         for i in range(no_of_segments):
             segment = Segment(name=block.file_origin+str(i))
             block.segments.append(segment)
 
-
+        #adding the raw data to the block's channel_indexes/segments
         for idx, segment in enumerate(block.segments):
             single_v_analogsignal = vsignals[:,idx].rescale('mV')
             segment.analogsignals.append(single_v_analogsignal)
@@ -279,30 +286,3 @@ class SingleNeuron:
                 block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
 
         return block
-
-
-
-# >>> # create a Block with 3 Segment and 2 ChannelIndex objects
-# >>> blk = Block()
-# >>> for ind in range(3):
-# ...     seg = Segment(name='segment %d' % ind, index=ind)
-# ...     blk.segments.append(seg)
-# ...
-# >>> for ind in range(2):
-# ...     channel_ids=np.arange(64)+ind
-# ...     chx = ChannelIndex(name='Array probe %d' % ind,
-# ...                        index=np.arange(64),
-# ...                        channel_ids=channel_ids,
-# ...                        channel_names=['Channel %i' % chid
-# ...                                       for chid in channel_ids])
-# ...     blk.channel_indexes.append(chx)
-# ...
-# >>> # Populate the Block with AnalogSignal objects
-# >>> for seg in blk.segments:
-# ...     for chx in blk.channel_indexes:
-# ...         a = AnalogSignal(np.random.randn(10000, 64)*nA,
-# ...                          sampling_rate=10*kHz)
-# ...         # link AnalogSignal and ID providing channel_index
-# ...         a.channel_index = chx
-# ...         chx.analogsignals.append(a)
-# ...         seg.analogsignals.append(a)

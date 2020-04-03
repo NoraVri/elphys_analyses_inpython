@@ -23,57 +23,215 @@ def get_depolarizingevents(single_segment,plotting='on'):
 
     sampling_rate = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
     #parameter settings - finding depolarizations in the raw voltage trace
-    filter_cutofffreq = 2000
-    filter_params = sgnl.butter(10, filter_cutofffreq, 'lowpass', fs=sampling_rate, output='sos')
-    voltage_filtered = sgnl.sosfilt(filter_params, voltage_recording)
-    filterartifact_window_inms = 4
-    filterartifact_window = int(sampling_rate/1000 * filterartifact_window_inms)
-#depolarization condition: wherever diff(filtered_voltage) > 0 for >0.5 ms
-#and there is a minimal change in voltage of 0.1mV in the 10ms window around the marked idx
-    consistentdepolarization_duration_inms = 0.5
-    consistentdepolarization_duration = int(sampling_rate/1000 * consistentdepolarization_duration_inms -1)#-1 to account for taking derivative
-    consistentdepolarization_vchangewindow_inms = 5
-    consistentdepolarization_vchangewindow = int(sampling_rate/1000 * consistentdepolarization_vchangewindow_inms)
-    consistentdepolarization_minvchange = 0.1
+    decimateby_number = 5 #the function includes a filter, too, but basically we're downsampling by this number
+    voltage_downsampled = sgnl.decimate(voltage_recording, decimateby_number)
+    time_axis_downsampled = time_axis[::decimateby_number]
+#finding depolarizing events in downsampled trace:
+    window_inms = 1
+    window_insamples = int(sampling_rate / 1000 * window_inms)
+    window_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * window_inms)
+    print('window in samples in downsampled trace = '+str(window_indownsampledsamples))
+    decaywindow_inms = 20
+    decaywindow_insamples = int(sampling_rate / 1000 * decaywindow_inms)
+    decaywindow_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * decaywindow_inms)
+    baselinewindow_inms = 5
+    baselinewindow_insamples = int(sampling_rate / 1000 * baselinewindow_inms)
+    baselinewindow_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * baselinewindow_inms)
+    # stepwindow_inms = 0.25
+    # stepwindow_insamples = int(sampling_rate / 1000 * stepwindow_inms)
+    # stepwindow_indownsampedsamples = int(sampling_rate / 1000 / decimateby_number * stepwindow_inms)
+    # print('stepwindow in samples in downsampled trace = '+str(stepwindow_indownsampedsamples))
+    mindepolamp = 0.1 #mV/ms
+    depolamp = 0.25
 
-    voltage_filtered_derivative = np.diff(voltage_filtered,append=voltage_filtered[-1])
-    derivativeconsistentlypositive_idcs = [] #any idx in voltage_filtered_derivative where the next ... idcs also have a positive value.
-    for i, idx in enumerate(voltage_filtered_derivative):
-        if idx >= 0 and i+consistentdepolarization_duration < len(voltage_filtered_derivative):
-            if np.amin(voltage_filtered_derivative[i:i+consistentdepolarization_duration]) >= 0:
-                derivativeconsistentlypositive_idcs.append(i)
-    depolarizingevents_candidates = []
-    for idx in derivativeconsistentlypositive_idcs:
-        if idx+consistentdepolarization_vchangewindow < len(voltage_recording) and idx-consistentdepolarization_vchangewindow >= 0:
-            # print('idx = '+str(idx))
-            vsnippet1 = voltage_recording[idx-consistentdepolarization_vchangewindow:idx]
-            vsnippet2 = voltage_recording[idx:idx+consistentdepolarization_vchangewindow]
-            # print(np.mean(vsnippet))
-            if np.amax(vsnippet1) - np.amin(vsnippet1) > consistentdepolarization_minvchange and np.amax(vsnippet2) - np.amin(vsnippet2) > consistentdepolarization_minvchange:
-                maxv_insnippet_idx = np.argmax(voltage_recording[idx-consistentdepolarization_vchangewindow:idx+consistentdepolarization_vchangewindow])
-                eventpeakcandidate_idx = idx - consistentdepolarization_vchangewindow + maxv_insnippet_idx
-                depolarizingevents_candidates.append(eventpeakcandidate_idx)
-    depolarizingevents_candidates = list(set(depolarizingevents_candidates))
+    # voltage_per2msderivative = []
+    voltage_permsderivative = []
+    for idx in range(0,len(voltage_downsampled)-window_indownsampledsamples*10):
+        v_slope_approx = voltage_downsampled[idx+window_indownsampledsamples] - voltage_downsampled[idx]
+        voltage_permsderivative.append(v_slope_approx)
+        # v_2msslope_approx = voltage_downsampled[idx+window_indownsampledsamples*2] - voltage_downsampled[idx]
+        # v_2msslope_approx = v_2msslope_approx / 2
+        # voltage_per2msderivative.append(v_2msslope_approx)
+        # v_10msslope_approx = voltage_downsampled[idx+window_indownsampledsamples*2] - voltage_downsampled[idx]
+        # v_10msslope_approx = v_10msslope_approx / 10
+        # voltage_per10msderivative.append(v_10msslope_approx)
+    voltage_permsderivative = np.array(voltage_permsderivative)
+    time_axis_derivative = time_axis_downsampled[:len(voltage_permsderivative):]
+
+    depolarizations_indownsampledtrace = []
+    depolarizations = []
+    maxderivpoints = []
+    smalldepolarizations_indownsampledtrace = []
+    smalldepolarizations = []
+
+    sample_no = 0
+    keep_looping = True
+    while sample_no < len(voltage_permsderivative) - 2*window_indownsampledsamples:
+        ms1_meanvderivative = np.mean(voltage_permsderivative[sample_no:sample_no + window_indownsampledsamples])
+        ms2_maxvderivative = np.amax(
+            voltage_permsderivative[sample_no + window_indownsampledsamples:sample_no + window_indownsampledsamples * 2])
+        if ms2_maxvderivative >= depolamp + ms1_meanvderivative:
+            depolarizations_indownsampledtrace.append(sample_no)
+            depolarizations.append(sample_no * decimateby_number)
+            ms2_maxvderivative_idx = np.argmax(
+                voltage_permsderivative[
+                sample_no + window_indownsampledsamples:sample_no + window_indownsampledsamples * 2])
+            maxvderiv_sample = sample_no + ms2_maxvderivative_idx
+            while voltage_permsderivative[maxvderiv_sample+1] >= voltage_permsderivative[maxvderiv_sample] and maxvderiv_sample < len(voltage_permsderivative) - 1:
+                maxvderiv_sample += 1
+            skip_samples = maxvderiv_sample - sample_no
+            maxderivpoints.append(maxvderiv_sample * decimateby_number)
+            sample_no += skip_samples
+        elif ms2_maxvderivative >= mindepolamp + ms1_meanvderivative:
+            smalldepolarizations_indownsampledtrace.append(idx)
+            smalldepolarizations.append(idx * decimateby_number)
+            sample_no += 1
+        sample_no += 1
+    # for idx in range(len(voltage_permsderivative) - window_indownsampledsamples*2):
+    #     ms1_meanvderivative = np.mean(voltage_permsderivative[idx:idx+window_indownsampledsamples])
+    #     ms2_maxvderivative = np.amax(voltage_permsderivative[idx+window_indownsampledsamples:idx+window_indownsampledsamples*2])
+    #     if ms2_maxvderivative >= depolamp + ms1_meanvderivative:
+    #         maxvderivative_idx = np.argmax(voltage_permsderivative[idx+window_indownsampledsamples:idx+window_indownsampledsamples*2])
+    #         depolarizations_indownsampledtrace.append(idx)
+    #         depolarizations.append(idx * decimateby_number)
+    #     elif ms2_maxvderivative >= mindepolamp + ms1_meanvderivative:
+    #         smalldepolarizations_indownsampledtrace.append(idx)
+    #         smalldepolarizations.append(idx * decimateby_number)
+
+
+    # sample_no = baselinewindow_indownsampledsamples
+    # keep_looping = True
+    # while keep_looping:
+    #     decaystart_idx = 0
+    #     postpeak_decay_v = []
+    #     if sample_no + decaywindow_indownsampledsamples >= len(voltage_permsderivative):
+    #         keep_looping = False
+    #         print('reached loop end')
+    #         break
+    #     if voltage_permsderivative[sample_no] >= mindepolamp * 2:
+    #         cleardepolarizations_indownsampledtrace.append(sample_no)
+    #         cleardepolarizations.append(sample_no * decimateby_number)
+    #         sample_no += 1
+    #     if voltage_permsderivative[sample_no] >= mindepolamp:
+    #         postsample_riseanddecay_v = voltage_downsampled[sample_no:sample_no+decaywindow_indownsampledsamples]
+    #         postsample_riseanddecay_vdiff = voltage_per2msderivative[sample_no:sample_no+decaywindow_indownsampledsamples]
+    #         vdiff_smallestvalue = np.amin(voltage_per2msderivative[sample_no:sample_no+decaywindow_indownsampledsamples])
+    #         presample_meanvderiv = np.mean(
+    #             voltage_per2msderivative[sample_no-baselinewindow_indownsampledsamples:sample_no])
+    #
+    #         if vdiff_smallestvalue < 0:
+    #             maximaldecay_idx = np.argmin(postsample_riseanddecay_vdiff)
+    #             peakvidx = np.argmax(postsample_riseanddecay_v)
+    #             postpeak_decay_v = postsample_riseanddecay_v[peakvidx::]
+    #         elif presample_meanvderiv > 0 and vdiff_smallestvalue < presample_meanvderiv:
+    #             maximaldecay_idx = np.argmin(postsample_riseanddecay_vdiff)
+    #             approxslope_duringdecay = np.linspace(0,decaywindow_inms*presample_meanvderiv,decaywindow_indownsampledsamples)
+    #             peakvidx = np.argmax(postsample_riseanddecay_v-approxslope_duringdecay)
+    #             postpeak_decay_v = postsample_riseanddecay_v[peakvidx::]
+    #
+    #         smalldepolarizations_candidates_indownsampledtrace.append(sample_no)
+    #         smalldepolarizations_candidates.append(sample_no * decimateby_number)
+    #
+    #     if len(postpeak_decay_v) > 0 and maximaldecay_idx > 0:
+    #         depolarizations_in_downsampledtrace.append(sample_no)
+    #         depolarizations.append(sample_no*5)
+    #         sample_no += maximaldecay_idx
+    #         print(sample_no)
+    #     else:
+    #         sample_no += 1
+
 
     if plotting == 'on':
         figure,axes = plt.subplots(2,1,sharex=True)
         axes[0].plot(time_axis,voltage_recording,color='blue')
-        axes[0].plot(time_axis,voltage_filtered,color='black')
-        axes[0].plot(time_axis[::5],sgnl.decimate(voltage_recording,5),color='red')
-        axes[0].scatter(time_axis[derivativeconsistentlypositive_idcs],voltage_recording[derivativeconsistentlypositive_idcs],color='green')
-        axes[0].scatter(time_axis[depolarizingevents_candidates],voltage_recording[depolarizingevents_candidates],color='red')
+        axes[0].plot(time_axis[::5],voltage_downsampled,color='black')
+        # axes[0].scatter(time_axis[depolarizations_twicepremeansize],voltage_recording[depolarizations_twicepremeansize],
+        #                 color='green')
+        axes[0].scatter(time_axis[depolarizations], voltage_recording[depolarizations],
+                        color='red')
+        axes[0].scatter(time_axis[smalldepolarizations], voltage_recording[smalldepolarizations],
+                        color='black')
         axes[0].set_ylabel('voltage (mV)')
         axes[0].set_title('voltage trace (black: smoothed)')
 
-        axes[1].plot(time_axis,voltage_filtered_derivative,color='black')
-        axes[1].scatter(time_axis[derivativeconsistentlypositive_idcs],
-                        voltage_filtered_derivative[derivativeconsistentlypositive_idcs],color='green')
-        axes[1].scatter(time_axis[depolarizingevents_candidates],
-                        voltage_filtered_derivative[depolarizingevents_candidates],color='red')
+        # axes[1].plot(time_axis_downsampled,np.diff(voltage_downsampled,append=voltage_downsampled[-1]),
+        #              color='black')
+        axes[1].plot(time_axis_derivative,voltage_permsderivative,
+                     color='green')
+        # axes[1].scatter(time_axis_derivative[depolarizations_twicepremeansize_indownsampledtrace],
+        #                 voltage_permsderivative[depolarizations_twicepremeansize_indownsampledtrace],
+        #                 color='blue')
+        axes[1].scatter(time_axis_derivative[depolarizations_indownsampledtrace],
+                        voltage_permsderivative[depolarizations_indownsampledtrace],
+                        color='red')
         axes[1].set_xlabel('time (ms)')
-        axes[1].set_title('first derivative of voltage')
+        axes[1].set_title('first derivative of downsampled voltage')
+        plt.suptitle(single_segment.file_origin)
+    return depolarizations
 
-    return depolarizingevents_candidates
+
+
+# def get_depolarizingevents(single_segment,plotting='on'):
+#     # getting all the relevant data from the Neo/Segment object
+#     single_voltage_trace = single_segment.analogsignals[0]
+#     time_axis = single_voltage_trace.times
+#     time_axis = time_axis.rescale('ms').magnitude
+#     voltage_recording = np.squeeze(single_voltage_trace)
+#     current_recording = np.squeeze(single_segment.analogsignals[1])
+
+#     sampling_rate = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
+#     #parameter settings - finding depolarizations in the raw voltage trace
+#     filter_cutofffreq = 2000
+#     filter_params = sgnl.butter(10, filter_cutofffreq, 'lowpass', fs=sampling_rate, output='sos')
+#     voltage_filtered = sgnl.sosfilt(filter_params, voltage_recording)
+#     filterartifact_window_inms = 4
+#     filterartifact_window = int(sampling_rate/1000 * filterartifact_window_inms)
+# #depolarization condition: wherever diff(filtered_voltage) > 0 for >0.5 ms
+# #and there is a minimal change in voltage of 0.1mV in the 10ms window around the marked idx
+#     consistentdepolarization_duration_inms = 0.5
+#     consistentdepolarization_duration = int(sampling_rate/1000 * consistentdepolarization_duration_inms -1)#-1 to account for taking derivative
+#     consistentdepolarization_vchangewindow_inms = 5
+#     consistentdepolarization_vchangewindow = int(sampling_rate/1000 * consistentdepolarization_vchangewindow_inms)
+#     consistentdepolarization_minvchange = 0.1
+
+#     voltage_filtered_derivative = np.diff(voltage_filtered,append=voltage_filtered[-1])
+#     derivativeconsistentlypositive_idcs = [] #any idx in voltage_filtered_derivative where the next ... idcs also have a positive value.
+#     for i, idx in enumerate(voltage_filtered_derivative):
+#         if idx >= 0 and i+consistentdepolarization_duration < len(voltage_filtered_derivative):
+#             if np.amin(voltage_filtered_derivative[i:i+consistentdepolarization_duration]) >= 0:
+#                 derivativeconsistentlypositive_idcs.append(i)
+#     depolarizingevents_candidates = []
+#     for idx in derivativeconsistentlypositive_idcs:
+#         if idx+consistentdepolarization_vchangewindow < len(voltage_recording) and idx-consistentdepolarization_vchangewindow >= 0:
+#             # print('idx = '+str(idx))
+#             vsnippet1 = voltage_recording[idx-consistentdepolarization_vchangewindow:idx]
+#             vsnippet2 = voltage_recording[idx:idx+consistentdepolarization_vchangewindow]
+#             # print(np.mean(vsnippet))
+#             if np.amax(vsnippet1) - np.amin(vsnippet1) > consistentdepolarization_minvchange and np.amax(vsnippet2) - np.amin(vsnippet2) > consistentdepolarization_minvchange:
+#                 maxv_insnippet_idx = np.argmax(voltage_recording[idx-consistentdepolarization_vchangewindow:idx+consistentdepolarization_vchangewindow])
+#                 eventpeakcandidate_idx = idx - consistentdepolarization_vchangewindow + maxv_insnippet_idx
+#                 depolarizingevents_candidates.append(eventpeakcandidate_idx)
+#     depolarizingevents_candidates = list(set(depolarizingevents_candidates))
+
+#     if plotting == 'on':
+#         figure,axes = plt.subplots(2,1,sharex=True)
+#         axes[0].plot(time_axis,voltage_recording,color='blue')
+#         axes[0].plot(time_axis,voltage_filtered,color='black')
+#         axes[0].plot(time_axis[::5],sgnl.decimate(voltage_recording,5),color='red')
+#         axes[0].scatter(time_axis[derivativeconsistentlypositive_idcs],voltage_recording[derivativeconsistentlypositive_idcs],color='green')
+#         axes[0].scatter(time_axis[depolarizingevents_candidates],voltage_recording[depolarizingevents_candidates],color='red')
+#         axes[0].set_ylabel('voltage (mV)')
+#         axes[0].set_title('voltage trace (black: smoothed)')
+
+#         axes[1].plot(time_axis,voltage_filtered_derivative,color='black')
+#         axes[1].scatter(time_axis[derivativeconsistentlypositive_idcs],
+#                         voltage_filtered_derivative[derivativeconsistentlypositive_idcs],color='green')
+#         axes[1].scatter(time_axis[depolarizingevents_candidates],
+#                         voltage_filtered_derivative[depolarizingevents_candidates],color='red')
+#         axes[1].set_xlabel('time (ms)')
+#         axes[1].set_title('first derivative of voltage')
+
+#     return depolarizingevents_candidates
 
 
 

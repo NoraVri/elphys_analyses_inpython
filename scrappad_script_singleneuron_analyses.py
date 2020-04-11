@@ -16,6 +16,22 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+
+# %% small sections, while plotting everything
+cell20190814A = SingleNeuron("20190814A")
+file_toexcept = cell20190814A.rawdata_blocks[0].file_origin #in this block, there are 2 recording channels active but only Ch1 is actually recording from a neuron
+cell20190814A.rawdata_remove_nonrecordingchannel(file_toexcept,2)
+
+cell20190814Asegment_depolarizingevents = get_depolarizingevents(cell20190814A.rawdata_blocks[0].segments[0].time_slice(t_start=710*pq.s,t_stop=711*pq.s))
+
+cell20190805A = SingleNeuron('20190805A')
+cell20190805A.rawdata_blocks = cell20190805A.rawdata_blocks[1::]
+file_toexcept = 'gapFree_0001.abf'
+cell20190805A.rawdata_remove_nonrecordingchannel(file_toexcept,1)
+
+cell20190805Asegment_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[0].segments[0].time_slice(t_start=325*pq.s,t_stop=326*pq.s))
+
+
 # %% abf recordings
 cell20190814A = SingleNeuron("20190814A")
 file_toexcept = cell20190814A.rawdata_blocks[0].file_origin #in this block, there are 2 recording channels active but only Ch1 is actually recording from a neuron

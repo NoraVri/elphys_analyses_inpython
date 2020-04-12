@@ -136,8 +136,6 @@ class SingleNeuron:
 # %% functions for analyzing raw data:
 # %% depolarizing events
     def get_depolarizingevents_fromRawData(self,
-                                           min_event_amplitude = 0.5,
-                                           peak_height = 0.15,
                                            plot='off'):
         """This function takes the raw data belonging to SingleNeuron (in the form of a SingleNeuron_RawData class instance)
         and peakfinding parameters (minimal amplitude and 'peak height').
@@ -145,26 +143,26 @@ class SingleNeuron:
         It outputs a dictionary containing the idcs of depolarizingevents_peaks by block&trace no,
         as well as the corresponding depolarizingevents_measures (amplitude, baseline_v, ...)
         """
-        dictionary = {}
+        actionpotentials_dictionary = {}
+        subthresholddepolarizations_dictionary = {}
         for block in self.rawdata_blocks:
             for i, segment in enumerate(block.segments):
-                depolarizingevents_peaksidcs = snafs.singlevoltagetrace_find_depolarizingevents_peaksidcs(
-                                                segment,
-                                                min_event_amplitude = min_event_amplitude,
-                                                peakheight = peak_height,
-                                                plotting = plot)
-                depolarizingevents_peaksidcs_withmeasures = snafs.singlevoltagetrace_get_depolarizingevents_measures(
-                                                            segment,
-                                                            depolarizingevents_peaksidcs)
+                actionpotentials_dictionary, \
+                subthresholddepolarizations_dictionary = snafs.get_depolarizingevents(
+                                                                segment,
+                                                                plotting=plot)
 
-                dictionary.update(
+                actionpotentials_dictionary.update(
                     {f'file {segment.file_origin} trace {str(i)}' :
-                     {'peaks_indices' : depolarizingevents_peaksidcs_withmeasures,
-                      'param_mineventamp' : min_event_amplitude,
-                      'param_peakheight' : peak_height}
+                     {'action_potentials' : actionpotentials_dictionary}
+                     })
+                subthresholddepolarizations_dictionary.update(
+                    {f'file {segment.file_origin} trace {str(i)}' :
+                     {'subthreshold_depolarizations' : subthresholddepolarizations_dictionary}
                      })
 
-        self.depolarizing_events = dictionary
+        self.depolarizing_events = subthresholddepolarizations_dictionary
+        self.action_potentials = actionpotentials_dictionary
         #TODO: write code that returns this in a Pandas dataframe instead
         #use the dataframe to make nice plots of things, starting with events baselined
         #use Pandas to save the results in json format.

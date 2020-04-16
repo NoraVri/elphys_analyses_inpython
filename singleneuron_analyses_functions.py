@@ -9,389 +9,219 @@ This file defines a class for working with depolarizing events.
 # %% imports
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.signal as sgnl
+from scipy import signal
 import quantities as pq
 
 # %%
 def get_depolarizingevents(single_segment,
                            min_depolspeed=0.1,
                            min_depolamp=0.1,
-                           mswindow=1,
                            peakwindow=10,
-                           fullspikewindow=40,
-                           downsample_number=4,
-                           plotting='on'):
+                           spikewindow=40,
+                           noisefilter_hpfreq = 3000,
+                           oscfilter_lpfreq = 20,
+                           plot = 'on'):
     # getting all the relevant data from the Neo/Segment object
     single_voltage_trace = single_segment.analogsignals[0]
     time_axis = single_voltage_trace.times
     time_axis = time_axis.rescale('ms').magnitude
-    voltage_recording = np.squeeze(single_voltage_trace)
-    current_recording = np.squeeze(single_segment.analogsignals[1])
-    sampling_rate = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
+    voltage_recording = np.array(np.squeeze(single_voltage_trace)) #!Make sure it's in mV
+    current_recording = np.array(np.squeeze(single_segment.analogsignals[1])) #!Make sure it's in pA
+    sampling_frequency = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
+    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000 *pq.ms
 
-    #parameter settings - defaults:
-    decimateby_number = downsample_number #the function includes a filter, too, but basically we're downsampling by this number
-    mindepol = min_depolspeed  # mV/ms
-    depol_minamplitude = min_depolamp  # mV
-    #time windows
-    window_inms = mswindow #window used for calculating the 'rough' derivative and candidate-depolarizations points
-    window_insamples = int(sampling_rate / 1000 * window_inms)
-    window_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * window_inms)
-    peakwindow_inms = peakwindow
-    peakwindow_insamples = int(sampling_rate / 1000 * peakwindow_inms)
-    peakwindow_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * peakwindow_inms)
-    fullspikewindow_inms = fullspikewindow
-    fullspikewindow_insamples = int(sampling_rate / 1000 * fullspikewindow_inms)
-    fullspikewindow_indownsampledsamples = int(sampling_rate / 1000 / decimateby_number * fullspikewindow_inms)
+    #parameter settings - default time windows:
+    window_inms = 1 #window used for calculating the 'rough' derivative and candidate-depolarizations points
+    window_insamples = int(sampling_frequency / 1000 * window_inms)
+    peakwindow_inms = peakwindow #distance from depol_idx to potential peak
+    peakwindow_insamples = int(sampling_frequency / 1000 * peakwindow_inms)
+    spikewindow_inms = spikewindow
+    spikewindow_insamples = int(sampling_frequency / 1000 * spikewindow_inms)
 
     #prep:
-    #downsampling/filtering the raw voltage
-    voltage_downsampled = sgnl.decimate(voltage_recording, decimateby_number)
-    time_axis_downsampled = time_axis[::decimateby_number]
+    #filtering the raw voltage twice: high-pass to get 'only the noise', and low-pass to get 'only the STOs'.
+    #subtract both from raw voltage to get trace for event-detection
+    lowpass_sos = signal.butter(2, oscfilter_lpfreq, btype='lowpass', fs=sampling_frequency, output='sos')
+    voltage_oscillationstrace = signal.sosfiltfilt(lowpass_sos, voltage_recording)
+    highpass_sos = signal.butter(1, noisefilter_hpfreq, btype='highpass', fs=sampling_frequency, output='sos')
+    voltage_noisetrace = signal.sosfiltfilt(highpass_sos, voltage_recording)
+    voltage_eventdetecttrace = voltage_recording - voltage_oscillationstrace - voltage_noisetrace
+
     #taking the ms-by-ms derivative
     voltage_permsderivative = []
-    for idx in range(0,len(voltage_downsampled)-window_indownsampledsamples):
-        v_slope_approx = voltage_downsampled[idx+window_indownsampledsamples] - voltage_downsampled[idx]
+    for idx in range(0,len(voltage_eventdetecttrace)-window_insamples):
+        v_slope_approx = voltage_eventdetecttrace[idx+window_insamples] - voltage_eventdetecttrace[idx]
         voltage_permsderivative.append(v_slope_approx)
     voltage_permsderivative = np.array(voltage_permsderivative)
-    time_axis_derivative = time_axis_downsampled[:len(voltage_permsderivative):]
+    time_axis_derivative = time_axis[:len(voltage_permsderivative):]
 
-    #actually collecting points of interest
-    depolarizations_indownsampledtrace = []
+    #actually collecting points of interest: peaks of depolarizations, and their baseline-points
+    depolarizations = []
     depols_with_peaks = []
     peaks_idcs = []
-    peaks_risecorrected_idcs = []
-    spikes_baseline_idcs = []
-    baseline_rereached_idcs = []
-    actionpotentials_dictionary = {}
-    subthresholddepolarizations_dictionary = {}
-    for idx in range(len(voltage_permsderivative) - peakwindow_indownsampledsamples):
+    for idx in range(len(voltage_permsderivative) - peakwindow_insamples):
         #skip points that refer to places on already-identified events
         if peaks_idcs and idx < peaks_idcs[-1]:
             continue
-        elif baseline_rereached_idcs and idx < baseline_rereached_idcs[-1]:
-            continue
         else:
-        #1. identify depolarizations of mindepol(=0.1)mV/ms or more (relative to the 'general' depolarization rate, for example on an oscillation)
-            w1_meanvderivative = np.mean(voltage_permsderivative[idx:idx+window_indownsampledsamples])
-            w1_minderivative = np.amin(voltage_permsderivative[idx:idx+window_indownsampledsamples])
-            w2_maxvderivative = np.amax(voltage_permsderivative[idx+window_indownsampledsamples:idx+(2*window_indownsampledsamples)])
-            #points qualify as depolarizations if:
-                # - dV/dt_ms in the first 1ms window is not too variable (mean-min < mindepol)
-                # - max dVdt_ms in the second 1ms window is > mindepol + mean dVdt_ms in the first 1ms window
-                # - dVdt_ms in the second 1ms window is > mean dVdt_ms in the first 1ms window (for each point in the window)
-            if w1_meanvderivative-w1_minderivative < mindepol \
-                and w2_maxvderivative >= mindepol+w1_meanvderivative\
-                and [dvdt >= w1_meanvderivative for dvdt in voltage_permsderivative[
-                                                            idx+window_indownsampledsamples:idx+(2*window_indownsampledsamples)]
-                     ]:
-                depol_idx = idx+window_indownsampledsamples #depol_idx will mark the baseline_v point, if a proper peak can be found to go with it
-                depolarizations_indownsampledtrace.append(depol_idx)
+    #1. identify depolarizations of mindepol mV/ms or more
+        # points qualify as depolarizations if:
+        # - dV/dt_ms in the first 1ms window is not too variable (mean-min < mindepol)
+        # - mean dVdt_ms in the second 1ms window is > mindepol + mean dVdt_ms in the first 1ms window
+            w1_meanvderivative = np.mean(voltage_permsderivative[idx:idx+window_insamples])
+            w1_minderivative = np.amin(voltage_permsderivative[idx:idx+window_insamples]) #as approximation of 'remaining noise'
+            w2_meanvderivative = np.mean(voltage_permsderivative[idx+window_insamples:idx+(2*window_insamples)])
+            if w1_meanvderivative-w1_minderivative < min_depolspeed \
+                and w2_meanvderivative >= min_depolspeed+w1_meanvderivative:
+                depol_idx = idx+window_insamples #depol_idx will mark the baseline_v point, if a proper peak can be found to go with it
+                depolarizations.append(depol_idx)
 
-                baselinev = np.mean(voltage_downsampled[depol_idx - window_indownsampledsamples:depol_idx])
-                peakvtrace = voltage_downsampled[depol_idx:depol_idx+peakwindow_indownsampledsamples]
-                peakv = np.amax(peakvtrace)
-                peakv_idx = np.argmax(peakvtrace)
-
-        # 2. identify depolarizations that are followed by a peak in voltage
-            # 2a. action potentials: get baseline_v-point and return-to-baseline_v-point (detailed measures will be taken from voltage_recording, not voltage_downsampled)
-                if peakv > 0:
-                    #TODO
-                    #switch out the following code with a function that returns one entry of the actionpotentials_dictionary
-                    baseline_rereached_idx = peakv_idx
-                    while depol_idx + baseline_rereached_idx < len(
-                            voltage_downsampled) and baseline_rereached_idx <= fullspikewindow_indownsampledsamples and \
-                            voltage_downsampled[depol_idx + baseline_rereached_idx] > baselinev:
-                        baseline_rereached_idx += 1
-                    if voltage_downsampled[depol_idx + baseline_rereached_idx] > baselinev:
-                        # if v does not go back to baseline after spike, take peakwindow instead
-                        baseline_rereached_idcs.append(depol_idx + peakwindow_indownsampledsamples)
-                    else:
-                        baseline_rereached_idcs.append(depol_idx + baseline_rereached_idx)
-                    spikes_baseline_idcs.append(depol_idx)
-
-            # 2b. subthreshold depolarizations: check if they are > depol_minamplitude(=0.1)mV relative to baseline V
-                # and if they (probably) have a peak occurring within peakwindow
-                elif peakv >= baselinev + depol_minamplitude \
-                    and 0.5*window_indownsampledsamples < peakv_idx < 0.75*peakwindow_indownsampledsamples:
+    # 2. identify depolarizations that are followed by a peak in voltage
+        #points qualify as having a peak if:
+        # - peakv (within 10ms from depol_idx) > baselinev + mindepolamp in the event-detect trace
+        # - minv after peakv goes back down to <80% of peak amp
+        # - maxv after peakv is less than peakv+50% of peak amp from baseline
+        # - applied current does not change between the baseline- and peak-points
+                ed_baselinev = np.mean(voltage_eventdetecttrace[depol_idx-window_insamples:depol_idx])
+                ed_peakvtrace = voltage_eventdetecttrace[depol_idx:depol_idx+peakwindow_insamples]
+                ed_peakv = np.amax(ed_peakvtrace)
+                ed_peakamp = ed_peakv - ed_baselinev
+                peakv_idx = np.argmax(ed_peakvtrace) + depol_idx
+                ed_postpeaktrace = voltage_eventdetecttrace[peakv_idx:peakv_idx+peakwindow_insamples]
+                ed_postpeakmin = np.amin(ed_postpeaktrace)
+                ed_postpeakmax = np.amax(ed_postpeaktrace)
+                current_atbaseline = np.mean(current_recording[depol_idx-window_insamples:depol_idx])
+                current_atpeak = np.mean(current_recording[peakv_idx:peakv_idx+peakwindow_insamples])
+                if ed_peakamp >= min_depolamp \
+                    and ed_postpeakmin < ed_baselinev+(0.8*ed_peakamp) \
+                    and ed_postpeakmax < ed_baselinev+(1.5*ed_peakamp) \
+                    and abs(current_atbaseline - current_atpeak) < 20:
                     depols_with_peaks.append(depol_idx)
-                    peaks_idcs.append(depol_idx + peakv_idx)
-            #2c. subthreshold depolarizations that get lost in oscillations: check if they are > depol_minamplitude(=0.1)mV relative to baseline V
-                # in vtrace corrected for pre-baseline avg rise
-                else:
-                    avgrise = w1_meanvderivative
-                    avgrisetrace = np.linspace(start=0,
-                                               stop=avgrise * peakwindow_inms,
-                                               num=peakwindow_indownsampledsamples)
-                    peakvtrace_avgrisesubstracted = peakvtrace - avgrisetrace
-                    peakv_risecorrected = np.amax(peakvtrace_avgrisesubstracted)
-                    peakv_risecorrected_idx = np.argmax(peakvtrace_avgrisesubstracted)
+                    peaks_idcs.append(peakv_idx)
 
-                    if peakv_risecorrected >= baselinev + depol_minamplitude \
-                        and 0.5*window_indownsampledsamples < peakv_risecorrected_idx < 0.75*peakwindow_indownsampledsamples:
-                        depols_with_peaks.append(depol_idx)
-                        peaks_risecorrected_idcs.append(depol_idx + peakv_risecorrected_idx)
+    #3. get event parameters (for APs and subthreshold depolarizations separately).
+    actionpotentials_dictionary = {}
+    depolarizingevents_dictionary = {}
+    for i, peak_idx in enumerate(peaks_idcs):
+        baseline_idx = depols_with_peaks[i]
 
-                        # plt.figure()
-                        # plt.plot(time_axis_downsampled[
-                        #          depol_idx - window_indownsampledsamples:depol_idx + peakwindow_indownsampledsamples],
-                        #          voltage_downsampled[
-                        #          depol_idx - window_indownsampledsamples:depol_idx + peakwindow_indownsampledsamples],
-                        #          color='black')
-                        # plt.plot(time_axis_downsampled[depol_idx:depol_idx + peakwindow_indownsampledsamples],
-                        #          peakvtrace_avgrisesubstracted,
-                        #          color='green')
+        ed_baselinev = np.mean(voltage_eventdetecttrace[baseline_idx-window_insamples:baseline_idx])
+        ed_peakv = voltage_eventdetecttrace[peak_idx]
+        ed_peakamp = ed_peakv - ed_baselinev
 
+        if ed_peakamp > 40: #get action potential parameters
+            #baseline v: meanv in the ms before baseline_idx
+            baseline_v = np.mean(voltage_recording[baseline_idx-window_insamples:baseline_idx])
+            #peak v: v at peak_idx (as found on ed-trace)
+            peak_v = voltage_recording[peak_idx]
+            #amplitude from baseline to peak
+            spikeamp = peak_v - baseline_v
+            #rise-time: time from 10% - 90% of peak amp
+            risetrace = voltage_recording[baseline_idx:peak_idx]
+            risetrace_clipped = risetrace[risetrace >= baseline_v+0.1*spikeamp]
+            risestart_idx = peak_idx - len(risetrace_clipped)
+            risetrace_clipped = risetrace_clipped[risetrace_clipped <= baseline_v+0.9*spikeamp]
+            rise_time = len(risetrace_clipped) * sampling_period_inms
+            #half-width: AP width at 50% of amplitude
+            halfhalfwidth_inidcs = len(risetrace[risetrace > baseline_v + 0.5*spikeamp])
+            additional_idcs = peak_idx
+            while voltage_recording[additional_idcs] >= baseline_v + 0.5*spikeamp:
+                additional_idcs += 1
+            additional_idcs = additional_idcs - peak_idx
+            halfwidth_inidcs = halfhalfwidth_inidcs + additional_idcs
+            half_width = halfwidth_inidcs * sampling_period_inms
+            #threshold: 10% of max. dV/dt
+            fullspikev = voltage_recording[baseline_idx:peak_idx + spikewindow_insamples]
+            fullspikev_diff = np.diff(fullspikev)
+            maxdvdt = np.amax(fullspikev_diff)
+            maxdvdt_idx = np.argmax(fullspikev_diff)
+            thrshd_idx = maxdvdt_idx
+            while fullspikev_diff[thrshd_idx] > 0.1*maxdvdt and thrshd_idx >= 0:
+                thrshd_idx += -1
+            spikethreshold_idx = baseline_idx + thrshd_idx
+            spikethreshold_v = voltage_recording[spikethreshold_idx]
+            #threshold-width: AP width at threshold v
+            thrshld2_idx = peak_idx-baseline_idx
+            while fullspikev[thrshld2_idx] > spikethreshold_v and thrshld2_idx < spikewindow_insamples:
+                thrshld2_idx += 1
+            thresholdwidth_inidcs = thrshld2_idx-thrshd_idx
+            if fullspikev[thrshld2_idx] <= spikethreshold_v:
+                threshold_width = thresholdwidth_inidcs * sampling_period_inms
+            else:
+                threshold_width = None
 
-                        # plt.scatter(time_axis_downsampled[depol_idx], voltage_downsampled[depol_idx],
-                        #             color='blue')
-                        # plt.scatter(time_axis_downsampled[depol_idx + peakv_idx],
-                        #             voltage_downsampled[depol_idx + peakv_idx], color='red')
+            actionpotentials_dictionary[peak_idx] = {
+                'baselinev_idx' : baseline_idx,
+                'baselinev' : baseline_v,
+                'peakv' : peak_v,
+                'amplitude' : spikeamp,
+                'rise-time' : rise_time,
+                'half-width' : half_width,
+                'thresholdv_idx' : spikethreshold_idx,
+                'thresholdv' : spikethreshold_v,
+                'thresholdrereached-time' : threshold_width
+                #don't forget about current
+            }
 
-                        # elif peakv_idx >= 0.75*peakwindow_indownsampledsamples \
-                        #     or peakv_risecorrected_idx >= 0.75*peakwindow_indownsampledsamples:
-                        #
-                        #     # plt.scatter(time_axis_downsampled[depol_idx], voltage_downsampled[depol_idx],
-                        #     #             color='blue')
-                        #     alternative_peakv = np.amax(peakvtrace[:int(0.75*window_indownsampledsamples):])
-                        #     alternative_peakv_idx = np.argmax(peakvtrace[:int(0.75*peakwindow_indownsampledsamples):])
-                        #     alternative_peakv_trendcorrected = np.amax(peakvtrace_avgrisesubstracted[:int(0.75*peakwindow_indownsampledsamples):])
-                        #     alternative_peakv_trendcorrected_idx = np.argmax(peakvtrace_avgrisesubstracted[:int(0.75*peakwindow_indownsampledsamples):])
-                        #     if np.amax([alternative_peakv,alternative_peakv_trendcorrected]) > baselinev + depol_minamplitude \
-                        #         and 0.5*window_indownsampledsamples < np.amin([alternative_peakv_idx,alternative_peakv_trendcorrected_idx]) < 0.75*peakwindow_indownsampledsamples:
-                        #         depols_with_peaks.append(depol_idx)
-                        #         peaks_idcs.append(depol_idx + np.amin([alternative_peakv_idx,alternative_peakv_trendcorrected_idx]))
-
-                            # plt.scatter(time_axis_downsampled[depol_idx + peakv_idx],
-                            #             voltage_downsampled[depol_idx + peakv_idx],
-                            #             color='yellow')
-
-
-
-    depolarizations = np.array(depolarizations_indownsampledtrace) * decimateby_number
-    depols_with_peaks = np.array(depols_with_peaks) * decimateby_number
-    peaks_idcs = np.array(peaks_idcs) * decimateby_number
-    peaks_risecorrected_idcs = np.array(peaks_risecorrected_idcs) * decimateby_number
-    spikes_baseline_idcs = np.array(spikes_baseline_idcs) * decimateby_number
-    baseline_rereached_idcs = np.array(baseline_rereached_idcs) * decimateby_number
-
-
-
-    if plotting == 'on':
-        figure,axes = plt.subplots(2,1,sharex=True)
-        axes[0].plot(time_axis,voltage_recording,color='blue')
-        axes[0].plot(time_axis[::decimateby_number],voltage_downsampled,color='black')
-        # axes[0].scatter(time_axis[depolarizations_twicepremeansize],voltage_recording[depolarizations_twicepremeansize],
-        #                 color='green')
-        # axes[0].scatter(time_axis[depolarizations], voltage_recording[depolarizations],
-        #                 color='black')
-        axes[0].scatter(time_axis[depols_with_peaks], voltage_recording[depols_with_peaks],
-                        color='red')
-        axes[0].scatter(time_axis[peaks_idcs], voltage_recording[peaks_idcs],
-                        color='green')
-        axes[0].scatter(time_axis[peaks_risecorrected_idcs], voltage_recording[peaks_risecorrected_idcs],
-                        color='yellow')
-        if len(spikes_baseline_idcs) > 0:
-            axes[0].scatter(time_axis[spikes_baseline_idcs], voltage_recording[spikes_baseline_idcs],
+            if plot == 'on':
+                plt.figure()
+                plt.plot(time_axis[baseline_idx-window_insamples:peak_idx+spikewindow_insamples],
+                        voltage_recording[baseline_idx-window_insamples:peak_idx+spikewindow_insamples],
+                         color='blue')
+                plt.scatter(time_axis[baseline_idx], voltage_recording[baseline_idx],
+                            color='red')
+                plt.scatter(time_axis[peak_idx], voltage_recording[peak_idx],
+                            color='green')
+                plt.scatter(time_axis[spikethreshold_idx], spikethreshold_v,
                             color='black')
-            axes[0].scatter(time_axis[baseline_rereached_idcs], voltage_recording[baseline_rereached_idcs],
-                            color='blue')
-        axes[0].set_ylabel('voltage (mV)')
-        axes[0].set_title('voltage trace (black: smoothed)')
+                plt.hlines(y=baseline_v+0.5*spikeamp,
+                           xmin=time_axis[peak_idx-halfhalfwidth_inidcs],xmax=time_axis[peak_idx+additional_idcs],
+                           color='green',
+                           label='half-width')
+                plt.hlines(baseline_v+0.1*spikeamp,
+                           xmin=time_axis[risestart_idx],xmax=time_axis[risestart_idx+len(risetrace_clipped)],
+                           color='red',
+                           label='rise-time')
+                plt.hlines(spikethreshold_v,
+                           xmin=time_axis[spikethreshold_idx],xmax=time_axis[spikethreshold_idx+thresholdwidth_inidcs],
+                           color='black',
+                           label='threshold-width')
+                plt.legend()
 
-        # axes[1].plot(time_axis_downsampled,np.diff(voltage_downsampled,append=voltage_downsampled[-1]),
-        #              color='black')
+
+        else: #subthreshold event
+            depolarizingevents_dictionary[peak_idx] = {
+            }
+
+    if plot == 'on':
+        voltage_zerocentered = voltage_recording - np.mean(voltage_recording)
+        figure,axes = plt.subplots(2,1,sharex=True)
+        axes[0].plot(time_axis,voltage_zerocentered,color='blue',label='raw data (mean subtracted)')
+        axes[0].plot(time_axis,voltage_eventdetecttrace,color='black',label='filtered data')
+        axes[0].scatter(time_axis[depols_with_peaks], voltage_zerocentered[depols_with_peaks],
+                        color='red')
+        axes[0].scatter(time_axis[peaks_idcs], voltage_zerocentered[peaks_idcs],
+                        color='green')
+        axes[0].scatter(time_axis[depols_with_peaks], voltage_eventdetecttrace[depols_with_peaks],
+                        color='red')
+        axes[0].scatter(time_axis[peaks_idcs], voltage_eventdetecttrace[peaks_idcs],
+                        color='green')
+        axes[0].legend()
+        # if len(spikes_baseline_idcs) > 0:
+        #     axes[0].scatter(time_axis[spikes_baseline_idcs], voltage_zerocentered[spikes_baseline_idcs],
+        #                     color='black')
+        #     axes[0].scatter(time_axis[baseline_rereached_idcs], voltage_zerocentered[baseline_rereached_idcs],
+        #                     color='blue')
+        axes[0].set_ylabel('voltage (mV)')
+        axes[0].set_title(single_segment.file_origin)
+
         axes[1].plot(time_axis_derivative,voltage_permsderivative,
                      color='black')
-        # axes[1].scatter(time_axis_derivative[smalldepolarizations_indownsampledtrace],
-        #                 voltage_permsderivative[smalldepolarizations_indownsampledtrace],
-        #                 color='green')
-        axes[1].scatter(time_axis_derivative[depolarizations_indownsampledtrace],
-                        voltage_permsderivative[depolarizations_indownsampledtrace],
+        # axes[1].set_ylim(-1, 2)
+        axes[1].scatter(time_axis_derivative[depolarizations],
+                        voltage_permsderivative[depolarizations],
                         color='red')
         axes[1].set_xlabel('time (ms)')
-        axes[1].set_title('first derivative of downsampled voltage')
-        plt.suptitle(single_segment.file_origin)
-    return depols_with_peaks
+        axes[1].set_title('ms-by-ms derivative of filtered voltage')
 
-
-
-
-
-
-# %%
-#function for finding depolarizing events in a single voltage trace
-def singlevoltagetrace_find_depolarizingevents_peaksidcs(single_segment,
-                                                         min_event_amplitude=0.5,
-                                                         peakheight=0.15,
-                                                         plotting='on'):
-    #notes for me:
-    #(1) the downsampling function (scipy.signal.decimate) includes smoothing as well; I'm using the function's default setting for now.
-    #(2) peakheight refers to height of the event in the second derivative of the voltage trace;
-    #    min_event_amplitude refers to the height of the actual event in the voltage trace.
-    #TODO code improvement ideas: use std as a measure of noise level, and set params accordingly
-    """
-    Parameters
-    ----------
-    single_voltage_trace :
-        TYPE: AnalogSignal object (as defined in the Neo-IO module).
-        Must have sampling rate information, and have unit of mV.
-        DESCRIPTION: a single, intracellularly recorded voltage trace.
-    min_event_amplitude:
-        TYPE: float, optional
-        DESCRIPTION: minimal difference between minV and maxV around a (potential) voltage peak.
-        The default is 0.5 (mV)
-    peakheight :
-        TYPE: float, optional
-        DESCRIPTION: minimal height of peaks in the second derivative of voltage
-        for detection of sub-threshold depolarizing events. The default is 0.15.
-
-    Returns
-    -------
-    depolarizingevents_peaksidcs :
-        TYPE: list of integers
-        DESCRIPTION: A list of indices, where each index is unique and corresponds
-        to the peak of a sub-threshold depolarizing event.
-    also makes a new figure of the voltage trace and derivatives,
-    with detected peaks marked.
-
-    """
-    # getting all the relevant data from the Neo/Segment object
-    single_voltage_trace = single_segment.analogsignals[0]
-    time_axis = single_voltage_trace.times
-    time_axis = time_axis.rescale('ms').magnitude
-    voltage_recording = np.squeeze(single_voltage_trace)
-    single_current_trace = single_segment.analogsignals[1]
-    current_recording = np.squeeze(single_current_trace)
-
-    #scaling parameters relative to trace sampling rate
-    sampling_rate = float(single_voltage_trace.sampling_rate)
-    smoothingfactor1 = int(sampling_rate/1000) #smoothingfactor is the window size for the filter applied in the downsampling.
-    peakwindow = int(sampling_rate*5/1000) #a fastevent peak should be within 5 ms from the peak-point in the voltage derivative
-    currentchange_aroundevent_window = int(sampling_rate*100/1000) #an event peak should not be within 100 ms from DC current step being applied
-
-    # getting a differentiated voltage trace from which fast depolarizations can be picked up
-    voltage_downsampled = sgnl.decimate(voltage_recording, smoothingfactor1)
-    time_axis_downsampled = time_axis[0::smoothingfactor1]
-    voltage_downsampled_derivative = np.diff(voltage_downsampled,append=voltage_downsampled[-1]) #appending the last value keeps the derivative-trace the same length as the original
-    voltage_downsampled_derivative = np.where(voltage_downsampled_derivative<0,0,voltage_downsampled_derivative) #replacing all negative values with 0
-    voltage_downsampled_secondderivative = np.diff(voltage_downsampled_derivative,append=voltage_downsampled_derivative[-1])
-    #using findpeaks on differentiated voltage to pick up candidates for depolarizing events
-    depolarizingevents_idcs_indownsampledtrace = sgnl.find_peaks(voltage_downsampled_secondderivative,
-                                                                  height=peakheight)[0]
-
-    depolarizingevents_idcs = depolarizingevents_idcs_indownsampledtrace * smoothingfactor1
-
-    # picking up voltage peaks belonging to fast depolarizations, based on some criteria
-    depolarizingevents_peaksidcs = []
-    #testing each peak on basic criteria; move on to the next idx if criterium isn't met
-    for idx in depolarizingevents_idcs:
-        voltagesnippet = voltage_recording[idx:idx+peakwindow]
-        maxv_insnippet_index = np.argmax(voltagesnippet)
-        maxv_insnippet = np.amax(voltagesnippet)
-        minv_insnippet = np.amin(voltagesnippet)
-        vdiff_insnippet = maxv_insnippet - minv_insnippet
-
-        #check if it's a response to DC current (in window before eventidx)
-        if idx < currentchange_aroundevent_window:
-            currentsnippet_startidx = 0
-        else:
-            currentsnippet_startidx = idx - currentchange_aroundevent_window
-        currentsnippet = current_recording[currentsnippet_startidx:idx]
-        currentchange_insnippet = np.amax(currentsnippet) - np.amin(currentsnippet)
-        if currentchange_insnippet > 20:
-            continue
-
-        #it's a spike
-        if maxv_insnippet > 0:
-            continue
-
-        #"peak" is at the start of the window therefore not actually a peak
-        if maxv_insnippet_index < 5:
-            continue
-
-        #"peak" is at the end of the window therefore not actually a peak
-        if maxv_insnippet_index > peakwindow - 5:
-            continue
-
-        #peak is on a spike shoulder
-        if minv_insnippet > -20:
-            continue
-
-        #difference between min and max is too small for it to be a proper event
-        if vdiff_insnippet < min_event_amplitude:
-        #!! assumes that v is in mV (but does not actually check if that's true right now)
-            continue
-
-        depolarizingevent_peakidx = idx + maxv_insnippet_index
-#write depolarizing-events parameters-finding function here, such that it's called on a single peakidx
-        depolarizingevents_peaksidcs.append(depolarizingevent_peakidx)
-
-    depolarizingevents_peaksidcs = list(set(depolarizingevents_peaksidcs)) #removing duplicates
-
-
-    #plotting the voltagetrace with detected peaks, and the difftrace to see that things went well
-    if plotting == 'on':
-        figure,axes = plt.subplots(2,1,sharex=True)
-        axes[0].plot(time_axis,voltage_recording,color='blue')
-        axes[0].plot(time_axis_downsampled,voltage_downsampled,color='black')
-        axes[0].scatter(time_axis[depolarizingevents_peaksidcs],voltage_recording[depolarizingevents_peaksidcs],color='red')
-        axes[0].set_ylabel('voltage (mV)')
-        axes[0].set_title('voltage trace (black: smoothed)')
-        axes[1].plot(time_axis_downsampled,voltage_downsampled_derivative,color='blue')
-        axes[1].plot(time_axis_downsampled,voltage_downsampled_secondderivative,color='black')
-        axes[1].scatter(time_axis_downsampled[depolarizingevents_idcs_indownsampledtrace],
-                        voltage_downsampled_secondderivative[depolarizingevents_idcs_indownsampledtrace],color='green')
-        axes[1].set_xlabel('time (ms)')
-        axes[1].set_title('first (blue) and second (black) derivative of voltage')
-        figure.suptitle(single_segment.file_origin)
-
-    return depolarizingevents_peaksidcs
-
-
-def singlevoltagetrace_get_depolarizingevents_measures(single_segment,
-                                                       depolarizingevents_peaksidcs):
-
-    voltage_recording = np.squeeze(single_segment.analogsignals[0])
-    voltage_recording = voltage_recording.rescale('mV')
-    sampling_rate = float(single_segment.analogsignals[0].sampling_rate)
-
-    #windows and other static parameters
-    window_10ms = int(sampling_rate*10/1000) #the 10 ms before the peak-point
-    window_6ms = int(sampling_rate*6/1000)
-    window_3ms = int(sampling_rate*3/1000)
-    mV_2 = 2 * pq.mV
-
-    depolarizingevents_withmeasures_dictionary = {}
-    #finding measures to go with each peakidx, but only if measures pass tests for being 'clean'
-    for peakidx in depolarizingevents_peaksidcs:
-        baseline = None
-        amp = None
-        rise_time = None
-        decay_time = None
-
-        if peakidx - window_10ms < 0:
-            #skip any peaks that are less than 10ms from trace start
-            continue
-
-        peak_v = voltage_recording[peakidx]
-        vsnippet_inprepeakwindow = voltage_recording[peakidx - window_10ms : peakidx - window_3ms]
-        minv_inprepeakwindow = np.amin(vsnippet_inprepeakwindow)
-        if peak_v < minv_inprepeakwindow:
-            #v in the window 10 - 3 ms before event-peak is higher than event-peak
-            continue
-
-        vsnippet_inbaselinewindow = voltage_recording[peakidx - window_6ms : peakidx - window_3ms]
-        baseline_v = np.mean(vsnippet_inbaselinewindow)
-        if (baseline_v > (minv_inprepeakwindow - mV_2)) & (baseline_v < (minv_inprepeakwindow + mV_2)):
-            #mean_v 6-3ms before the peak is +/- 2mV from min_v 10-3 ms before the peak
-            baseline = baseline_v
-            amp = peak_v - baseline_v
-
-        #code for getting rise_time and decay_time goes here
-
-        depolarizingevents_withmeasures_dictionary[peakidx] = {'baseline_v' : baseline ,
-                                          'amplitude' : amp,
-                                          'risetime' : rise_time,
-                                          'decaytime' : decay_time}
-    return depolarizingevents_withmeasures_dictionary
+    return actionpotentials_dictionary, depolarizingevents_dictionary

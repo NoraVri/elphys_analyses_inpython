@@ -114,7 +114,12 @@ class SingleNeuron:
             all_raw_data = self.remove_nonrecordingchannel(all_raw_data,item[0],item[1])
         return all_raw_data
 
-# %% functions for plotting the raw data:
+# %% functions for quickly seeing things about the raw data:
+    def print_blocknames(self):
+        "prints the (file)names of all the blocks of singleneuron."
+        for block in self.rawdata_blocks:
+             print(block.file_origin)
+
     def plot_allrawdata(self):
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index.

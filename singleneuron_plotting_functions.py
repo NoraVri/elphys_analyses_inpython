@@ -9,7 +9,7 @@ from neo import io
 #from neo.core import Block, Segment, ChannelIndex
 import matplotlib.pyplot as plt
 import numpy as np
-# %%
+# %% general raw-data plotting
 def plot_block(block):
     """ takes a block and plots all analogsignals, one subplot per channel_index.
     """
@@ -27,3 +27,5 @@ def plot_block(block):
         axes[i].set_xlabel('time (ms)')
         axes[i].set_ylabel(str(traces_unit))
 
+
+# %% depolarizing events

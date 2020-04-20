@@ -140,14 +140,10 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self,
-                                           plot='off'):
-        """This function takes the raw data belonging to SingleNeuron (in the form of a SingleNeuron_RawData class instance)
-        and peakfinding parameters (minimal amplitude and 'peak height').
+    def get_depolarizingevents_fromRawData(self, plot='off'):
+        #TODO
+        #write this whole thing up so that function defaults can be changed easily
 
-        It outputs a dictionary containing the idcs of depolarizingevents_peaks by block&trace no,
-        as well as the corresponding depolarizingevents_measures (amplitude, baseline_v, ...)
-        """
         actionpotentials_dictionary = {}
         subthresholddepolarizations_dictionary = {}
         for block in self.rawdata_blocks:
@@ -155,7 +151,7 @@ class SingleNeuron:
                 actionpotentials_dictionary, \
                 subthresholddepolarizations_dictionary = snafs.get_depolarizingevents(
                                                                 segment,
-                                                                plotting=plot)
+                                                                plot)
 
                 actionpotentials_dictionary.update(
                     {f'file {segment.file_origin} trace {str(i)}' :

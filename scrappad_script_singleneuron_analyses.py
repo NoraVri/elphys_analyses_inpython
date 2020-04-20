@@ -29,7 +29,7 @@ cell20190805A.rawdata_blocks = cell20190805A.rawdata_blocks[1::]
 file_toexcept = 'gapFree_0001.abf'
 cell20190805A.rawdata_remove_nonrecordingchannel(file_toexcept,1)
 
-cell20190805Asegment_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[0].segments[0].time_slice(t_start=325*pq.s,t_stop=326*pq.s))
+cell20190805Asegment_APs, cell20190805Asegment_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[0].segments[0].time_slice(t_start=325*pq.s,t_stop=326*pq.s))
 
 
 # %% abf recordings
@@ -40,7 +40,7 @@ cell20190814A.rawdata_remove_nonrecordingchannel(file_toexcept,2)
 # cell20190814A.plot_block_byname(cell20190814A.rawdata_blocks[3].file_origin)
 
 cell20190814Asegment_APs, cell20190814Asegment_depols = get_depolarizingevents(cell20190814A.rawdata_blocks[0].segments[0].time_slice(t_start=700*pq.s,t_stop=730*pq.s))
-cell20190814Asegment_withblockers_depolarizingevents = get_depolarizingevents(cell20190814A.rawdata_blocks[3].segments[0].time_slice(t_start=230*pq.s,t_stop=260*pq.s))
+# cell20190814Asegment_withblockers_depolarizingevents = get_depolarizingevents(cell20190814A.rawdata_blocks[3].segments[0].time_slice(t_start=230*pq.s,t_stop=260*pq.s))
 
 # %%
 cell20190729A = SingleNeuron("20190729A")
@@ -58,7 +58,7 @@ cell20190805A.rawdata_remove_nonrecordingchannel(file_toexcept,1)
 # cell20190805A.plot_block_byname(file_toexcept)
 # cell20190805A.plot_block_byname(cell20190805A.rawdata_blocks[3].file_origin)
 
-cell20190805Asegment_APs, cell20190805Asegment_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[0].segments[0].time_slice(t_start=320*pq.s,t_stop=350*pq.s))
+cell20190805Asegment_APs, cell20190805Asegment_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[0].segments[0].time_slice(t_start=320*pq.s,t_stop=335*pq.s),plot='off')
 #cell20190805Asegment_withblockers_depolarizingevents = get_depolarizingevents(cell20190805A.rawdata_blocks[3].segments[0].time_slice(t_start=50*pq.s,t_stop=350*pq.s))
 
 # %% pxp recording

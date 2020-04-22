@@ -16,6 +16,8 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+from singleneuron_analyses_functions import make_depolarizingevents_measures_dictionaries
+apmeasures_emptydict, depoleventsmeasures_emptydict = make_depolarizingevents_measures_dictionaries()
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
@@ -64,10 +66,20 @@ cell20200310C = SingleNeuron('20200310C')
  cell20190729Asegment_withblockers_depolarizingevents) = get_depolarizingevents(
     cell20190729A.rawdata_blocks[3].segments[0].time_slice(t_start=660*pq.s,t_stop=690*pq.s))
 
-# %% pxp recording
+# %% pxp recordings
 (cell20200308Bsegment_actionpotentials,
  cell20200308Bsegment_depolarizingevents) = get_depolarizingevents(
     cell20200308B.rawdata_blocks[8].segments[0].time_slice(t_start=140*pq.s,t_stop=170*pq.s))
 (cell20200308Bsegment_withlightpulse_actionpotentials,
  cell20200308Bsegment_withlightpulse_depolarizingevents) = get_depolarizingevents(
     cell20200308B.rawdata_blocks[0].segments[0])
+
+# %%
+cell20200308F_actionpotentials, \
+cell20200308F_depolarizingevents = get_depolarizingevents(
+    cell20200308F.rawdata_blocks[0].segments[0].time_slice(t_start=40*pq.s, t_stop=55*pq.s),
+    apmeasures_emptydict, depoleventsmeasures_emptydict,
+    min_depolamp=0.5,
+    plot='on')
+
+

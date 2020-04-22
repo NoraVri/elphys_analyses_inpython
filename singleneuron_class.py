@@ -153,7 +153,7 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self, plotting='off'):
+    def get_depolarizingevents_fromRawData(self, **kwargs):
         #TODO
         #write this whole thing up so that function defaults can be changed easily
 
@@ -166,7 +166,7 @@ class SingleNeuron:
                                                             segment,
                                                             segment_actionpotentials,
                                                             segment_subthresholddepolarizations,
-                                                            plot=plotting)
+                                                            **kwargs)
 
                 trace_origin = block.file_origin + 'segment' + str(i)
                 segment_actionpotentials['origin'] = \

@@ -14,6 +14,7 @@ import quantities as pq
 
 # %% depolarizing events
 def make_depolarizingevents_measures_dictionaries():
+
     actionpotentials_measures = {
         'peakv': [],
         'baselinev': [],
@@ -65,16 +66,18 @@ def make_depolarizingevents_measures_dictionaries():
     }
     return actionpotentials_measures, depolarizingevents_measures
 
+
 def get_depolarizingevents(single_segment,
                            actionpotentials_dictionary,
                            depolarizingevents_dictionary,
-                           min_depolspeed=0.1,
-                           min_depolamp=0.2,
-                           peakwindow=5,
-                           spikewindow=40,
+                           min_depolspeed = 0.1,
+                           min_depolamp = 0.2,
+                           peakwindow = 5,
+                           spikewindow = 40,
                            noisefilter_hpfreq = 3000,
                            oscfilter_lpfreq = 20,
-                           plot = 'on'):
+                           plot = 'off'):
+
     # step1] prep:
     # getting all the relevant data from the Neo/Segment object
     single_voltage_trace = single_segment.analogsignals[0]
@@ -83,7 +86,7 @@ def get_depolarizingevents(single_segment,
     voltage_recording = np.array(np.squeeze(single_voltage_trace)) #!Make sure it's in mV
     current_recording = np.array(np.squeeze(single_segment.analogsignals[1])) #!Make sure it's in pA
     sampling_frequency = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
-    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000 #*pq.ms
+    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000 *pq.ms
 
     #parameter settings - default time windows:
     window_inms = 1 #window used for calculating the 'rough' derivative and candidate-depolarizations points

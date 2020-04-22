@@ -18,8 +18,9 @@ import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
 class SingleNeuron:
-     # init
-    def __init__(self, singleneuron_name, path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
+    ## init
+    def __init__(self, singleneuron_name,
+                 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
     # path should be to a folder that contains data and results beloning to SingleNeuron's project.
     # path gets updated to absolute path of the folder/file containing the raw data recorded for singleneuron
         self.name = singleneuron_name
@@ -29,11 +30,13 @@ class SingleNeuron:
         self.rawdata_blocks = [] #all recorded raw data, as a list of neo block objects (one block per file)
 
         self.depolarizing_events = {}
+        self.action_potentials = {}
         self.subthreshold_oscillations = []
         self.input_resistance = []
 
         self.get_singleneuron_storeddata()
 
+    ## other class-technical functions related to getting data
     def get_singleneuron_storeddata(self):
         """ This function determines whether a file carrying singleneuron_name
         is present in a folder with 'myResults';
@@ -86,6 +89,10 @@ class SingleNeuron:
                 self.rawdata_recordingtype = 'pxp'
                 self.rawdata_path = subdirectory_path
                 self.files_reader_pxp()
+            elif (self.name + '_asibws') in os.listdir(subdirectory_path):
+                self.rawdata_recordingtype = 'ibw'
+                self.rawdata_path = subdirectory_path+'\\'+self.name+'_asibws'
+                self.files_reader_ibw()
             else:
                 continue
             break
@@ -108,6 +115,12 @@ class SingleNeuron:
                         segment.analogsignals[2:4] = []
                 #code that saves changes made goes here
 
+    def rawdata_remove_nonrecordingblock(self, file_origin):
+        for i, block in enumerate(self.rawdata_blocks):
+            if block.file_origin == file_origin:
+                self.rawdata_blocks.__delitem__(i)
+                #code that saves changes made goes here
+
     def get_rawdata_withadjustments(self, rawdata_reading_notes):
         all_raw_data = self.get_singleneuron_rawdata(self.name)
         for item in rawdata_reading_notes:
@@ -126,7 +139,7 @@ class SingleNeuron:
         """
         for block in self.rawdata_blocks:
             plots.plot_block(block)
-            plt.suptitle(self.name+' raw data file '+block.file_origin)
+            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     def plot_block_byname(self, block_file_origin):
         """takes the name of the file from which the rawdata_block was created
@@ -135,38 +148,39 @@ class SingleNeuron:
         for block in self.rawdata_blocks:
             if block.file_origin == block_file_origin:
                 plots.plot_block(block)
-                plt.suptitle(self.name+' raw data file '+block.file_origin)
+                plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self, plot='off'):
+    def get_depolarizingevents_fromRawData(self, plotting='off'):
         #TODO
         #write this whole thing up so that function defaults can be changed easily
 
-        actionpotentials_dictionary = {}
-        subthresholddepolarizations_dictionary = {}
+        all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
         for block in self.rawdata_blocks:
             for i, segment in enumerate(block.segments):
-                actionpotentials_dictionary, \
-                subthresholddepolarizations_dictionary = snafs.get_depolarizingevents(
-                                                                segment,
-                                                                plot)
+                segment_actionpotentials, segment_subthresholddepolarizations = snafs.make_depolarizingevents_measures_dictionaries()
+                (segment_actionpotentials,
+                segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
+                                                            segment,
+                                                            segment_actionpotentials,
+                                                            segment_subthresholddepolarizations,
+                                                            plot=plotting)
 
-                actionpotentials_dictionary.update(
-                    {f'file {segment.file_origin} trace {str(i)}' :
-                     {'action_potentials' : actionpotentials_dictionary}
-                     })
-                subthresholddepolarizations_dictionary.update(
-                    {f'file {segment.file_origin} trace {str(i)}' :
-                     {'subthreshold_depolarizations' : subthresholddepolarizations_dictionary}
-                     })
+                trace_origin = block.file_origin + 'segment' + str(i)
+                segment_actionpotentials['origin'] = \
+                    [trace_origin] * len(segment_actionpotentials['peakv'])
+                segment_subthresholddepolarizations['origin'] = \
+                    [trace_origin] * len(segment_subthresholddepolarizations['peakv'])
 
-        self.depolarizing_events = subthresholddepolarizations_dictionary
-        self.action_potentials = actionpotentials_dictionary
-        #TODO: write code that returns this in a Pandas dataframe instead
-        #use the dataframe to make nice plots of things, starting with events baselined
-        #use Pandas to save the results in json format.
+                for key in all_actionpotentials:
+                    all_actionpotentials[key] += segment_actionpotentials[key]
+                for key in all_depolarizations:
+                    all_depolarizations[key] += segment_subthresholddepolarizations[key]
+
+        self.depolarizing_events = all_depolarizations
+        self.action_potentials = all_actionpotentials
 
 # %% the actual reading in of raw data from files
     def files_reader_abf(self):
@@ -233,6 +247,10 @@ class SingleNeuron:
             self.rawdata_blocks.append(block)
             #segments and channel_indexes - indexes and units (on analogsignals)
             #block.file_origin as a unique pointer to the original raw data files
+
+    def files_reader_ibw(self):
+        print('function under construction')
+
 
     @staticmethod
     def get_bwgroup_as_block(run, subdirectories_list, reader):

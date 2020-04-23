@@ -33,6 +33,9 @@ class SingleNeuron:
         self.action_potentials = {}
         self.subthreshold_oscillations = []
         self.input_resistance = []
+        self.passive_decay = []
+
+        self.rawdata_readingnotes = {}
 
         self.get_singleneuron_storeddata()
 
@@ -113,7 +116,7 @@ class SingleNeuron:
                     block.channel_indexes[2:4] = []
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
-                #code that saves changes made goes here
+
 
     def rawdata_remove_nonrecordingblock(self, file_origin):
         for i, block in enumerate(self.rawdata_blocks):
@@ -153,7 +156,7 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self, **kwargs):
+    def get_depolarizingevents_fromRawData(self, kwargs):
         #TODO
         #write this whole thing up so that function defaults can be changed easily
 

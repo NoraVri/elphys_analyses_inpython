@@ -17,12 +17,19 @@ os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataA
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
 from singleneuron_analyses_functions import make_depolarizingevents_measures_dictionaries
-apmeasures_emptydict, depoleventsmeasures_emptydict = make_depolarizingevents_measures_dictionaries()
+# apmeasures_emptydict, depoleventsmeasures_emptydict = make_depolarizingevents_measures_dictionaries()
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
 cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf',1)
+
+cell20190805A.rawdata_blocks[6::] = []
+cell20190805A.get_depolarizingevents_fromRawData(min_depolspeed=0.15,
+                                                 min_depolamp=0.3,
+                                                 oscfilter_lpfreq=15)
+
+
 # %%
 cell20190814A = SingleNeuron("20190814A")
 cell20190814A.rawdata_remove_nonrecordingchannel(cell20190814A.rawdata_blocks[0].file_origin,2)

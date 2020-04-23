@@ -7,105 +7,117 @@ Created on Wed Mar 25 20:14:57 2020
 # %% imports
 import os
 import re
+import json
 from igor import packed
 from neo import io
-from neo.core import Block, Segment, ChannelIndex, AnalogSignal
+from neo.core import Block, Segment, ChannelIndex
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
-#imports of functions I wrote
+# imports of functions I wrote
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
 class SingleNeuron:
+
     ## init
     def __init__(self, singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
-    # path should be to a folder that contains data and results beloning to SingleNeuron's project.
-    # path gets updated to absolute path of the folder/file containing the raw data recorded for singleneuron
+                    # path should be to a folder that contains data and results beloning to SingleNeuron's project.
         self.name = singleneuron_name
-        self.path = path #folder containing folders with data and folder with 'myResults'
+        self.path = path #folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
         self.rawdata_path = []
         self.rawdata_recordingtype = None #raw data file(s) type; gets updated once data files are found
         self.rawdata_blocks = [] #all recorded raw data, as a list of neo block objects (one block per file)
+        self.rawdata_readingnotes = {} #notes needed to exactly recreate all stored results
 
-        self.depolarizing_events = {}
-        self.action_potentials = {}
+        self.depolarizing_events = pd.DataFrame()
+        self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
         self.input_resistance = []
         self.passive_decay = []
 
-        self.rawdata_readingnotes = {}
+        self.get_singleneuron_rawdata()
+        self.get_singleneuron_storedresults()
 
-        self.get_singleneuron_storeddata()
 
-    ## other class-technical functions related to getting data
-    def get_singleneuron_storeddata(self):
-        """ This function determines whether a file carrying singleneuron_name
-        is present in a folder with 'myResults';
-        if yes, it will populate the class instance with results found in the file (if such results are present).
-        """
-        results_file_path = self.get_results_file_path()
-        if results_file_path:
-            data = {} #TODO: put code here that actually reads a file
-            print('no actual results file opened')
-            # if data.get('rawdata_reading_notes'):
-            #     rawdata_reading_notes = data['rawdata_reading_notes']#or whichever other way this will be accessed
-            #     #reading_notes will be a list of file_origin / nonrecording channel pairs
-            #     #self.get_rawdata_withadjustments(self.name,rawdata_reading_notes)
-            # else:
-            #     #self.get_singleneuron_rawdata()
-            # if data.get('depolarizing_events'):
-            #     self.depolarizing_events = data['depolarizing_events']
-            # if data.get('subthreshold_oscillations'):
-            #     self.subthreshold_oscillations = data['subthreshold_oscillations']
-            # if data.get('input_resistance'):
-            #     self.input_resistance = data['input_resistance']
+    def write_results(self):
+
+        results_folder = [folder for folder in os.listdir(self.path) \
+                          if folder.startswith('myResults')]
+
+        if results_folder:
+
+            results_path = self.path + '\\' + results_folder[0]
+            os.chdir(results_path)
+
+            if len(self.rawdata_readingnotes) > 0:
+                with open(results_path +'\\' + self.name + \
+                          '_rawdata_readingnotes', 'w') as file:
+                    file.write(json.dumps(self.rawdata_readingnotes))
+
+            if len(self.depolarizing_events) > 0:
+                self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
+
+            if len(self.action_potentials) > 0:
+                self.action_potentials.to_csv(self.name + '_action_potentials.csv')
+
         else:
-            self.get_singleneuron_rawdata()
 
-    def get_results_file_path(self):
-        results_file_path = None
-        for folder in os.listdir(self.path):
-            if folder.startswith('myResults'):
-                for file in os.listdir(self.path+'\\'+folder):
-                    if self.name in file:
-                        results_file_path = self.path+'\\'+folder+'\\'+file
-        return results_file_path
+            print('no results folder found')
 
-    def write_results_file(self):
-        print('code under construction')
 
-# %% functions for reading raw data into the class instance (actual read functions further below)
+
     def get_singleneuron_rawdata(self):
-    # this function uses neuron_name to find a path to the raw data file(s) recorded for that neuron;
-    # once the right path(s) are found, it calls on files_reader to read the data in as Neo blocks.
-    # !! it currently only works for single-cell recordings in abf format !!
+        """ This function uses singleneuron_name and path to find the
+        raw data file(s) recorded from singleneuron.
+        Once the right path(s) are found, it calls on the relevant files_reader (defined further below)
+        to import the raw data in my standardized format using the Python/Neo framework.
+
+        This function currently works for .abf-files (one folder per singleneuron)
+        and pxp-files (one file per singleneuron).
+        """
         for folder_name in os.listdir(self.path):
+
             subdirectory_path = self.path + '\\' + folder_name
+
             if self.name in os.listdir(subdirectory_path):
+
                 self.rawdata_recordingtype = 'abf'
                 self.rawdata_path = subdirectory_path+'\\'+self.name
                 self.files_reader_abf()
 
             elif (self.name + '.pxp') in os.listdir(subdirectory_path):
+
                 self.rawdata_recordingtype = 'pxp'
                 self.rawdata_path = subdirectory_path
                 self.files_reader_pxp()
+
             elif (self.name + '_asibws') in os.listdir(subdirectory_path):
+
                 self.rawdata_recordingtype = 'ibw'
                 self.rawdata_path = subdirectory_path+'\\'+self.name+'_asibws'
                 self.files_reader_ibw()
+
             else:
                 continue
+
             break
+
         if not self.rawdata_path:
+
             print('files matching neuron name exactly were not found')
+
+
 
     def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
     #this function takes a file name and the number of the channel
     #that singleneuron is not recorded on (1 or 2, following my home rig conventions),
     #and removes superfluous traces from the corresponding block's channel_indexes and segments
+        if not self.rawdata_readingnotes.get('nonrecordingchannels'):
+            self.rawdata_readingnotes['nonrecordingchannels'] = {}
+
         for block in self.rawdata_blocks:
             if block.file_origin == file_origin:
                 if non_recording_channel == 1:
@@ -117,24 +129,87 @@ class SingleNeuron:
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
 
+                if file_origin not in self.rawdata_readingnotes['nonrecordingchannels'].keys():
+                    self.rawdata_readingnotes['nonrecordingchannels'].update({
+                        file_origin: non_recording_channel
+                    })
+
+
 
     def rawdata_remove_nonrecordingblock(self, file_origin):
+        if not self.rawdata_readingnotes.get('nonrecordingblocks'):
+            self.rawdata_readingnotes['nonrecordingblocks'] = []
+
         for i, block in enumerate(self.rawdata_blocks):
             if block.file_origin == file_origin:
                 self.rawdata_blocks.__delitem__(i)
-                #code that saves changes made goes here
+                if file_origin not in self.rawdata_readingnotes['nonrecordingblocks']:
+                    self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
 
-    def get_rawdata_withadjustments(self, rawdata_reading_notes):
-        all_raw_data = self.get_singleneuron_rawdata(self.name)
-        for item in rawdata_reading_notes:
-            all_raw_data = self.remove_nonrecordingchannel(all_raw_data,item[0],item[1])
-        return all_raw_data
 
-# %% functions for quickly seeing things about the raw data:
+
+    def get_singleneuron_storedresults(self):
+
+        resultsfilespaths_list = []
+
+        for folder in os.listdir(self.path):
+
+            if folder.startswith('myResults'):
+                resultsfolder_path = self.path + '\\' + folder
+
+                for path in os.listdir(resultsfolder_path):
+
+                    if self.name in path:
+                        resultsfilespaths_list.append(
+                            resultsfolder_path + '\\' + path)
+
+        if resultsfilespaths_list:
+
+            for path in resultsfilespaths_list:
+
+                if 'rawdata_readingnotes' in path:
+                    with open(path, 'r') as file:
+                        self.rawdata_readingnotes = json.loads(file.read())
+
+                if 'depolarizing_events' in path:
+                    self.depolarizing_events = pd.read_csv(path)
+
+                if 'action_potentials' in path:
+                    self.action_potentials = pd.read_csv(path)
+
+                if 'subthreshold_oscillations' in path:
+                    self.subthreshold_oscillations = {}
+
+                if 'input_resistance' in path:
+                    self.input_resistance = {}
+
+                if 'passive_decay' in path:
+                    self.passive_decay = {}
+
+
+        if self.rawdata_readingnotes:
+
+            if self.rawdata_readingnotes.get('nonrecordingchannels'):
+
+                for filename, channelno in \
+                        self.rawdata_readingnotes['nonrecordingchannels'].items():
+
+                    self.rawdata_remove_nonrecordingchannel(filename, channelno)
+
+            if self.rawdata_readingnotes.get('nonrecordingblocks'):
+
+                for filename in self.rawdata_readingnotes['nonrecordingblocks']:
+
+                    self.rawdata_remove_nonrecordingblock(filename)
+
+
+
+    # %% functions for quickly seeing things about the raw data:
     def print_blocknames(self):
         "prints the (file)names of all the blocks of singleneuron."
         for block in self.rawdata_blocks:
              print(block.file_origin)
+
 
     def plot_allrawdata(self):
         """plots all blocks of raw traces imported for singleneuron;
@@ -143,6 +218,7 @@ class SingleNeuron:
         for block in self.rawdata_blocks:
             plots.plot_block(block)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+
 
     def plot_block_byname(self, block_file_origin):
         """takes the name of the file from which the rawdata_block was created
@@ -156,34 +232,35 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data:
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self, kwargs):
-        #TODO
-        #write this whole thing up so that function defaults can be changed easily
+    def get_depolarizingevents_fromRawData(self, **kwargs):
+        self.rawdata_readingnotes['getdepolarizingevents_settings'] = kwargs
 
         all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
         for block in self.rawdata_blocks:
             for i, segment in enumerate(block.segments):
-                segment_actionpotentials, segment_subthresholddepolarizations = snafs.make_depolarizingevents_measures_dictionaries()
                 (segment_actionpotentials,
-                segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
+                 segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
                                                             segment,
-                                                            segment_actionpotentials,
-                                                            segment_subthresholddepolarizations,
                                                             **kwargs)
 
-                trace_origin = block.file_origin + 'segment' + str(i)
-                segment_actionpotentials['origin'] = \
-                    [trace_origin] * len(segment_actionpotentials['peakv'])
-                segment_subthresholddepolarizations['origin'] = \
-                    [trace_origin] * len(segment_subthresholddepolarizations['peakv'])
+                trace_origin = [block.file_origin]
+                segment_idx = [i]
+                segment_actionpotentials['file_origin'] = \
+                    trace_origin * len(segment_actionpotentials['peakv'])
+                segment_actionpotentials['segment_idx'] = \
+                    segment_idx * len(segment_actionpotentials['peakv'])
+                segment_subthresholddepolarizations['file_origin'] = \
+                    trace_origin * len(segment_subthresholddepolarizations['peakv'])
+                segment_subthresholddepolarizations['segment_idx'] = \
+                    segment_idx * len(segment_subthresholddepolarizations['peakv'])
 
                 for key in all_actionpotentials:
                     all_actionpotentials[key] += segment_actionpotentials[key]
                 for key in all_depolarizations:
                     all_depolarizations[key] += segment_subthresholddepolarizations[key]
 
-        self.depolarizing_events = all_depolarizations
-        self.action_potentials = all_actionpotentials
+        self.depolarizing_events = pd.DataFrame(all_depolarizations)
+        self.action_potentials = pd.DataFrame(all_actionpotentials)
 
 # %% the actual reading in of raw data from files
     def files_reader_abf(self):

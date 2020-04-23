@@ -14,7 +14,7 @@ import quantities as pq
 
 # %% depolarizing events
 def make_depolarizingevents_measures_dictionaries():
-
+    #function for creating dictionaries with a key for each of the measures that will be taken for each event
     actionpotentials_measures = {
         'peakv': [],
         'baselinev': [],
@@ -37,7 +37,8 @@ def make_depolarizingevents_measures_dictionaries():
         # 'AHPmin_idx' : AHPmin_idx,
         # 'AHP_amplitude' : AHPamp,
         # 'AHP-width' : AHP_width
-        'origin': [],
+        'file_origin' : [],
+        'segment_idx' : [],
     }
 
     depolarizingevents_measures = {
@@ -62,14 +63,13 @@ def make_depolarizingevents_measures_dictionaries():
         'edtrace_rt_start_idx': [],
         'hw_start_idx': [],
         'edtrace_hw_start_idx': [],
-        'origin': []
+        'file_origin' : [],
+        'segment_idx' : [],
     }
     return actionpotentials_measures, depolarizingevents_measures
 
 
 def get_depolarizingevents(single_segment,
-                           actionpotentials_dictionary,
-                           depolarizingevents_dictionary,
                            min_depolspeed = 0.1,
                            min_depolamp = 0.2,
                            peakwindow = 5,
@@ -126,7 +126,6 @@ def get_depolarizingevents(single_segment,
      depolarizingevents_resultsdictionary) = get_events_measures(peaks_idcs, depolswithpeaks_idcs,
                         voltage_recording, voltage_noisetrace, voltage_eventdetecttrace,
                         current_recording,
-                        actionpotentials_dictionary, depolarizingevents_dictionary,
                         ms_insamples, spikewindow_insamples, sampling_period_inms,
                         time_axis, plot)
 
@@ -250,9 +249,11 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, current
 def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
                         voltage_recording, voltage_noisetrace, voltage_eventdetecttrace,
                         current_recording,
-                        actionpotentials_dictionary, depolarizingevents_dictionary,
                         ms_insamples, spikewindow_insamples, sampling_period_inms,
                         time_axis, plot):
+
+    (actionpotentials_dictionary,
+     depolarizingevents_dictionary) = make_depolarizingevents_measures_dictionaries()
 
     for baseline_idx, peak_idx in zip(depolswithpeaks_idcs, peaks_idcs):
 

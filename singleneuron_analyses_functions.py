@@ -86,7 +86,7 @@ def get_depolarizingevents(single_segment,
     voltage_recording = np.array(np.squeeze(single_voltage_trace)) #!Make sure it's in mV
     current_recording = np.array(np.squeeze(single_segment.analogsignals[1])) #!Make sure it's in pA
     sampling_frequency = float(single_voltage_trace.sampling_rate) #!Make sure it's in Hz
-    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000 *pq.ms
+    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000
 
     #parameter settings - default time windows:
     window_inms = 1 #window used for calculating the 'rough' derivative and candidate-depolarizations points
@@ -132,7 +132,7 @@ def get_depolarizingevents(single_segment,
     #plotting the data (in all its shapes from raw to filtered to derivative)
     #with scatters of detected depolarizations and events
     if plot == 'on':
-        figure,axes = plt.subplots(3,1,sharex=True)
+        figure,axes = plt.subplots(3,1,sharex='all')
         axes[0].plot(time_axis,voltage_recording,
                      color='blue',label='raw data')
         axes[0].plot(time_axis, voltage_oscillationstrace,
@@ -420,71 +420,9 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             depolarizingevents_dictionary['hw_start_idx'].append(halfwidth_startidx)
             depolarizingevents_dictionary['edtrace_hw_start_idx'].append(ed_halfwidth_startidx)
 
-            # if plot == 'on':
-            #     figure,axes = plt.subplots(1,2,sharex='all')
-            #     axes[0].plot(time_axis[baseline_idx-ms_insamples:peak_idx+spikewindow_insamples],
-            #             voltage_recording[baseline_idx-ms_insamples:peak_idx+spikewindow_insamples],
-            #                  color='blue',
-            #                  label='raw voltage')
-            #     axes[0].plot(time_axis[baseline_idx-ms_insamples:peak_idx+spikewindow_insamples],
-            #             voltage_denoised[baseline_idx-ms_insamples:peak_idx+spikewindow_insamples],
-            #                  color='black',
-            #                  linewidth=2,
-            #                  label='noise-subtracted voltage')
-            #     axes[0].scatter(time_axis[baseline_idx], voltage_denoised[baseline_idx],
-            #                 color='red')
-            #     axes[0].scatter(time_axis[peak_idx], voltage_denoised[peak_idx],
-            #                 color='green')
-            #     axes[0].hlines(y=baseline_v + 0.1 * amplitude,
-            #                    xmin=time_axis[risestart_idx],
-            #                         xmax=time_axis[risestart_idx] + rise_time,
-            #                    color='red',
-            #                    label='rise-time')
-            #     if not isinstance(half_width, str):
-            #         axes[0].hlines(y=baseline_v+0.5*amplitude,
-            #                    xmin=time_axis[halfwidth_startidx],
-            #                        xmax=time_axis[halfwidth_startidx] + half_width,
-            #                    color='green',
-            #                    label='half-width')
-            #     if not isinstance(width, str):
-            #         axes[0].hlines(y=baseline_v+0.09*amplitude,
-            #                    xmin=time_axis[risestart_idx],
-            #                        xmax=time_axis[risestart_idx] + width,
-            #                    color='black',
-            #                    label='90%-width')
-            #     axes[0].legend()
-            #     axes[0].set_xlabel('time (ms)')
-            #     axes[0].set_ylabel('voltage (mv)')
-            #
-            #     axes[1].plot(time_axis[baseline_idx - ms_insamples:peak_idx + spikewindow_insamples],
-            #                  voltage_eventdetecttrace[baseline_idx - ms_insamples:peak_idx + spikewindow_insamples],
-            #                  color='black')
-            #     axes[1].scatter(time_axis[baseline_idx], voltage_eventdetecttrace[baseline_idx],
-            #                     color='red')
-            #     axes[1].scatter(time_axis[peak_idx], voltage_eventdetecttrace[peak_idx],
-            #                     color='green')
-            #     axes[1].hlines(y=ed_baseline_v + 0.1 * ed_amplitude,
-            #                    xmin=time_axis[ed_risestart_idx],
-            #                    xmax=time_axis[ed_risestart_idx + len(ed_risetrace_clipped)],
-            #                    color='red',
-            #                    label='rise-time')
-            #     if not isinstance(ed_half_width,str):
-            #         axes[1].hlines(y=ed_baseline_v + 0.5 * ed_amplitude,
-            #                        xmin=time_axis[ed_halfwidth_startidx],
-            #                        xmax=time_axis[ed_halfwidth_startidx] + ed_half_width,
-            #                        color='green',
-            #                        label='half-width')
-            #     if not isinstance(ed_width,str):
-            #         axes[1].hlines(y=ed_baseline_v + 0.09 * ed_amplitude,
-            #                        xmin=time_axis[ed_risestart_idx],
-            #                        xmax=time_axis[ed_risestart_idx] + ed_width,
-            #                        color='black',
-            #                        label='90%-width')
-            #     axes[1].legend()
-            #     axes[1].set_xlabel('time (ms)')
-            #     axes[1].set_ylabel('filtered voltage')
-
     return actionpotentials_dictionary, depolarizingevents_dictionary
+
+
 
 def descend_vtrace_until(vtracesnippet, v_stop_value):
 
@@ -492,7 +430,9 @@ def descend_vtrace_until(vtracesnippet, v_stop_value):
     while idx < len(vtracesnippet) - 3 \
      and (vtracesnippet[idx] >= v_stop_value or vtracesnippet[idx + 1] >= v_stop_value):
         idx += 1
+
     if vtracesnippet[idx] <= v_stop_value:
         return idx
+
     else:
         return float('nan')

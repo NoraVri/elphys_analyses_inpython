@@ -16,19 +16,35 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+from singleneuron_plotting_functions import *
 from singleneuron_analyses_functions import make_depolarizingevents_measures_dictionaries
-# apmeasures_emptydict, depoleventsmeasures_emptydict = make_depolarizingevents_measures_dictionaries()
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
-cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf',1)
+cell20190805A.plot_singledepolevents_withmeasures(
+    cell20190805A.depolarizing_events['edtrace_amplitude'] > 7 )
+# cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf',1)
+#
+# cell20190805A.rawdata_blocks[6::] = []
+# cell20190805A.get_depolarizingevents_fromRawData(min_depolspeed=0.15,
+#                                                  min_depolamp=0.3,
+#                                                  oscfilter_lpfreq=15)
 
-cell20190805A.rawdata_blocks[6::] = []
-cell20190805A.get_depolarizingevents_fromRawData(min_depolspeed=0.15,
-                                                 min_depolamp=0.3,
-                                                 oscfilter_lpfreq=15)
-
+# vtrace = np.squeeze(cell20190805A.rawdata_blocks[0].segments[0].analogsignals[0])
+# sampling_period_inms = float(cell20190805A.rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
+#
+# plot_startidx = cell20190805A.depolarizing_events.iloc[0]['baselinev_idx'] - 100
+#
+# measuresdict_rawevents = make_measuresdict_for_subthresholdevent(cell20190805A.depolarizing_events.iloc[0])
+# measuresdict_edtrace = make_measuresdict_for_subthresholdevent(cell20190805A.depolarizing_events.iloc[0])
+#
+#
+# figure,axes = plt.subplots(1,2,sharex='all')
+# plot_single_event(vtrace, sampling_period_inms, axes[0],
+#                       plot_startidx, measures_dict=measuresdict_rawevents)
+# plot_single_event(vtrace, sampling_period_inms, axes[1], plot_startidx,
+#                   measures_dict=measuresdict_edtrace)
 
 # %%
 cell20190814A = SingleNeuron("20190814A")
@@ -82,6 +98,7 @@ cell20200310C = SingleNeuron('20200310C')
     cell20200308B.rawdata_blocks[0].segments[0])
 
 # %%
+apmeasures_emptydict, depoleventsmeasures_emptydict = make_depolarizingevents_measures_dictionaries()
 cell20200308F_actionpotentials, \
 cell20200308F_depolarizingevents = get_depolarizingevents(
     cell20200308F.rawdata_blocks[0].segments[0].time_slice(t_start=40*pq.s, t_stop=55*pq.s),

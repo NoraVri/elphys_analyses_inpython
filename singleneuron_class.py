@@ -205,10 +205,16 @@ class SingleNeuron:
 
 
     # %% functions for quickly seeing things about the raw data:
-    def print_blocknames(self):
-        "prints the (file)names of all the blocks of singleneuron."
-        for block in self.rawdata_blocks:
-             print(block.file_origin)
+    def get_blocknames(self,printing = 'on'):
+        "returns the (file)names of all the blocks of singleneuron, and returns them as a list."
+        blocks_list = [block.file_origin for block in self.rawdata_blocks]
+
+        if printing == 'on':
+
+            print(blocks_list)
+
+        return blocks_list
+
 
 
     def plot_allrawdata(self):
@@ -261,6 +267,76 @@ class SingleNeuron:
 
         self.depolarizing_events = pd.DataFrame(all_depolarizations)
         self.action_potentials = pd.DataFrame(all_actionpotentials)
+
+
+
+# %% functions for plotting analysis results
+    def plot_singledepolevents_withmeasures(self, conditions_series):
+
+        events_forplotting = self.depolarizing_events.loc[conditions_series]
+
+        uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
+
+        allblocks_nameslist = self.get_blocknames(printing = 'off')
+
+
+        for block_name in uniqueblocks_nameslist:
+
+            rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+            block_events = events_forplotting.loc[
+                events_forplotting['file_origin'] == block_name
+                ]
+
+            unique_vtraces = list(set(block_events['segment_idx']))
+
+
+            for vtrace_idx in unique_vtraces:
+
+                trace_events = block_events.loc[
+                    block_events['segment_idx'] == vtrace_idx
+                    ]
+
+                vtrace = rawdata_block.segments[vtrace_idx].analogsignals[0]
+
+                sampling_frequency = float(vtrace.sampling_rate)
+
+                sampling_period_inms = float(vtrace.sampling_period) * 1000
+
+                vtrace = np.squeeze(np.array(vtrace))
+
+                edtrace, _, _ = snafs.apply_filters_torawdata(vtrace,
+                                                        oscfilter_lpfreq=20,
+                                                        noisefilter_hpfreq=3000,
+                                                        sampling_frequency=sampling_frequency,
+                                                        plot='off')
+
+
+                for event_idx, event_measures in trace_events.iterrows():
+
+                    plot_startidx = event_measures['baselinev_idx'] - int(5/sampling_period_inms)
+
+                    figure, axes = plt.subplots(1,2,sharex='all', num=event_idx)
+                    plt.suptitle(block_name + ' segment' + str(vtrace_idx))
+
+                    plots.plot_single_event(vtrace, sampling_period_inms, axes[0],
+                      plot_startidx, plotwindow_inms = 40,
+                      linecolor = 'blue',
+                      label = 'raw V',
+                      measures_dict = plots.make_measuresdict_for_subthresholdevent(
+                                                        event_measures,'raw')
+                                            )
+                    axes[0].set_ylabel('voltage (mV)')
+
+                    plots.plot_single_event(edtrace, sampling_period_inms, axes[1],
+                                            plot_startidx, plotwindow_inms=40,
+                                            linecolor='black',
+                                            label='event-detect trace',
+                                            measures_dict=plots.make_measuresdict_for_subthresholdevent(
+                                                        event_measures, 'edtrace')
+                                            )
+
+
+
 
 # %% the actual reading in of raw data from files
     def files_reader_abf(self):

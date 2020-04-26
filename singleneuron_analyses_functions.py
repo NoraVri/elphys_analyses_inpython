@@ -69,15 +69,16 @@ def make_depolarizingevents_measures_dictionaries():
     return actionpotentials_measures, depolarizingevents_measures
 
 
+
 def get_depolarizingevents(single_segment,
                            min_depolspeed = 0.1,
                            min_depolamp = 0.2,
                            peakwindow = 5,
-                           spikewindow = 40,
+                           eventdecaywindow = 40,
                            noisefilter_hpfreq = 3000,
                            oscfilter_lpfreq = 20,
                            plot = 'off'):
-
+# function defaults written here are overridden by values entered by default into SingleNeuron.readingnotes.getdepolarizingevents_settings
     # step1] prep:
     # getting all the relevant data from the Neo/Segment object
     single_voltage_trace = single_segment.analogsignals[0]
@@ -93,8 +94,8 @@ def get_depolarizingevents(single_segment,
     ms_insamples = int(sampling_frequency / 1000 * window_inms)
     peakwindow_inms = peakwindow #max distance from depol_idx to peak
     peakwindow_insamples = int(sampling_frequency / 1000 * peakwindow_inms)
-    spikewindow_inms = spikewindow
-    spikewindow_insamples = int(sampling_frequency / 1000 * spikewindow_inms)
+    eventdecaywindow_inms = eventdecaywindow
+    eventdecaywindow_insamples = int(sampling_frequency / 1000 * eventdecaywindow_inms)
 
     #filtering the raw voltage twice: high-pass to get 'only the noise', and low-pass to get 'only the STOs'.
     #subtract both from raw voltage to get trace for event-detection
@@ -126,7 +127,7 @@ def get_depolarizingevents(single_segment,
      depolarizingevents_resultsdictionary) = get_events_measures(peaks_idcs, depolswithpeaks_idcs,
                         voltage_recording, voltage_noisetrace, voltage_eventdetecttrace,
                         current_recording,
-                        ms_insamples, spikewindow_insamples, sampling_period_inms,
+                        ms_insamples, eventdecaywindow_insamples, sampling_period_inms,
                         time_axis, plot)
 
     #plotting the data (in all its shapes from raw to filtered to derivative)

@@ -19,41 +19,58 @@ import pandas as pd
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
-class SingleNeuron:
 
-    ## init
+
+class SingleNeuron:
+    # init
     def __init__(self, singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
-                    # path should be to a folder that contains data and results beloning to SingleNeuron's project.
-        self.name = singleneuron_name
-        self.path = path #folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
-        self.rawdata_path = []
-        self.rawdata_recordingtype = None #raw data file(s) type; gets updated once data files are found
-        self.rawdata_blocks = [] #all recorded raw data, as a list of neo block objects (one block per file)
-        self.rawdata_readingnotes = {} #notes needed to exactly recreate all stored results
 
+        self.name = singleneuron_name       # a unique name, that appears literally on all raw data files recorded for this singleneuron
+        self.path = path                    # folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
+        self.rawdata_path = []              # gets updated with the exact filepath leading to singleneuron's raw data files once they are found.
+        self.rawdata_recordingtype = None   # raw data file(s) type; gets updated once data files are found.
+        self.rawdata_blocks = []            # all recorded raw data, as a list of Neo block objects
+                                            # the readingnotes-dictionary contains all default kwargs settings, for each of the singleneuron analyses class-methods.
+        self.rawdata_readingnotes = {
+            'getdepolarizingevents_settings': {
+                'min_depolspeed': 0.1,
+                'min_depolamp': 0.2,
+                'peakwindow': 5,
+                'eventdecaywindow': 40,
+                'noisefilter_hpfreq': 3000,
+                'oscfilter_lpfreq': 20,
+                'plot': 'off'
+            }
+        }                                   # notes are updated with non-default kwargs needed to exactly recreate analyses results inside each method.
+                                            # the objects containing analyses results are updated
+                                            # inside the method that gets them, or from stored results.
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
         self.input_resistance = []
         self.passive_decay = []
-
         self.get_singleneuron_rawdata()
         self.get_singleneuron_storedresults()
 
 
-    def write_results(self):
 
-        results_folder = [folder for folder in os.listdir(self.path) \
+    def write_results(self):
+        """
+        this function saves all analysis results belonging to the singleneuron instance
+        to a folder on path labeled 'myResults'.
+        Each results-table is stored in a separate .csv file, and the parameter values
+        used to get them (stored in self.rawdata_readingnotes) are stored as a .json.
+        """
+        results_folder = [folder for folder in os.listdir(self.path)
                           if folder.startswith('myResults')]
 
         if results_folder:
-
             results_path = self.path + '\\' + results_folder[0]
             os.chdir(results_path)
 
             if len(self.rawdata_readingnotes) > 0:
-                with open(results_path +'\\' + self.name + \
+                with open(results_path + '\\' + self.name +
                           '_rawdata_readingnotes', 'w') as file:
                     file.write(json.dumps(self.rawdata_readingnotes))
 
@@ -63,8 +80,9 @@ class SingleNeuron:
             if len(self.action_potentials) > 0:
                 self.action_potentials.to_csv(self.name + '_action_potentials.csv')
 
-        else:
+            print('results have been saved.')
 
+        else:
             print('no results folder found')
 
 
@@ -72,33 +90,31 @@ class SingleNeuron:
     def get_singleneuron_rawdata(self):
         """ This function uses singleneuron_name and path to find the
         raw data file(s) recorded from singleneuron.
-        Once the right path(s) are found, it calls on the relevant files_reader (defined further below)
+        Once the right path is found, it calls on the relevant files_reader (defined further below)
         to import the raw data in my standardized format using the Python/Neo framework.
 
         This function currently works for .abf-files (one folder per singleneuron)
-        and pxp-files (one file per singleneuron).
+        and pxp-files (one file per singleneuron; each file has an internal folder-structure).
         """
         for folder_name in os.listdir(self.path):
 
             subdirectory_path = self.path + '\\' + folder_name
 
             if self.name in os.listdir(subdirectory_path):
-
                 self.rawdata_recordingtype = 'abf'
                 self.rawdata_path = subdirectory_path+'\\'+self.name
                 self.files_reader_abf()
 
             elif (self.name + '.pxp') in os.listdir(subdirectory_path):
-
                 self.rawdata_recordingtype = 'pxp'
                 self.rawdata_path = subdirectory_path
                 self.files_reader_pxp()
 
             elif (self.name + '_asibws') in os.listdir(subdirectory_path):
-
                 self.rawdata_recordingtype = 'ibw'
                 self.rawdata_path = subdirectory_path+'\\'+self.name+'_asibws'
                 self.files_reader_ibw()
+                print('this code is under construction')
 
             else:
                 continue
@@ -106,15 +122,16 @@ class SingleNeuron:
             break
 
         if not self.rawdata_path:
-
             print('files matching neuron name exactly were not found')
 
 
 
     def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
-    #this function takes a file name and the number of the channel
-    #that singleneuron is not recorded on (1 or 2, following my home rig conventions),
-    #and removes superfluous traces from the corresponding block's channel_indexes and segments
+        """ This function takes the name of a file/block and the number of the recording channel-set (voltage and current)
+        on which singleneuron is not recorded.
+        It returns self.rawdata_blocks with the superfluous traces removed from the relevant file,
+        and updates rawdata_readingnotes accordingly.
+        """
         if not self.rawdata_readingnotes.get('nonrecordingchannels'):
             self.rawdata_readingnotes['nonrecordingchannels'] = {}
 
@@ -128,6 +145,7 @@ class SingleNeuron:
                     block.channel_indexes[2:4] = []
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
+                else: print('input valid channel-set number: 1 or 2')
 
                 if file_origin not in self.rawdata_readingnotes['nonrecordingchannels'].keys():
                     self.rawdata_readingnotes['nonrecordingchannels'].update({
@@ -137,6 +155,10 @@ class SingleNeuron:
 
 
     def rawdata_remove_nonrecordingblock(self, file_origin):
+        """ This function takes the name of a recording file/block as input,
+        and returns self.rawdata_blocks without the recording by that name.
+        rawdata_readingnotes get updated with the names of the blocks that are removed.
+        """
         if not self.rawdata_readingnotes.get('nonrecordingblocks'):
             self.rawdata_readingnotes['nonrecordingblocks'] = []
 
@@ -149,22 +171,20 @@ class SingleNeuron:
 
 
     def get_singleneuron_storedresults(self):
-
-        resultsfilespaths_list = []
-
+        """ This function finds any files in the 'myResults' folder bearing singleneuron's name,
+        and adds their contents to the relevant containers on this instance of singleneuron.
+        """
+        resultsfilespaths_list = []  # getting a list of paths to each of the relevant results files
         for folder in os.listdir(self.path):
-
             if folder.startswith('myResults'):
                 resultsfolder_path = self.path + '\\' + folder
 
                 for path in os.listdir(resultsfolder_path):
-
                     if self.name in path:
                         resultsfilespaths_list.append(
                             resultsfolder_path + '\\' + path)
 
         if resultsfilespaths_list:
-
             for path in resultsfilespaths_list:
 
                 if 'rawdata_readingnotes' in path:
@@ -186,44 +206,38 @@ class SingleNeuron:
                 if 'passive_decay' in path:
                     self.passive_decay = {}
 
+        if self.rawdata_readingnotes.get('nonrecordingchannels'):
+            for filename, channelno in \
+                    self.rawdata_readingnotes['nonrecordingchannels'].items():
+                self.rawdata_remove_nonrecordingchannel(filename, channelno)
 
-        if self.rawdata_readingnotes:
-
-            if self.rawdata_readingnotes.get('nonrecordingchannels'):
-
-                for filename, channelno in \
-                        self.rawdata_readingnotes['nonrecordingchannels'].items():
-
-                    self.rawdata_remove_nonrecordingchannel(filename, channelno)
-
-            if self.rawdata_readingnotes.get('nonrecordingblocks'):
-
-                for filename in self.rawdata_readingnotes['nonrecordingblocks']:
-
-                    self.rawdata_remove_nonrecordingblock(filename)
+        if self.rawdata_readingnotes.get('nonrecordingblocks'):
+            for filename in self.rawdata_readingnotes['nonrecordingblocks']:
+                self.rawdata_remove_nonrecordingblock(filename)
 
 
 
-    # %% functions for quickly seeing things about the raw data:
-    def get_blocknames(self,printing = 'on'):
-        "returns the (file)names of all the blocks of singleneuron, and returns them as a list."
+# %% functions for quickly seeing things about the raw data
+
+    def get_blocknames(self, printing='on'):
+        """ returns the (file)names of all the blocks of singleneuron as a list, and prints them.
+        """
         blocks_list = [block.file_origin for block in self.rawdata_blocks]
 
         if printing == 'on':
-
             print(blocks_list)
-
         return blocks_list
 
 
 
     def plot_allrawdata(self):
         """plots all blocks of raw traces imported for singleneuron;
-        one figure per block, separate subplots for each channel_index.
+        one figure per block, separate subplots for each channel_index (voltage/current/aux).
         """
         for block in self.rawdata_blocks:
             plots.plot_block(block)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+
 
 
     def plot_block_byname(self, block_file_origin):
@@ -236,18 +250,31 @@ class SingleNeuron:
                 plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 
-# %% functions for analyzing raw data:
+
+# %% functions for analyzing raw data
+
 # %% depolarizing events
     def get_depolarizingevents_fromRawData(self, **kwargs):
-        self.rawdata_readingnotes['getdepolarizingevents_settings'] = kwargs
+        """This function goes over all voltage-traces in all raw-data blocks, and returns
+        two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
+        Each dataframe contains a set of standard measures taken from each event, as well as
+        all information needed to recover the location of the event in the original data trace.
+        Default values for function parameters are read in from rawdata_readingnotes, and are
+        updated there if non-default kwargs are used.
+        """
+        for key, value in kwargs.items():
+            if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
+                self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value
 
+        # initializing empty measures-dictionaries
         all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
+        # getting all events: looping over each block, and each trace within each block
         for block in self.rawdata_blocks:
             for i, segment in enumerate(block.segments):
                 (segment_actionpotentials,
                  segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
                                                             segment,
-                                                            **kwargs)
+                                                            **self.rawdata_readingnotes['getdepolarizingevents_settings'])
 
                 trace_origin = [block.file_origin]
                 segment_idx = [i]
@@ -260,25 +287,30 @@ class SingleNeuron:
                 segment_subthresholddepolarizations['segment_idx'] = \
                     segment_idx * len(segment_subthresholddepolarizations['peakv'])
 
+                # updating the measures-dictionaries with the results from a single trace
                 for key in all_actionpotentials:
                     all_actionpotentials[key] += segment_actionpotentials[key]
                 for key in all_depolarizations:
                     all_depolarizations[key] += segment_subthresholddepolarizations[key]
 
-        self.depolarizing_events = pd.DataFrame(all_depolarizations)
-        self.action_potentials = pd.DataFrame(all_actionpotentials)
+        self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
+        self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
 
 
 
 # %% functions for plotting analysis results
-    def plot_singledepolevents_withmeasures(self, conditions_series):
+    def plot_depolevents_overlayed(self, condition_series,
+                                   plotwindow_start = -20, plotwindow_inms = 80,
+                                   time_align_to = 'peakv_idx',
+                                   do_baselining = False, do_normalizing = False):
 
-        events_forplotting = self.depolarizing_events.loc[conditions_series]
-
+        events_forplotting = self.depolarizing_events.loc[condition_series]
         uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
+        allblocks_nameslist = self.get_blocknames(printing='off')
 
-        allblocks_nameslist = self.get_blocknames(printing = 'off')
-
+        figure, axis = plt.subplots(1,1, squeeze=True)
+        plt.suptitle(self.name + 'depolarizing events')
+        axis.set_title('raw voltage')
 
         for block_name in uniqueblocks_nameslist:
 
@@ -292,49 +324,53 @@ class SingleNeuron:
 
             for vtrace_idx in unique_vtraces:
 
-                trace_events = block_events.loc[
-                    block_events['segment_idx'] == vtrace_idx
-                    ]
-
+                trace_events = block_events.loc[block_events['segment_idx'] == vtrace_idx]
                 vtrace = rawdata_block.segments[vtrace_idx].analogsignals[0]
-
-                sampling_frequency = float(vtrace.sampling_rate)
-
                 sampling_period_inms = float(vtrace.sampling_period) * 1000
-
                 vtrace = np.squeeze(np.array(vtrace))
 
-                edtrace, _, _ = snafs.apply_filters_torawdata(vtrace,
-                                                        oscfilter_lpfreq=20,
-                                                        noisefilter_hpfreq=3000,
-                                                        sampling_frequency=sampling_frequency,
-                                                        plot='off')
+                for event_idx, eventmeasures in trace_events.iterrows():
+                    plot_startidx = eventmeasures[time_align_to] + int((plotwindow_start / sampling_period_inms))
+                    plots.plot_single_event(vtrace,sampling_period_inms,axis,
+                                            plot_startidx,
+                                            plotwindow_inms,
+                                            linecolor = 'blue', label = None,
+                                            eventmeasures_series = eventmeasures,
+                                            do_baselining=do_baselining,
+                                            do_normalizing=do_normalizing)
+                    print('event no.' + str(event_idx) + ' plotted')
 
 
-                for event_idx, event_measures in trace_events.iterrows():
 
-                    plot_startidx = event_measures['baselinev_idx'] - int(5/sampling_period_inms)
 
-                    figure, axes = plt.subplots(1,2,sharex='all', num=event_idx)
-                    plt.suptitle(block_name + ' segment' + str(vtrace_idx))
 
-                    plots.plot_single_event(vtrace, sampling_period_inms, axes[0],
-                      plot_startidx, plotwindow_inms = 40,
-                      linecolor = 'blue',
-                      label = 'raw V',
-                      measures_dict = plots.make_measuresdict_for_subthresholdevent(
-                                                        event_measures,'raw')
-                                            )
-                    axes[0].set_ylabel('voltage (mV)')
+    def plot_individualdepolevents_withmeasures(self, condition_series,
+                                                plotwindow_inms = 40,
+                                                baselinewindow_inms = 5):
+        """ This function takes a Pandas true/false series of the same length as self.depolarizing_events,
+        and plots the subset of events for which the condition is True.
+        Each event is plotted in a separate figure, with one subplot showing the
+        raw voltage trace and one showing the event-detect trace (from which filtered data are substracted).
+        In each subplot, the relevant measures taken from that event are marked.
+        By default, events are plotted in a window of 40 ms, starting from 5ms before baselinev_idx.
+        """
+        events_forplotting = self.depolarizing_events.loc[condition_series]
+        uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
+        allblocks_nameslist = self.get_blocknames(printing = 'off')
 
-                    plots.plot_single_event(edtrace, sampling_period_inms, axes[1],
-                                            plot_startidx, plotwindow_inms=40,
-                                            linecolor='black',
-                                            label='event-detect trace',
-                                            measures_dict=plots.make_measuresdict_for_subthresholdevent(
-                                                        event_measures, 'edtrace')
-                                            )
+        for block_name in uniqueblocks_nameslist:
+            rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+            block_events = events_forplotting.loc[
+                events_forplotting['file_origin'] == block_name]
+            unique_vtraces = list(set(block_events['segment_idx']))
 
+            for vtrace_idx in unique_vtraces:
+                plots.plot_singlesegment_individualdepolevents_withmeasures(
+                        rawdata_block,
+                        block_events,
+                        vtrace_idx,
+                        self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                        plotwindow_inms, baselinewindow_inms)
 
 
 
@@ -366,6 +402,8 @@ class SingleNeuron:
                 block.annotate(epoch_infos=epoch_infos)
 
                 self.rawdata_blocks.append(block)
+
+
 
     def files_reader_pxp(self):
         """This function changes the current directory to the folder containing
@@ -404,8 +442,11 @@ class SingleNeuron:
             #segments and channel_indexes - indexes and units (on analogsignals)
             #block.file_origin as a unique pointer to the original raw data files
 
+
+
     def files_reader_ibw(self):
         print('function under construction')
+
 
 
     @staticmethod

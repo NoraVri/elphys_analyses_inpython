@@ -21,30 +21,11 @@ from singleneuron_analyses_functions import make_depolarizingevents_measures_dic
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
-cell20190805A.plot_singledepolevents_withmeasures(
-    cell20190805A.depolarizing_events['edtrace_amplitude'] > 7 )
-# cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf',1)
-#
-# cell20190805A.rawdata_blocks[6::] = []
-# cell20190805A.get_depolarizingevents_fromRawData(min_depolspeed=0.15,
-#                                                  min_depolamp=0.3,
-#                                                  oscfilter_lpfreq=15)
 
-# vtrace = np.squeeze(cell20190805A.rawdata_blocks[0].segments[0].analogsignals[0])
-# sampling_period_inms = float(cell20190805A.rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
-#
-# plot_startidx = cell20190805A.depolarizing_events.iloc[0]['baselinev_idx'] - 100
-#
-# measuresdict_rawevents = make_measuresdict_for_subthresholdevent(cell20190805A.depolarizing_events.iloc[0])
-# measuresdict_edtrace = make_measuresdict_for_subthresholdevent(cell20190805A.depolarizing_events.iloc[0])
-#
-#
-# figure,axes = plt.subplots(1,2,sharex='all')
-# plot_single_event(vtrace, sampling_period_inms, axes[0],
-#                       plot_startidx, measures_dict=measuresdict_rawevents)
-# plot_single_event(vtrace, sampling_period_inms, axes[1], plot_startidx,
-#                   measures_dict=measuresdict_edtrace)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['edtrace_amplitude'] > 10, do_baselining=True)
+
+# cell20190805A.plot_individualdepolevents_withmeasures(
+#     cell20190805A.depolarizing_events['edtrace_amplitude'] > 8 )
 
 # %%
 cell20190814A = SingleNeuron("20190814A")

@@ -299,48 +299,57 @@ class SingleNeuron:
 
 
 # %% functions for plotting analysis results
-    def plot_depolevents_overlayed(self, condition_series,
-                                   plotwindow_start = -20, plotwindow_inms = 80,
-                                   time_align_to = 'peakv_idx',
-                                   do_baselining = False, do_normalizing = False):
+    def plot_depolevents_overlayed(self, condition_series=pd.Series(),
+                                   newplot_per_block=False,
+                                   colorby_measure = '', **kwargs):
 
-        events_forplotting = self.depolarizing_events.loc[condition_series]
-        uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
+        if not condition_series.empty:
+            events_for_plotting = self.depolarizing_events.loc[condition_series]
+        else:
+            events_for_plotting = self.depolarizing_events
+
+        unique_blocks_nameslist = list(set(events_for_plotting['file_origin']))
         allblocks_nameslist = self.get_blocknames(printing='off')
 
-        figure, axis = plt.subplots(1,1, squeeze=True)
-        plt.suptitle(self.name + 'depolarizing events')
-        axis.set_title('raw voltage')
+        if newplot_per_block and not colorby_measure:
+            for block_name in unique_blocks_nameslist:
+                figure, axis = plt.subplots(1, 1, squeeze=True)
+                plt.suptitle(self.name + block_name + ' depolarizing events')
+                rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+                block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 
-        for block_name in uniqueblocks_nameslist:
+                plots.plot_singleblock_events(rawdata_block, block_events,
+                                              self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                              axis_object=axis,
+                                              **kwargs)
+                axis_title = 'voltage'
+                if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
+                    axis_title += ' event-detect trace, '
+                if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
+                    axis_title += ' baselined'
+                if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
+                    axis_title += ' normalized'
+                axis.set_title(axis_title)
 
-            rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
-            block_events = events_forplotting.loc[
-                events_forplotting['file_origin'] == block_name
-                ]
+        elif not colorby_measure:
+            figure, axis = plt.subplots(1, 1, squeeze=True)
+            plt.suptitle(self.name + ' depolarizing events')
+            for block_name in unique_blocks_nameslist:
+                rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+                block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 
-            unique_vtraces = list(set(block_events['segment_idx']))
-
-
-            for vtrace_idx in unique_vtraces:
-
-                trace_events = block_events.loc[block_events['segment_idx'] == vtrace_idx]
-                vtrace = rawdata_block.segments[vtrace_idx].analogsignals[0]
-                sampling_period_inms = float(vtrace.sampling_period) * 1000
-                vtrace = np.squeeze(np.array(vtrace))
-
-                for event_idx, eventmeasures in trace_events.iterrows():
-                    plot_startidx = eventmeasures[time_align_to] + int((plotwindow_start / sampling_period_inms))
-                    plots.plot_single_event(vtrace,sampling_period_inms,axis,
-                                            plot_startidx,
-                                            plotwindow_inms,
-                                            linecolor = 'blue', label = None,
-                                            eventmeasures_series = eventmeasures,
-                                            do_baselining=do_baselining,
-                                            do_normalizing=do_normalizing)
-                    print('event no.' + str(event_idx) + ' plotted')
-
-
+                plots.plot_singleblock_events(rawdata_block, block_events,
+                                              self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                              axis_object=axis,
+                                              **kwargs)
+            axis_title = 'voltage'
+            if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
+                axis_title += ' event-detect trace, '
+            if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
+                axis_title += ' baselined'
+            if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
+                axis_title += ' normalized'
+            axis.set_title(axis_title)
 
 
 

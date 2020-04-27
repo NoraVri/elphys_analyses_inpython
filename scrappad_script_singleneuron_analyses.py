@@ -21,8 +21,21 @@ from singleneuron_analyses_functions import make_depolarizingevents_measures_dic
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
-
-cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['edtrace_amplitude'] > 10, do_baselining=True)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['edtrace_amplitude'] > 10,
+                                         do_baselining=True)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['amplitude'] > 10,
+                                         do_baselining=True,
+                                         do_normalizing=True)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['edtrace_amplitude'] > 10,
+                                         get_measures_type ='raw',
+                                         do_baselining=True)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['amplitude'] > 10,
+                                         get_measures_type='edtrace')
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['edtrace_amplitude'] > 10,
+                                         get_measures_type='edtrace',
+                                         do_baselining=True)
+cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['amplitude'] > 10,
+                                         newplot_per_block=True)
 
 # cell20190805A.plot_individualdepolevents_withmeasures(
 #     cell20190805A.depolarizing_events['edtrace_amplitude'] > 8 )

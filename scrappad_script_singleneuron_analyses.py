@@ -42,6 +42,7 @@ cell20190805A.plot_depolevents_overlayed(cell20190805A.depolarizing_events['ampl
                                          newplot_per_block=True,
                                          colorby_measure='baselinev')
 
+
 # cell20190805A.plot_individualdepolevents_withmeasures(
 #     cell20190805A.depolarizing_events['edtrace_amplitude'] > 8 )
 
@@ -52,9 +53,22 @@ cell20190814A.rawdata_remove_nonrecordingchannel(cell20190814A.rawdata_blocks[0]
 cell20190729A = SingleNeuron("20190729A")
 
 cell20200308B = SingleNeuron('20200308B')
-
+# %%
 cell20200308F = SingleNeuron('20200308F')
+cell20200308F.plot_depolevents_overlayed(newplot_per_block=True,
+                                         colorby_measure='baselinev')
 
+cell20200308F.plot_depolevents_overlayed(colorby_measure='baselinev',
+                                         do_baselining=True)
+
+cell20200308F.plot_depolevents_overlayed(cell20200308F.depolarizing_events['baselinev'] < -25,
+                                         colorby_measure='amplitude')
+
+cell20200308F.plot_depolevents_overlayed(cell20200308F.depolarizing_events['baselinev'] < -25,
+                                         colorby_measure='amplitude',
+                                         do_baselining=True,
+                                         do_normalizing=True)
+# %%
 cell20200308D = SingleNeuron('20200308D')
 
 cell20200310C = SingleNeuron('20200310C')

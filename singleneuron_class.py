@@ -43,9 +43,9 @@ class SingleNeuron:
                 'oscfilter_lpfreq': 20,
                 'plot': 'off'
             }
-        }                                   # notes are updated with non-default kwargs needed to exactly recreate analyses results inside each method.
-                                            # the objects containing analyses results are updated
-                                            # inside the method that gets them, or from stored results.
+        }       # notes are updated with non-default kwargs needed to exactly recreate analyses results inside each method.
+                # the objects containing analyses results are updated
+                # inside the method that gets them, or from stored results.
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
@@ -255,13 +255,27 @@ class SingleNeuron:
 # %% functions for analyzing raw data
 
 # %% depolarizing events
-    def get_depolarizingevents_fromRawData(self, **kwargs):
+    def get_depolarizingevents_fromrawdata(self, **kwargs):
         """This function goes over all voltage-traces in all raw-data blocks, and returns
         two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
         Each dataframe contains a set of standard measures taken from each event, as well as
         all information needed to recover the location of the event in the original data trace.
         Default values for function parameters are read in from rawdata_readingnotes, and are
         updated there if non-default kwargs are used.
+
+        Inputs (all optional):
+        'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
+        'min_depolamp': minimal amplitude from baseline to a possible event peak.
+        'peakwindow': maximal time between a detected depolarization and an event peak (in ms).
+        'eventdecaywindow': maximal time after peak within which voltage should decay again to <80% of its amplitude.
+        'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
+        'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
+        'plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.
+
+        !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
+        The recommended workflow is to use snafs.get_depolarizingevents() on a (time_slice of)
+        single, representative segment first to find good settings for kwargs.
+        !! Once satisfied with the results, run self.write_results() to save the data !!
         """
         for key, value in kwargs.items():
             if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
@@ -304,33 +318,56 @@ class SingleNeuron:
                                    newplot_per_block=False, blocknames_list = None,
                                    colorby_measure = '', color_lims = [],
                                    **kwargs):
+        """ This function plots overlays of depolarizing events, either all in one plot
+        or as one plot per rawdata_block present on the singleneuron class instance.
+        By default, all detected events are plotted in a single plot; all blue lines
+        representing the original raw recorded events.
 
+        Optional inputs:
+        condition_series: a Pandas True/False series (same length as depolarizingevents) marking a subset of events for plotting.
+        newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
+        [blocknames_list]: a list of block names (== block.file_origin) marking a subset of blocks for event-plotting.
+        'colorby_measure': key of a depolarizingevents_measure to color-code the lines by.
+        [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
+        'timealignto_measure': default='peakv_idx', but can be changed to any key representing a time measurement.
+        prealignpoint_window_inms: default=10, length of the timewindow for plotting before the align-point.
+        total_plotwindow_inms: default=50, total length of the window for plotting the events.
+        get_measures_type: default='raw', if it's something else the event-detect trace will be recreated and used.
+        do_baselining: if True, baselinev is subtracted from the event-trace.
+        do_normalizing: if True, the event-trace is divided by amplitude.
+        """
+        # selecting the (subset of) events for plotting:
         if not condition_series.empty:
             events_for_plotting = self.depolarizing_events.loc[condition_series]
         else:
             events_for_plotting = self.depolarizing_events
-
+        # if required, set colorbar limits (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
         if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
-            color_lims = [events_for_plotting[colorby_measure].min(), events_for_plotting[colorby_measure].max()]
-
+            color_lims = [events_for_plotting[colorby_measure].min(),
+                          events_for_plotting[colorby_measure].max()]
         if colorby_measure and len(color_lims) == 2 and not newplot_per_block:
-            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,color_lims)
-
+            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
+                                                                    color_lims)
+        # get the (subset of) blocks for which events are to be plotted:
         unique_blocks_forplotting = set(events_for_plotting['file_origin'])
         if blocknames_list:
             unique_blocks_forplotting = unique_blocks_forplotting.intersection(set(blocknames_list))
         unique_blocks_forplotting = list(unique_blocks_forplotting)
-
         allblocks_nameslist = self.get_blocknames(printing='off')
+
+        # plotting events:
         if newplot_per_block:
             for block_name in unique_blocks_forplotting:
                 rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
-
-                figure, axis = plots.plot_singleblock_events(rawdata_block, block_events,
+                # making a new plot for each block, getting the figure and axis handles out
+                figure, axis = plots.plot_singleblock_events(rawdata_block,
+                                                             block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
-                                              colorby_measure=colorby_measure, color_lims=color_lims,
+                                              colorby_measure=colorby_measure,
+                                              color_lims=color_lims,
                                               **kwargs)
+                # setting axis properties and figure title
                 axis_title = 'voltage'
                 if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
                     axis_title += ' event-detect trace, '
@@ -342,6 +379,7 @@ class SingleNeuron:
                 figure.suptitle(self.name + block_name + ' depolarizing events')
 
         else:
+            #initializing the figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + ' depolarizing events')
             for block_name in unique_blocks_forplotting:
@@ -351,8 +389,10 @@ class SingleNeuron:
                 plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               axis_object=axis,
-                                              colorby_measure=colorby_measure, color_lims=color_lims,
+                                              colorby_measure=colorby_measure,
+                                              color_lims=color_lims,
                                               **kwargs)
+            # setting axis properties and figure title
             axis_title = 'voltage'
             if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
                 axis_title += ' event-detect trace '
@@ -369,12 +409,17 @@ class SingleNeuron:
     def plot_individualdepolevents_withmeasures(self, condition_series,
                                                 plotwindow_inms = 40,
                                                 baselinewindow_inms = 5):
-        """ This function takes a Pandas true/false series of the same length as self.depolarizing_events,
-        and plots the subset of events for which the condition is True.
+        """ This function plots the subset of events for which the condition is True.
         Each event is plotted in a separate figure, with one subplot showing the
         raw voltage trace and one showing the event-detect trace (from which filtered data are substracted).
         In each subplot, the relevant measures taken from that event are marked.
-        By default, events are plotted in a window of 40 ms, starting from 5ms before baselinev_idx.
+
+        Mandatory input:
+        condition_series: a Pandas True/False series (same length as depolarizingevents) marking a subset of events for plotting.
+
+        Optional inputs:
+        plotwindow_inms: default=40, the total length of the plot window.
+        baselinewindow_inms: default=5, the length of the plot window before baselinev_idx.
         """
         events_forplotting = self.depolarizing_events.loc[condition_series]
         uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
@@ -387,7 +432,7 @@ class SingleNeuron:
             unique_vtraces = list(set(block_events['segment_idx']))
 
             for vtrace_idx in unique_vtraces:
-                plots.plot_singlesegment_individualdepolevents_withmeasures(
+                plots.plot_singlesegment_events_individually_withmeasures(
                         rawdata_block,
                         block_events,
                         vtrace_idx,

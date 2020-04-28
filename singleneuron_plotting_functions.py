@@ -5,6 +5,7 @@ Created on Wed Mar 25 21:30:10 2020
 @author: neert
 """
 # %% imports
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,14 +32,37 @@ def plot_block(block):
 
 
 # %% depolarizing events
+def get_colors_forlineplots(colorby_measure,data):
+    colormap = mpl.cm.viridis
+    if isinstance(data, list) and len(data) == 2:
+        cm_normalizer = mpl.colors.Normalize(vmin=data[0],vmax=data[1])
+    elif isinstance(data, pd.DataFrame):
+        cm_normalizer = mpl.colors.Normalize(vmin=min(data[colorby_measure]),
+                                             vmax=max(data[colorby_measure]))
+    else:
+        print('line coloring could not be resolved.')
+    return colormap, cm_normalizer
+
 def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizingevents_settings,
                             timealignto_measure = 'peakv_idx',
+                            colorby_measure = '', color_lims = [],
                             prealignpoint_window_inms = 10, total_plotwindow_inms = 50,
                             axis_object = None,
                             **kwargs):  # get_measures_type, do_baselining, do_normalizing etc. are passed straight through to plot_single_event
-    # to-do: add code for dealing with making a color-coding scheme
+
+    if block_eventsmeasures.empty:
+        return
+
+    if colorby_measure and len(color_lims) == 2:
+        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure, color_lims)
+    elif colorby_measure:
+        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures)
+        print('colorbar automatically generated from single-block data')
+
     if not axis_object:
         figure, axis = plt.subplots(1,1,squeeze=True)
+        if colorby_measure:
+            figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap), label=colorby_measure)
     else: axis = axis_object
 
     # getting the individual segments from the block
@@ -59,9 +83,17 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 
         for event_idx, eventmeasures in segment_eventsmeasures.iterrows():
             plot_startidx = eventmeasures[timealignto_measure] - int(prealignpoint_window_inms / sampling_period_inms)
-            plot_single_event(vtrace, sampling_period_inms, axis, plot_startidx, total_plotwindow_inms,
+            if colorby_measure:
+                linecolor = colormap(cm_normalizer(eventmeasures[colorby_measure]))
+                plot_single_event(vtrace, sampling_period_inms, axis, plot_startidx, total_plotwindow_inms,
+                                  eventmeasures_series=eventmeasures, linecolor=linecolor, **kwargs)
+            else:
+                plot_single_event(vtrace, sampling_period_inms, axis, plot_startidx, total_plotwindow_inms,
                               eventmeasures_series=eventmeasures, **kwargs)
             print('event no.' + str(event_idx) + ' plotted')
+
+    if not axis_object:
+        return figure, axis
 
 
 

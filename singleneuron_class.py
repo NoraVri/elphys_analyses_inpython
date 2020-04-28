@@ -11,6 +11,7 @@ import json
 from igor import packed
 from neo import io
 from neo.core import Block, Segment, ChannelIndex
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -300,27 +301,35 @@ class SingleNeuron:
 
 # %% functions for plotting analysis results
     def plot_depolevents_overlayed(self, condition_series=pd.Series(),
-                                   newplot_per_block=False,
-                                   colorby_measure = '', **kwargs):
+                                   newplot_per_block=False, blocknames_list = None,
+                                   colorby_measure = '', color_lims = [],
+                                   **kwargs):
 
         if not condition_series.empty:
             events_for_plotting = self.depolarizing_events.loc[condition_series]
         else:
             events_for_plotting = self.depolarizing_events
 
-        unique_blocks_nameslist = list(set(events_for_plotting['file_origin']))
-        allblocks_nameslist = self.get_blocknames(printing='off')
+        if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
+            color_lims = [events_for_plotting[colorby_measure].min(), events_for_plotting[colorby_measure].max()]
 
-        if newplot_per_block and not colorby_measure:
-            for block_name in unique_blocks_nameslist:
-                figure, axis = plt.subplots(1, 1, squeeze=True)
-                plt.suptitle(self.name + block_name + ' depolarizing events')
+        if colorby_measure and len(color_lims) == 2 and not newplot_per_block:
+            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,color_lims)
+
+        unique_blocks_forplotting = set(events_for_plotting['file_origin'])
+        if blocknames_list:
+            unique_blocks_forplotting = unique_blocks_forplotting.intersection(set(blocknames_list))
+        unique_blocks_forplotting = list(unique_blocks_forplotting)
+
+        allblocks_nameslist = self.get_blocknames(printing='off')
+        if newplot_per_block:
+            for block_name in unique_blocks_forplotting:
                 rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 
-                plots.plot_singleblock_events(rawdata_block, block_events,
+                figure, axis = plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
-                                              axis_object=axis,
+                                              colorby_measure=colorby_measure, color_lims=color_lims,
                                               **kwargs)
                 axis_title = 'voltage'
                 if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
@@ -330,26 +339,30 @@ class SingleNeuron:
                 if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
                     axis_title += ' normalized'
                 axis.set_title(axis_title)
+                figure.suptitle(self.name + block_name + ' depolarizing events')
 
-        elif not colorby_measure:
+        else:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + ' depolarizing events')
-            for block_name in unique_blocks_nameslist:
+            for block_name in unique_blocks_forplotting:
                 rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 
                 plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               axis_object=axis,
+                                              colorby_measure=colorby_measure, color_lims=color_lims,
                                               **kwargs)
             axis_title = 'voltage'
             if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-                axis_title += ' event-detect trace, '
+                axis_title += ' event-detect trace '
             if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
                 axis_title += ' baselined'
             if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
                 axis_title += ' normalized'
             axis.set_title(axis_title)
+            if colorby_measure:
+                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap), label=colorby_measure)
 
 
 

@@ -72,7 +72,7 @@ class SingleNeuron:
 
             if len(self.rawdata_readingnotes) > 0:
                 with open(results_path + '\\' + self.name +
-                          '_rawdata_readingnotes', 'w') as file:
+                          '_rawdata_readingnotes.json', 'w') as file:
                     file.write(json.dumps(self.rawdata_readingnotes))
 
             if len(self.depolarizing_events) > 0:
@@ -241,14 +241,15 @@ class SingleNeuron:
 
 
 
-    def plot_block_byname(self, block_file_origin):
+    def plot_blocks_byname(self, *block_file_origin, mark_events='none'):
         """takes the name of the file from which the rawdata_block was created
         and plots only that block (separate subplots for each channel_index).
         """
-        for block in self.rawdata_blocks:
-            if block.file_origin == block_file_origin:
-                plots.plot_block(block)
-                plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+        blocknames_list = self.get_blocknames(printing='off')
+        for block_name in block_file_origin:
+            block = self.rawdata_blocks[blocknames_list.index(block_name)]
+            plots.plot_block(block, mark_events)
+            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 
 
@@ -315,6 +316,7 @@ class SingleNeuron:
 
 # %% functions for plotting analysis results
     def plot_depolevents_overlayed(self, condition_series=pd.Series(),
+                                   get_subthreshold_events = True,
                                    newplot_per_block=False, blocknames_list = None,
                                    colorby_measure = '', color_lims = [],
                                    **kwargs):
@@ -337,10 +339,14 @@ class SingleNeuron:
         do_normalizing: if True, the event-trace is divided by amplitude.
         """
         # selecting the (subset of) events for plotting:
-        if not condition_series.empty:
+        if get_subthreshold_events and not condition_series.empty:
             events_for_plotting = self.depolarizing_events.loc[condition_series]
-        else:
+        elif not condition_series.empty:
+            events_for_plotting = self.action_potentials.loc[condition_series]
+        elif get_subthreshold_events:
             events_for_plotting = self.depolarizing_events
+        else:
+            events_for_plotting = self.action_potentials
         # if required, set colorbar limits (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
         if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
             color_lims = [events_for_plotting[colorby_measure].min(),
@@ -407,6 +413,7 @@ class SingleNeuron:
 
 
     def plot_individualdepolevents_withmeasures(self, condition_series,
+                                                get_subthreshold_events = True,
                                                 plotwindow_inms = 40,
                                                 baselinewindow_inms = 5):
         """ This function plots the subset of events for which the condition is True.
@@ -421,7 +428,10 @@ class SingleNeuron:
         plotwindow_inms: default=40, the total length of the plot window.
         baselinewindow_inms: default=5, the length of the plot window before baselinev_idx.
         """
-        events_forplotting = self.depolarizing_events.loc[condition_series]
+        if get_subthreshold_events:
+            events_forplotting = self.depolarizing_events.loc[condition_series]
+        else:
+            events_forplotting = self.action_potentials.loc[condition_series]
         uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
         allblocks_nameslist = self.get_blocknames(printing = 'off')
 
@@ -433,6 +443,7 @@ class SingleNeuron:
 
             for vtrace_idx in unique_vtraces:
                 plots.plot_singlesegment_events_individually_withmeasures(
+                        get_subthreshold_events,
                         rawdata_block,
                         block_events,
                         vtrace_idx,

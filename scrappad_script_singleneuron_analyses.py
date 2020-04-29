@@ -70,7 +70,9 @@ cell20200308F.plot_depolevents_overlayed(cell20200308F.depolarizing_events['base
                                          do_normalizing=True)
 # %%
 cell20200308D = SingleNeuron('20200308D')
-
+cell20200308D.plot_individualdepolevents_withmeasures(cell20200308D.action_potentials['amplitude'] > 30,
+                                                      get_subthreshold_events=False)
+# %%
 cell20200310C = SingleNeuron('20200310C')
 
 

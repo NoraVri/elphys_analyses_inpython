@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import singleneuron_analyses_functions as snafs
 # %% general raw-data plotting
-def plot_block(block):
+def plot_block(block, mark_events='none'):
     """ takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     """
@@ -20,7 +20,7 @@ def plot_block(block):
     time_axis = time_axis.rescale('ms')
     #making one subplot per active recording channel
     nsubplots = len(block.channel_indexes)
-    figure,axes = plt.subplots(nrows=nsubplots,ncols=1,sharex='all')
+    figure, axes = plt.subplots(nrows=nsubplots,ncols=1,sharex='all')
     for i in range(nsubplots):
         traces = np.transpose(np.squeeze(np.array(list(iter(
                                 block.channel_indexes[i].analogsignals)))))
@@ -30,8 +30,21 @@ def plot_block(block):
         axes[i].set_ylabel(str(traces_unit))
 
 
+    if isinstance(mark_events, pd.DataFrame):
+        block_events = mark_events.loc[mark_events['file_origin'] == block.file_origin]
+        for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
+            vtrace = np.squeeze(np.array(signal))
+            trace_events = block_events.loc[block_events['segment_idx'] == idx]
+            axes[0].scatter(time_axis[list(trace_events['baselinev_idx'])],
+                            vtrace[list(trace_events['baselinev_idx'])],
+                            color='green')
+            axes[0].scatter(time_axis[list(trace_events['peakv_idx'])],
+                            vtrace[list(trace_events['peakv_idx'])],
+                            color='red')
 
-# %% depolarizing events - line plots of raw data
+
+
+# %% depolarizing events and action potentials - line plots of raw data
 # plotting an individual event, using depolarizingevents_measures information
 def plot_single_event(vtrace, sampling_period_inms,
                       axis_object, plot_startidx, plotwindow_inms=40,
@@ -79,7 +92,7 @@ def plot_single_event(vtrace, sampling_period_inms,
 
     # optional: adding scatterpoints and/or horizontal lines to demark measures where relevant:
     if display_measures and not eventmeasures_series.empty:
-        measures_dict = make_measuresdict_for_subthresholdevent(eventmeasures_series,
+        measures_dict = make_eventmeasures_dict_forplotting(eventmeasures_series,
                                                                 get_measures_type)
         for key, valsdict in measures_dict.items():
             point = valsdict['idx']
@@ -104,7 +117,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                             colorby_measure = '', color_lims = [],
                             prealignpoint_window_inms = 10, total_plotwindow_inms = 50,
                             axis_object = None,
-                            **kwargs):  # get_measures_type, do_baselining, do_normalizing etc. are passed straight through to plot_single_event
+                            **kwargs):
 
     if block_eventsmeasures.empty:
         return
@@ -153,7 +166,8 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 
 
 # plotting all events of a segment/single v-trace, individually, with displaying measures
-def plot_singlesegment_events_individually_withmeasures(block, block_events,
+def plot_singlesegment_events_individually_withmeasures(get_subthreshold_events,
+                                                          block, block_events,
                                                           trace_idx, reading_notes,
                                                           plotwindow_inms=40,
                                                           baselinewindow_inms = 5):
@@ -166,35 +180,55 @@ def plot_singlesegment_events_individually_withmeasures(block, block_events,
     sampling_frequency = float(vtrace.sampling_rate)
     sampling_period_inms = float(vtrace.sampling_period) * 1000
     vtrace = np.squeeze(np.array(vtrace))
-    edtrace, _, _ = snafs.apply_filters_torawdata(vtrace,
-                                                  oscfilter_lpfreq = reading_notes['oscfilter_lpfreq'],
-                                                  noisefilter_hpfreq = reading_notes['noisefilter_hpfreq'],
-                                                  sampling_frequency = sampling_frequency,
-                                                  plot = 'off')
-    # plotting each event for this vtrace
-    for event_idx, event_measures in trace_events.iterrows():
-        plot_startidx = event_measures['baselinev_idx'] - int(baselinewindow_inms /
-                                                              sampling_period_inms)
 
-        figure, axes = plt.subplots(1, 2, sharex='all', num=event_idx)  # event_idx is the idx of the entry of this event in the depolarizingevents_dataframe
-        plt.suptitle(block_name + ' segment' + str(trace_idx))
+    if get_subthreshold_events:
+        edtrace, _, _ = snafs.apply_filters_torawdata(vtrace,
+                                                      oscfilter_lpfreq = reading_notes['oscfilter_lpfreq'],
+                                                      noisefilter_hpfreq = reading_notes['noisefilter_hpfreq'],
+                                                      sampling_frequency = sampling_frequency,
+                                                      plot = 'off')
+        # plotting each event for this vtrace
+        for event_idx, event_measures in trace_events.iterrows():
+            plot_startidx = event_measures['baselinev_idx'] - int(baselinewindow_inms /
+                                                                  sampling_period_inms)
 
-        plot_single_event(vtrace, sampling_period_inms, axes[0],
-                          plot_startidx, plotwindow_inms=plotwindow_inms,
-                          linecolor='blue',
-                          eventmeasures_series=event_measures,
-                          get_measures_type='raw',
-                          display_measures=True)
-        axes[0].set_ylabel('voltage (mV)')
-        axes[0].set_title('raw voltage')
+            figure, axes = plt.subplots(1, 2, sharex='all', num=event_idx)  # event_idx is the idx of the entry of this event in the depolarizingevents_dataframe
+            plt.suptitle(block_name + ' segment' + str(trace_idx))
 
-        plot_single_event(edtrace, sampling_period_inms, axes[1],
-                          plot_startidx, plotwindow_inms=plotwindow_inms,
-                          linecolor='black',
-                          eventmeasures_series=event_measures,
-                          get_measures_type='edtrace',
-                          display_measures=True)
-        axes[1].set_title('event-detect trace')
+            plot_single_event(vtrace, sampling_period_inms, axes[0],
+                              plot_startidx, plotwindow_inms=plotwindow_inms,
+                              linecolor='blue',
+                              eventmeasures_series=event_measures,
+                              get_measures_type='raw',
+                              display_measures=True)
+            axes[0].set_ylabel('voltage (mV)')
+            axes[0].set_title('raw voltage')
+
+            plot_single_event(edtrace, sampling_period_inms, axes[1],
+                              plot_startidx, plotwindow_inms=plotwindow_inms,
+                              linecolor='black',
+                              eventmeasures_series=event_measures,
+                              get_measures_type='edtrace',
+                              display_measures=True)
+            axes[1].set_title('event-detect trace')
+
+    else:
+        for event_idx, event_measures in trace_events.iterrows():
+            plot_startidx = event_measures['baselinev_idx'] - int(baselinewindow_inms /
+                                                                  sampling_period_inms)
+
+            figure, axis = plt.subplots(1, 1, squeeze=True,
+                                        num=event_idx)  # event_idx is the idx of the entry of this event in the depolarizingevents_dataframe
+            plt.suptitle(block_name + ' segment' + str(trace_idx))
+
+            plot_single_event(vtrace, sampling_period_inms, axis,
+                              plot_startidx, plotwindow_inms=plotwindow_inms,
+                              linecolor='blue',
+                              eventmeasures_series=event_measures,
+                              get_measures_type='raw',
+                              display_measures=True)
+            axis.set_ylabel('voltage (mV)')
+            axis.set_title('raw voltage')
 
 
 # helper functions
@@ -211,10 +245,12 @@ def get_colors_forlineplots(colorby_measure,data):
     return colormap, cm_normalizer
 
 
-def make_measuresdict_for_subthresholdevent(eventmeasures_series, measuretype='raw'):
+def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw'):
     """ This function takes a pd.Series object containing the measures for a single event,
     and returns them in a dictionary along with line/point color information for use in
     displaying event-measures through the plot_single_event function.
+    Measures taken from APs or subthreshold depolarizations are returned, based on the content of eventmeasures_series.
+    Measures are added only if their value is not <= 0 or nan.
     If measuretype is not "raw", values gotten from the event-detect trace will be returned.
     """
     # all events have a baseline-point and a peak-point, and it's the same in the raw and event-detect traces.
@@ -226,7 +262,7 @@ def make_measuresdict_for_subthresholdevent(eventmeasures_series, measuretype='r
                    'color': 'red'}
     }
 
-    if measuretype == 'raw':  # other measures are added in only if their value is not <=0 or nan
+    if measuretype == 'raw':
         if float(eventmeasures_series['rise-time']) > 0:
             measuresdict['rise-time'] = {
                 'idx': eventmeasures_series['rt_start_idx'],
@@ -240,13 +276,27 @@ def make_measuresdict_for_subthresholdevent(eventmeasures_series, measuretype='r
                 'duration': float(eventmeasures_series['half-width']),
                 'color': 'green'
             }
-
-        if float(eventmeasures_series['width_at10%amp']) > 0:
-            measuresdict['width'] = {
-                'idx': eventmeasures_series['rt_start_idx'] - 1,
-                'duration': float(eventmeasures_series['width_at10%amp']),
-                'color': 'black'
-            }
+        # measures that are specific to subthreshold depolarizing events
+        if 'width_at10%amp' in eventmeasures_series.keys():
+            if float(eventmeasures_series['width_at10%amp']) > 0:
+                measuresdict['width'] = {
+                    'idx': eventmeasures_series['rt_start_idx'] - 1,
+                    'duration': float(eventmeasures_series['width_at10%amp']),
+                    'color': 'black'
+                }
+        # measures that are specific to action potentials
+        if 'thresholdv' in eventmeasures_series.keys():
+            if float(eventmeasures_series['thresholdv']) > 0:
+                measuresdict['threshold_v'] = {
+                    'idx': eventmeasures_series['threshold_idx'],
+                    'color': 'blue'
+                }
+            if float(eventmeasures_series['threshold-width']) > 0:
+                measuresdict['threshold-width'] = {
+                    'idx': eventmeasures_series['threshold_idx'],
+                    'duration': float(eventmeasures_series['threshold-width']),
+                    'color': 'black'
+                }
 
     else:
         if float(eventmeasures_series['edtrace_rise-time']) > 0:
@@ -271,7 +321,3 @@ def make_measuresdict_for_subthresholdevent(eventmeasures_series, measuretype='r
             }
 
     return measuresdict
-
-
-
-# %% action potentials - line plots of raw data

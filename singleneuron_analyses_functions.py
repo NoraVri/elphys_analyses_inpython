@@ -23,20 +23,19 @@ def make_depolarizingevents_measures_dictionaries():
         'half-width': [],
         'thresholdv': [],
         'threshold-width': [],
+        'n_spikeshoulderpeaks': [],
+        'ahp_amplitude': [],
+        'ahp_width': [],
         'applied_current': [],
+        'approx_oscslope': [],
 
-        'peak_idx': [],
+        'peakv_idx': [],
         'baselinev_idx': [],
-        'rt_startidx': [],
-        'hw_startidx': [],
+        'rt_start_idx': [],
+        'hw_start_idx': [],
         'threshold_idx': [],
-        # 'prespike_approxslope' : slopeapprox,
-        # 'applied_current' : current_applied,
-        # 'peaksonshoulder' : no_of_spikelets,
-        # 'AHPstart_idx' : AHPstart_idx,
-        # 'AHPmin_idx' : AHPmin_idx,
-        # 'AHP_amplitude' : AHPamp,
-        # 'AHP-width' : AHP_width
+        'ahp_min_idx': [],
+        'ahp_end_idx': [],
         'file_origin' : [],
         'segment_idx' : [],
     }
@@ -48,8 +47,8 @@ def make_depolarizingevents_measures_dictionaries():
         'rise-time': [],
         'half-width': [],
         'width_at10%amp': [],
-        # 'preevent_approxslope' : slopeapprox,
         'applied_current': [],
+        'approx_oscslope': [],
 
         'edtrace_baselinev': [],
         'edtrace_amplitude': [],
@@ -75,6 +74,7 @@ def get_depolarizingevents(single_segment,
                            min_depolamp = 0.2,
                            peakwindow = 5,
                            eventdecaywindow = 40,
+                           spikeahpwindow = 100,
                            noisefilter_hpfreq = 3000,
                            oscfilter_lpfreq = 20,
                            plot = 'off'):
@@ -96,6 +96,7 @@ def get_depolarizingevents(single_segment,
     peakwindow_insamples = int(sampling_frequency / 1000 * peakwindow_inms)
     eventdecaywindow_inms = eventdecaywindow
     eventdecaywindow_insamples = int(sampling_frequency / 1000 * eventdecaywindow_inms)
+    spikeahpwindow_insamples = int(sampling_frequency / 1000 * spikeahpwindow)
 
     #filtering the raw voltage twice: high-pass to get 'only the noise', and low-pass to get 'only the STOs'.
     #subtract both from raw voltage to get trace for event-detection
@@ -125,9 +126,10 @@ def get_depolarizingevents(single_segment,
     #constructing a dictionary of peaks_idcs, with all related measurements (separately for APs and one for subthreshold depolarizations)
     (actionpotentials_resultsdictionary,
      depolarizingevents_resultsdictionary) = get_events_measures(peaks_idcs, depolswithpeaks_idcs,
-                        voltage_recording, voltage_noisetrace, voltage_eventdetecttrace,
+                        voltage_recording, voltage_oscillationstrace, voltage_noisetrace, voltage_eventdetecttrace,
                         current_recording,
-                        ms_insamples, eventdecaywindow_insamples, sampling_period_inms,
+                        ms_insamples, eventdecaywindow_insamples, spikeahpwindow_insamples,
+                        sampling_period_inms,
                         time_axis, plot)
 
     #plotting the data (in all its shapes from raw to filtered to derivative)
@@ -248,9 +250,10 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, current
 
 
 def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
-                        voltage_recording, voltage_noisetrace, voltage_eventdetecttrace,
+                        voltage_recording, voltage_oscillationstrace, voltage_noisetrace, voltage_eventdetecttrace,
                         current_recording,
-                        ms_insamples, spikewindow_insamples, sampling_period_inms,
+                        ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
+                        sampling_period_inms,
                         time_axis, plot):
 
     (actionpotentials_dictionary,
@@ -261,6 +264,9 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
         ed_baseline_v = np.mean(voltage_eventdetecttrace[baseline_idx - ms_insamples:baseline_idx])
         ed_peakv = voltage_eventdetecttrace[peak_idx]
         ed_peakamp = ed_peakv - ed_baseline_v
+
+        prebaseline_vslope = (voltage_oscillationstrace[baseline_idx] -
+                              voltage_oscillationstrace[baseline_idx - ms_insamples]) # in mV/ms
 
         if ed_peakamp > 50 and peak_idx < len(voltage_recording) - spikewindow_insamples: #get action potential parameters
             #baseline v: meanv in the 2ms around baseline_idx
@@ -296,12 +302,46 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             returntothreshold_inidcs = descend_vtrace_until(descendtrace, threshold_v)
             thresholdwidth_inidcs = peak_idx + returntothreshold_inidcs - threshold_idx
             threshold_width = thresholdwidth_inidcs * sampling_period_inms
+            # count spikelets on spike shoulder
+            if np.isnan(threshold_width):
+                spikeshoulderpeaks = np.array(peaks_idcs)
+                spikeshoulderpeaks = spikeshoulderpeaks[spikeshoulderpeaks > peak_idx]
+                spikeshoulderpeaks = spikeshoulderpeaks[spikeshoulderpeaks < peak_idx + 5*ms_insamples]
+                n_spikeshoulderpeaks = len(spikeshoulderpeaks)
+                ahpmin_idx = float('nan')
+                ahpamplitude = float('nan')
+                ahpend_idx = float('nan')
+                ahp_width = float('nan')
+            if not np.isnan(threshold_width):
+                spikeshoulderpeaks = np.array(peaks_idcs)
+                spikeshoulderpeaks = spikeshoulderpeaks[spikeshoulderpeaks > peak_idx]
+                spikeshoulderpeaks = spikeshoulderpeaks[spikeshoulderpeaks < peak_idx + returntothreshold_inidcs]
+                n_spikeshoulderpeaks = len(spikeshoulderpeaks)
+                # after-hyperpolarization start: return to baseline v
+                ahptrace = voltage_recording[peak_idx + returntothreshold_inidcs:
+                                             peak_idx + returntothreshold_inidcs + spikeahpwindow_insamples]
+                if np.amin(ahptrace) < baseline_v:
+                    ahpmin_idx = np.argmin(ahptrace)
+                    ahpamplitude = baseline_v - np.amin(ahptrace)
+                    ahpwidth_inidcs = ahpmin_idx
+                    while ahptrace[ahpwidth_inidcs] <= baseline_v and len(ahptrace) < ahpwidth_inidcs:
+                        ahpwidth_inidcs += 1
+                    ahpend_idx = peak_idx + returntothreshold_inidcs + ahpwidth_inidcs + 1
+                    if voltage_recording[ahpend_idx] <= baseline_v:
+                        ahpend_idx = float('nan')
+                    ahp_totalwidth_inidcs = ahpend_idx - threshold_idx + thresholdwidth_inidcs
+                    ahp_width = ahp_totalwidth_inidcs * sampling_period_inms
+                else:
+                    ahpmin_idx = float('nan')
+                    ahpamplitude = float('nan')
+                    ahpend_idx = float('nan')
+                    ahp_width = float('nan')
+
             #current applied
             current_applied = np.mean(current_recording[baseline_idx:peak_idx + returntothreshold_inidcs])
             if abs(current_applied) <= 10:
                 current_applied = 0
-            #approximate slope (of STO) just before the AP
-            #number of spikelet-peaks on AP shoulder
+            #number of spikelet-peaks on AP shoulder - get by finding peaks_idcs that come between peak_idx and AHPstart_idx
             #after-hyperpolarization parameters:
             #start_idx (or:return to baseline_v), min value and idx, amplitude, width
 
@@ -312,13 +352,20 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             actionpotentials_dictionary['half-width'].append(half_width)
             actionpotentials_dictionary['thresholdv'].append(threshold_v)
             actionpotentials_dictionary['threshold-width'].append(threshold_width)
-            actionpotentials_dictionary['applied_current'].append(current_applied)
+            actionpotentials_dictionary['n_spikeshoulderpeaks'].append(n_spikeshoulderpeaks)
+            actionpotentials_dictionary['ahp_amplitude'].append(ahpamplitude)
+            actionpotentials_dictionary['ahp_width'].append(ahp_width)
 
-            actionpotentials_dictionary['peak_idx'].append(peak_idx)
+            actionpotentials_dictionary['applied_current'].append(current_applied)
+            actionpotentials_dictionary['approx_oscslope'].append(prebaseline_vslope)
+
+            actionpotentials_dictionary['peakv_idx'].append(peak_idx)
             actionpotentials_dictionary['baselinev_idx'].append(baseline_idx)
-            actionpotentials_dictionary['rt_startidx'].append(risestart_idx)
-            actionpotentials_dictionary['hw_startidx'].append(half_width_startidx)
+            actionpotentials_dictionary['rt_start_idx'].append(risestart_idx)
+            actionpotentials_dictionary['hw_start_idx'].append(half_width_startidx)
             actionpotentials_dictionary['threshold_idx'].append(threshold_idx)
+            actionpotentials_dictionary['ahp_min_idx'].append(ahpmin_idx)
+            actionpotentials_dictionary['ahp_end_idx'].append(ahpend_idx)
 
             if plot == 'on':
                 plt.figure()
@@ -399,7 +446,6 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             if abs(current_applied) <= 10:
                 current_applied = 0
 
-
             depolarizingevents_dictionary['peakv'].append(peak_v)
             depolarizingevents_dictionary['baselinev'].append(baseline_v)
             depolarizingevents_dictionary['amplitude'].append(amplitude)
@@ -407,6 +453,7 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             depolarizingevents_dictionary['half-width'].append(half_width)
             depolarizingevents_dictionary['width_at10%amp'].append(width)
             depolarizingevents_dictionary['applied_current'].append(current_applied)
+            depolarizingevents_dictionary['approx_oscslope'].append(prebaseline_vslope)
 
             depolarizingevents_dictionary['edtrace_baselinev'].append(ed_baseline_v)
             depolarizingevents_dictionary['edtrace_amplitude'].append(ed_amplitude)

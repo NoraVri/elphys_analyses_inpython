@@ -24,6 +24,7 @@ def make_depolarizingevents_measures_dictionaries():
         'thresholdv': [],
         'threshold-width': [],
         'n_spikeshoulderpeaks': [],
+        'spikeshoulderpeaks_idcs': [],
         'ahp_amplitude': [],
         'ahp_width': [],
         'applied_current': [],
@@ -74,7 +75,7 @@ def get_depolarizingevents(single_segment,
                            min_depolamp = 0.2,
                            peakwindow = 5,
                            eventdecaywindow = 40,
-                           spikeahpwindow = 100,
+                           spikeahpwindow = 250,
                            noisefilter_hpfreq = 3000,
                            oscfilter_lpfreq = 20,
                            plot = 'off'):
@@ -321,12 +322,13 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
                 ahptrace = voltage_recording[peak_idx + returntothreshold_inidcs:
                                              peak_idx + returntothreshold_inidcs + spikeahpwindow_insamples]
                 if np.amin(ahptrace) < baseline_v:
-                    ahpmin_idx = np.argmin(ahptrace)
+                    ahpmin_idx_inahptrace = np.argmin(ahptrace)
+                    ahpmin_idx = int(ahpmin_idx_inahptrace + peak_idx + returntothreshold_inidcs)
                     ahpamplitude = baseline_v - np.amin(ahptrace)
-                    ahpwidth_inidcs = ahpmin_idx
+                    ahpwidth_inidcs = ahpmin_idx_inahptrace
                     while ahptrace[ahpwidth_inidcs] <= baseline_v and len(ahptrace) < ahpwidth_inidcs:
                         ahpwidth_inidcs += 1
-                    ahpend_idx = peak_idx + returntothreshold_inidcs + ahpwidth_inidcs + 1
+                    ahpend_idx = int(peak_idx + returntothreshold_inidcs + ahpwidth_inidcs + 1)
                     if voltage_recording[ahpend_idx] <= baseline_v:
                         ahpend_idx = float('nan')
                     ahp_totalwidth_inidcs = ahpend_idx - threshold_idx + thresholdwidth_inidcs
@@ -352,6 +354,7 @@ def get_events_measures(peaks_idcs, depolswithpeaks_idcs,
             actionpotentials_dictionary['half-width'].append(half_width)
             actionpotentials_dictionary['thresholdv'].append(threshold_v)
             actionpotentials_dictionary['threshold-width'].append(threshold_width)
+            actionpotentials_dictionary['spikeshoulderpeaks_idcs'].append(spikeshoulderpeaks)
             actionpotentials_dictionary['n_spikeshoulderpeaks'].append(n_spikeshoulderpeaks)
             actionpotentials_dictionary['ahp_amplitude'].append(ahpamplitude)
             actionpotentials_dictionary['ahp_width'].append(ahp_width)

@@ -24,7 +24,8 @@ import singleneuron_analyses_functions as snafs
 
 class SingleNeuron:
     # init
-    def __init__(self, singleneuron_name,
+    def __init__(self,
+                 singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
 
         self.name = singleneuron_name       # a unique name, that appears literally on all raw data files recorded for this singleneuron
@@ -193,10 +194,10 @@ class SingleNeuron:
                         self.rawdata_readingnotes = json.loads(file.read())
 
                 if 'depolarizing_events' in path:
-                    self.depolarizing_events = pd.read_csv(path)
+                    self.depolarizing_events = pd.read_csv(path, index_col=0)
 
                 if 'action_potentials' in path:
-                    self.action_potentials = pd.read_csv(path)
+                    self.action_potentials = pd.read_csv(path, index_col=0)
 
                 if 'subthreshold_oscillations' in path:
                     self.subthreshold_oscillations = {}
@@ -255,7 +256,7 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data
 
-# %% depolarizing events
+# %% depolarizing events (subthreshold ones and action potentials)
     def get_depolarizingevents_fromrawdata(self, **kwargs):
         """This function goes over all voltage-traces in all raw-data blocks, and returns
         two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
@@ -382,7 +383,7 @@ class SingleNeuron:
                 if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
                     axis_title += ' normalized'
                 axis.set_title(axis_title)
-                figure.suptitle(self.name + block_name + ' depolarizing events')
+                figure.suptitle(self.name + block_name)
 
         else:
             #initializing the figure:
@@ -412,7 +413,7 @@ class SingleNeuron:
 
 
 
-    def plot_individualdepolevents_withmeasures(self, condition_series,
+    def plot_individualdepolevents_withmeasures(self, condition_series=pd.Series(),
                                                 get_subthreshold_events = True,
                                                 plotwindow_inms = 40,
                                                 baselinewindow_inms = 5):
@@ -428,10 +429,14 @@ class SingleNeuron:
         plotwindow_inms: default=40, the total length of the plot window.
         baselinewindow_inms: default=5, the length of the plot window before baselinev_idx.
         """
-        if get_subthreshold_events:
+        if get_subthreshold_events and not condition_series.empty:
             events_forplotting = self.depolarizing_events.loc[condition_series]
-        else:
+        elif not condition_series.empty:
             events_forplotting = self.action_potentials.loc[condition_series]
+        elif get_subthreshold_events:
+            events_forplotting = self.depolarizing_events
+        else:
+            events_forplotting = self.action_potentials
         uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
         allblocks_nameslist = self.get_blocknames(printing = 'off')
 

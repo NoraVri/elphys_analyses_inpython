@@ -66,7 +66,8 @@ def plot_single_event(vtrace, sampling_period_inms,
     """
     # creating the event-trace and corresponding time axis
     event_trace = vtrace[plot_startidx:plot_startidx + int(plotwindow_inms / sampling_period_inms)]
-    time_axis = np.arange(0, len(event_trace) * sampling_period_inms, sampling_period_inms)
+    time_axis = np.linspace(start=0, stop=plotwindow_inms, num=len(event_trace))
+    # time_axis = np.arange(0, len(event_trace) * sampling_period_inms, sampling_period_inms)
 
     # optional:
     # baselining
@@ -96,18 +97,18 @@ def plot_single_event(vtrace, sampling_period_inms,
                                                                 get_measures_type)
         for key, valsdict in measures_dict.items():
             point = valsdict['idx']
+            if point - plot_startidx < len(event_trace):
+                if len(valsdict) == 2:
+                    axis_object.scatter(time_axis[point - plot_startidx], event_trace[point - plot_startidx],
+                                        color=valsdict['color'],
+                                        label=key)
 
-            if len(valsdict) == 2:
-                axis_object.scatter(time_axis[point - plot_startidx], vtrace[point],
-                                    color=valsdict['color'],
-                                    label=key)
-
-            if len(valsdict) == 3:
-                axis_object.hlines(y=vtrace[point],
-                                   xmin=time_axis[point - plot_startidx],
-                                   xmax=time_axis[point - plot_startidx] + valsdict['duration'],
-                                   color=valsdict['color'],
-                                   label=(key + ' = ' + str(valsdict['duration']) + 'ms'))
+                if len(valsdict) == 3:
+                    axis_object.hlines(y=event_trace[point - plot_startidx],
+                                       xmin=time_axis[point - plot_startidx],
+                                       xmax=time_axis[point - plot_startidx] + valsdict['duration'],
+                                       color=valsdict['color'],
+                                       label=(key + ' = ' + str(valsdict['duration']) + 'ms'))
         axis_object.legend()
 
 
@@ -272,7 +273,7 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
 
         if float(eventmeasures_series['half-width']) > 0:
             measuresdict['half-width'] = {
-                'idx': eventmeasures_series['hw_start_idx'],
+                'idx': eventmeasures_series['hw_start_idx']-1,
                 'duration': float(eventmeasures_series['half-width']),
                 'color': 'green'
             }
@@ -297,6 +298,27 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                     'duration': float(eventmeasures_series['threshold-width']),
                     'color': 'black'
                 }
+            if not np.isnan(eventmeasures_series['ahp_min_idx']):
+                measuresdict['ahp_min'] = {
+                    'idx': int(eventmeasures_series['ahp_min_idx']),
+                    'color': 'red'
+                }
+            if not np.isnan(eventmeasures_series['ahp_end_idx']):
+                measuresdict['ahp_end'] = {
+                    'idx': int(eventmeasures_series['ahp_end_idx']),
+                    'color': 'green'
+                }
+            if eventmeasures_series['n_spikeshoulderpeaks'] > 0:
+                shoulderpeaks_idcs_asstr = eventmeasures_series['spikeshoulderpeaks_idcs']
+                if not shoulderpeaks_idcs_asstr == '[]':
+                    idcs_asstr = shoulderpeaks_idcs_asstr.replace('[','')
+                    idcs_asstr = idcs_asstr.replace(']','')
+                    [*idcs_asstrs] = idcs_asstr.split(' ')
+                    for i, idx in enumerate(idcs_asstrs):
+                        measuresdict['spikeshoulderpeak'+str(i)] = {
+                            'idx': int(idx),
+                            'color': 'red'
+                        }
 
     else:
         if float(eventmeasures_series['edtrace_rise-time']) > 0:

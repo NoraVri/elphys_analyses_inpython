@@ -23,7 +23,7 @@ import singleneuron_analyses_functions as snafs
 
 
 class SingleNeuron:
-    # init
+    # initializing the class instance
     def __init__(self,
                  singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
@@ -40,13 +40,15 @@ class SingleNeuron:
                 'min_depolamp': 0.2,
                 'peakwindow': 5,
                 'eventdecaywindow': 40,
+                'spikeahpwindow': 100,
                 'noisefilter_hpfreq': 3000,
                 'oscfilter_lpfreq': 20,
                 'plot': 'off'
             }
-        }       # notes are updated with non-default kwargs needed to exactly recreate analyses results inside each method.
-                # the objects containing analyses results are updated
-                # inside the method that gets them, or from stored results.
+        }       # Notes are updated with non-default kwargs needed to exactly recreate
+                    # analyses results inside each method.
+                # The objects containing analyses results are updated
+                    # inside the method that gets them, or from stored results.
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
@@ -56,7 +58,7 @@ class SingleNeuron:
         self.get_singleneuron_storedresults()
 
 
-
+    # save all results currently present on the singleneuron instance
     def write_results(self):
         """
         this function saves all analysis results belonging to the singleneuron instance
@@ -88,7 +90,7 @@ class SingleNeuron:
             print('no results folder found')
 
 
-
+    # get all raw electrophysiology recordings associated with singleneuron
     def get_singleneuron_rawdata(self):
         """ This function uses singleneuron_name and path to find the
         raw data file(s) recorded from singleneuron.
@@ -127,7 +129,7 @@ class SingleNeuron:
             print('files matching neuron name exactly were not found')
 
 
-
+    # remove channels on which singleneuron is not recorded from a rawdata_block
     def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
         """ This function takes the name of a file/block and the number of the recording channel-set (voltage and current)
         on which singleneuron is not recorded.
@@ -155,7 +157,7 @@ class SingleNeuron:
                     })
 
 
-
+    # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
         """ This function takes the name of a recording file/block as input,
         and returns self.rawdata_blocks without the recording by that name.
@@ -171,7 +173,7 @@ class SingleNeuron:
                     self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
 
 
-
+    # get all 'clean' data and any stored analysis results for singleneuron
     def get_singleneuron_storedresults(self):
         """ This function finds any files in the 'myResults' folder bearing singleneuron's name,
         and adds their contents to the relevant containers on this instance of singleneuron.
@@ -219,8 +221,10 @@ class SingleNeuron:
 
 
 
-# %% functions for quickly seeing things about the raw data
+# %% functions for plotting/seeing stuff
 
+
+    # getting a list of all block names
     def get_blocknames(self, printing='on'):
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them.
         """
@@ -231,7 +235,7 @@ class SingleNeuron:
         return blocks_list
 
 
-
+    # plotting all raw data, as recorded
     def plot_allrawdata(self):
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index (voltage/current/aux).
@@ -241,81 +245,19 @@ class SingleNeuron:
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 
-
-    def plot_blocks_byname(self, *block_file_origin, mark_events='none'):
+    # plotting specific blocks, optionally with action potentials or depolarizing events marked
+    def plot_blocks_byname(self, *block_file_origin, events_to_mark='none'):
         """takes the name of the file from which the rawdata_block was created
         and plots only that block (separate subplots for each channel_index).
         """
         blocknames_list = self.get_blocknames(printing='off')
         for block_name in block_file_origin:
             block = self.rawdata_blocks[blocknames_list.index(block_name)]
-            plots.plot_block(block, mark_events)
+            plots.plot_block(block, events_to_mark)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 
-
-# %% functions for analyzing raw data
-
-# %% depolarizing events (subthreshold ones and action potentials)
-    def get_depolarizingevents_fromrawdata(self, **kwargs):
-        """This function goes over all voltage-traces in all raw-data blocks, and returns
-        two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
-        Each dataframe contains a set of standard measures taken from each event, as well as
-        all information needed to recover the location of the event in the original data trace.
-        Default values for function parameters are read in from rawdata_readingnotes, and are
-        updated there if non-default kwargs are used.
-
-        Inputs (all optional):
-        'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
-        'min_depolamp': minimal amplitude from baseline to a possible event peak.
-        'peakwindow': maximal time between a detected depolarization and an event peak (in ms).
-        'eventdecaywindow': maximal time after peak within which voltage should decay again to <80% of its amplitude.
-        'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
-        'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
-        'plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.
-
-        !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
-        The recommended workflow is to use snafs.get_depolarizingevents() on a (time_slice of)
-        single, representative segment first to find good settings for kwargs.
-        !! Once satisfied with the results, run self.write_results() to save the data !!
-        """
-        for key, value in kwargs.items():
-            if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
-                self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value
-
-        # initializing empty measures-dictionaries
-        all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
-        # getting all events: looping over each block, and each trace within each block
-        for block in self.rawdata_blocks:
-            for i, segment in enumerate(block.segments):
-                (segment_actionpotentials,
-                 segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
-                                                            segment,
-                                                            **self.rawdata_readingnotes['getdepolarizingevents_settings'])
-
-                trace_origin = [block.file_origin]
-                segment_idx = [i]
-                segment_actionpotentials['file_origin'] = \
-                    trace_origin * len(segment_actionpotentials['peakv'])
-                segment_actionpotentials['segment_idx'] = \
-                    segment_idx * len(segment_actionpotentials['peakv'])
-                segment_subthresholddepolarizations['file_origin'] = \
-                    trace_origin * len(segment_subthresholddepolarizations['peakv'])
-                segment_subthresholddepolarizations['segment_idx'] = \
-                    segment_idx * len(segment_subthresholddepolarizations['peakv'])
-
-                # updating the measures-dictionaries with the results from a single trace
-                for key in all_actionpotentials:
-                    all_actionpotentials[key] += segment_actionpotentials[key]
-                for key in all_depolarizations:
-                    all_depolarizations[key] += segment_subthresholddepolarizations[key]
-
-        self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
-        self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
-
-
-
-# %% functions for plotting analysis results
+    # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents_overlayed(self, condition_series=pd.Series(),
                                    get_subthreshold_events = True,
                                    newplot_per_block=False, blocknames_list = None,
@@ -412,20 +354,21 @@ class SingleNeuron:
                 figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap), label=colorby_measure)
 
 
-
+    # plotting (subsets of) action potentials or depolarizing events, individually with measures marked
     def plot_individualdepolevents_withmeasures(self, condition_series=pd.Series(),
                                                 get_subthreshold_events = True,
                                                 plotwindow_inms = 40,
-                                                baselinewindow_inms = 5):
-        """ This function plots the subset of events for which the condition is True.
-        Each event is plotted in a separate figure, with one subplot showing the
-        raw voltage trace and one showing the event-detect trace (from which filtered data are substracted).
+                                                prebaselinewindow_inms = 5):
+        """ This function plots the subset of events for which the condition is True,
+        each a separate figure. By default, subthreshold events are plotted,
+        with one subplot showing the raw voltage trace and one showing the
+        event-detect trace (with oscillations and noise substracted).
+        If get_subthreshold_events is False, action potentials are plotted.
         In each subplot, the relevant measures taken from that event are marked.
 
-        Mandatory input:
-        condition_series: a Pandas True/False series (same length as depolarizingevents) marking a subset of events for plotting.
-
         Optional inputs:
+        condition_series: a Pandas True/False series (same length as depolarizingevents)
+                          marking a subset of events for plotting.
         plotwindow_inms: default=40, the total length of the plot window.
         baselinewindow_inms: default=5, the length of the plot window before baselinev_idx.
         """
@@ -453,11 +396,79 @@ class SingleNeuron:
                         block_events,
                         vtrace_idx,
                         self.rawdata_readingnotes['getdepolarizingevents_settings'],
-                        plotwindow_inms, baselinewindow_inms)
+                        plotwindow_inms, prebaselinewindow_inms)
+
+
+
+# %% functions for analyzing raw data
+
+
+# %% depolarizing events (subthreshold ones and action potentials)
+
+
+    # getting the action_potentials and depolarizing_events DataFames
+    def get_depolarizingevents_fromrawdata(self, **kwargs):
+        """This function goes over all voltage-traces in all raw-data blocks, and returns
+        two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
+        Each dataframe contains a set of standard measures taken from each event, as well as
+        all information needed to recover the location of the event in the original data trace.
+        Default values for function parameters are read in from rawdata_readingnotes, and are
+        updated there if non-default kwargs are used.
+
+        Inputs (all optional):
+        'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
+        'min_depolamp': minimal amplitude from baseline to a possible event peak.
+        'peakwindow': maximal time between a detected depolarization and an event peak (in ms).
+        'eventdecaywindow': maximal time after peak within which voltage should decay again to <80% of its amplitude.
+        'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
+        'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
+        'plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.
+
+        !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
+        The recommended workflow is to use snafs.get_depolarizingevents() on a (time_slice of)
+        single, representative segment first to find good settings for kwargs.
+        !! Once satisfied with the results, run self.write_results() to save the data !!
+        """
+        for key, value in kwargs.items():
+            if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
+                self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value
+
+        # initializing empty measures-dictionaries
+        all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
+        # getting all events: looping over each block, and each trace within each block
+        for block in self.rawdata_blocks:
+            for i, segment in enumerate(block.segments):
+                (segment_actionpotentials,
+                 segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
+                                                            segment,
+                                                            **self.rawdata_readingnotes['getdepolarizingevents_settings'])
+
+                trace_origin = [block.file_origin]
+                segment_idx = [i]
+                segment_actionpotentials['file_origin'] = \
+                    trace_origin * len(segment_actionpotentials['peakv'])
+                segment_actionpotentials['segment_idx'] = \
+                    segment_idx * len(segment_actionpotentials['peakv'])
+                segment_subthresholddepolarizations['file_origin'] = \
+                    trace_origin * len(segment_subthresholddepolarizations['peakv'])
+                segment_subthresholddepolarizations['segment_idx'] = \
+                    segment_idx * len(segment_subthresholddepolarizations['peakv'])
+
+                # updating the measures-dictionaries with the results from a single trace
+                for key in all_actionpotentials:
+                    all_actionpotentials[key] += segment_actionpotentials[key]
+                for key in all_depolarizations:
+                    all_depolarizations[key] += segment_subthresholddepolarizations[key]
+
+        self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
+        self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
 
 
 
 # %% the actual reading in of raw data from files
+
+
+    # reading .abf files
     def files_reader_abf(self):
         """This function changes the current directory to the folder containing
         the .abf raw data files recorded for singleneuron, and returns the
@@ -487,7 +498,7 @@ class SingleNeuron:
                 self.rawdata_blocks.append(block)
 
 
-
+    # reading .pxp files
     def files_reader_pxp(self):
         """This function changes the current directory to the folder containing
         the .pxp raw data file recorded for singleneuron, and returns the
@@ -526,13 +537,13 @@ class SingleNeuron:
             #block.file_origin as a unique pointer to the original raw data files
 
 
-
+    # reading .ibw files
     def files_reader_ibw(self):
         print('function under construction')
 
 
-
     @staticmethod
+    # helper function to files_reader_pxp
     def get_bwgroup_as_block(run, subdirectories_list, reader):
         #getting the traces belonging to this run
         traces_names = [item for item in subdirectories_list if item.startswith(run)]

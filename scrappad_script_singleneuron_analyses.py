@@ -18,12 +18,25 @@ from singleneuron_class import SingleNeuron
 
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
+cell20190805A.get_depolarizingevents_fromrawdata()
+cell20190805A.write_results()
 cell20190814A = SingleNeuron("20190814A")
+cell20190814A.get_depolarizingevents_fromrawdata()
+cell20190814A.write_results()
+# %%
 cell20190729A = SingleNeuron("20190729A")
+cell20190729A.get_depolarizingevents_fromrawdata(spikeahpwindow=250)
+cell20190729A.write_results()
 cell20200308F = SingleNeuron('20200308F')
+cell20200308F.get_depolarizingevents_fromrawdata()
+cell20200308F.write_results()
+# %%
 cell20200308D = SingleNeuron('20200308D')
+cell20200308D.get_depolarizingevents_fromrawdata()
+cell20200308D.write_results()
 cell20200310C = SingleNeuron('20200310C')
-
+cell20200310C.get_depolarizingevents_fromrawdata()
+cell20200310C.write_results()
 # %% plotting some stuff
 cell20190805A.plot_depolevents_overlayed(get_subthreshold_events=False,
                                          colorby_measure='baselinev')

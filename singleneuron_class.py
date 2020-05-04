@@ -39,8 +39,8 @@ class SingleNeuron:
                 'min_depolspeed': 0.1,
                 'min_depolamp': 0.2,
                 'peakwindow': 5,
-                'eventdecaywindow': 40,
-                'spikeahpwindow': 100,
+                'spikewindow': 40,
+                'spikeahpwindow': 150,
                 'noisefilter_hpfreq': 3000,
                 'oscfilter_lpfreq': 20,
                 'plot': 'off'
@@ -418,8 +418,10 @@ class SingleNeuron:
         Inputs (all optional):
         'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
         'min_depolamp': minimal amplitude from baseline to a possible event peak.
-        'peakwindow': maximal time between a detected depolarization and an event peak (in ms).
-        'eventdecaywindow': maximal time after peak within which voltage should decay again to <80% of its amplitude.
+        'peakwindow': maximal time between a detected depolarization and an event peak (in ms), and
+          time after peak within which voltage should not get higher, and decay again to <80% of its amplitude.
+        'spikewindow': time after peak within which half-width, threshold and whole-width are expected to occur.
+        'spikeahpwindow': time after threshold-width end within which AHP end is expected to occur.
         'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
         'plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.

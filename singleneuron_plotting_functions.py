@@ -190,7 +190,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures,
                                   plot_startidx, total_plotwindow_inms,
                                   eventmeasures_series=eventmeasures,
                                   **kwargs)
-            print('event no.' + str(event_idx) + ' plotted')
+            # print('event no.' + str(event_idx) + ' plotted')
 
     if not axis_object:
         return figure, axis
@@ -298,17 +298,17 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
 
     # getting parameters as measured from the raw voltage trace
     if measuretype == 'raw':
-        if float(eventmeasures_series['rise-time']) > 0:
-            measuresdict['rise-time'] = {
+        if float(eventmeasures_series['rise_time']) > 0:
+            measuresdict['rise_time'] = {
                 'idx': eventmeasures_series['rt_start_idx'],
-                'duration': float(eventmeasures_series['rise-time']),
+                'duration': float(eventmeasures_series['rise_time']),
                 'color': 'red'
             }
 
-        if float(eventmeasures_series['half-width']) > 0:
-            measuresdict['half-width'] = {
-                'idx': eventmeasures_series['hw_start_idx'] - 1,
-                'duration': float(eventmeasures_series['half-width']),
+        if float(eventmeasures_series['half_width']) > 0:
+            measuresdict['half_width'] = {
+                'idx': eventmeasures_series['hw_start_idx'],
+                'duration': float(eventmeasures_series['half_width']),
                 'color': 'green'
             }
 
@@ -329,10 +329,10 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                     'color': 'blue'
                 }
 
-            if float(eventmeasures_series['threshold-width']) > 0:
-                measuresdict['threshold-width'] = {
+            if float(eventmeasures_series['threshold_width']) > 0:
+                measuresdict['threshold_width'] = {
                     'idx': eventmeasures_series['threshold_idx'],
-                    'duration': float(eventmeasures_series['threshold-width']),
+                    'duration': float(eventmeasures_series['threshold_width']),
                     'color': 'black'
                 }
 
@@ -355,6 +355,7 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                 if not shoulderpeaks_idcs_asstr == '[]':
                     idcs_asstr = shoulderpeaks_idcs_asstr.replace('[','')
                     idcs_asstr = idcs_asstr.replace(']','')
+                    idcs_asstr = idcs_asstr.replace(',','')
                     [*idcs_asstrs] = idcs_asstr.split(' ')
                     for i, idx in enumerate(idcs_asstrs):
                         measuresdict['spikeshoulderpeak'+str(i)] = {
@@ -365,17 +366,17 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
 
     # getting parameters as measured from the event-detect trace
     else:
-        if float(eventmeasures_series['edtrace_rise-time']) > 0:
-            measuresdict['rise-time'] = {
+        if float(eventmeasures_series['edtrace_rise_time']) > 0:
+            measuresdict['rise_time'] = {
                 'idx': eventmeasures_series['edtrace_rt_start_idx'],
-                'duration': float(eventmeasures_series['edtrace_rise-time']),
+                'duration': float(eventmeasures_series['edtrace_rise_time']),
                 'color': 'red'
             }
 
-        if float(eventmeasures_series['edtrace_half-width']) > 0:
-            measuresdict['half-width'] = {
+        if float(eventmeasures_series['edtrace_half_width']) > 0:
+            measuresdict['half_width'] = {
                 'idx': eventmeasures_series['edtrace_hw_start_idx'],
-                'duration': float(eventmeasures_series['edtrace_half-width']),
+                'duration': float(eventmeasures_series['edtrace_half_width']),
                 'color': 'green'
             }
 

@@ -22,7 +22,7 @@ import quantities as pq
 # with measures, in two dictionaries (one for subtheshold events and one for APs).
 def get_depolarizingevents(single_segment,
                            min_depolspeed=0.1, min_depolamp=0.2,
-                           peakwindow=5, eventdecaywindow=40, spikeahpwindow=100,
+                           peakwindow=5, spikewindow=40, spikeahpwindow=150,
                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
                            plot='off'):
     """ This function finds depolarizing events and returns two dictionaries,
@@ -57,7 +57,7 @@ def get_depolarizingevents(single_segment,
     # parameter settings - default time windows:
     ms_insamples = int(sampling_frequency / 1000)
     peakwindow_insamples = int(sampling_frequency / 1000 * peakwindow) # max distance from depol_idx to peak
-    eventdecaywindow_insamples = int(sampling_frequency / 1000 * eventdecaywindow)
+    spikewindow_insamples = int(sampling_frequency / 1000 * spikewindow)
     spikeahpwindow_insamples = int(sampling_frequency / 1000 * spikeahpwindow)
 
     # filtering the raw voltage twice: high-pass to get 'only the noise',
@@ -99,7 +99,7 @@ def get_depolarizingevents(single_segment,
                                                 voltage_eventdetecttrace,
                                                 current_recording,
                                                 ms_insamples,
-                                                eventdecaywindow_insamples,
+                                                spikewindow_insamples,
                                                 spikeahpwindow_insamples,
                                                 sampling_period_inms)
 
@@ -211,8 +211,9 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
 
             # 2. identify spontaneous depolarizations that are followed by a peak in voltage
             # points qualify if:
-            # - applied current does not change within 50 ms before and after peak
-            # - peakv > baselinev + mindepolamp in the event-detect trace
+            # - applied current does not change within 50 ms before and after peak,
+            # - peakv > baselinev + mindepolamp in the event-detect trace,
+            # - maxv after peakv is larger than peakv, and
             # - minv after peakv goes back down to <80% of peak amp within peakwindow
             current_predepolarization = current_recording[
                                         int(depol_idx - (50 * ms_insamples)):
@@ -233,10 +234,14 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
             else:
                 peakv_idx = np.argmax(ed_peakvtrace) + depol_idx
                 ed_postpeaktrace = voltage_eventdetecttrace[
-                                   peakv_idx:peakv_idx + peakwindow_insamples]
+                                   peakv_idx + 1:peakv_idx + peakwindow_insamples + 1]
                 ed_postpeakmin = np.amin(ed_postpeaktrace)
+                ed_postpeakmax = np.amax(ed_postpeaktrace) - 0.05
 
-            if ed_postpeakmin > ed_baselinev + 0.9 * (ed_peakv - ed_baselinev):
+            if ed_postpeakmax > ed_peakv:
+                continue
+
+            if ed_postpeakmin > ed_baselinev + 0.8 * (ed_peakv - ed_baselinev):
                 continue
             else:
                 depols_with_peaks.append(depol_idx)
@@ -307,7 +312,7 @@ def get_events_measures(peaks_idcs,
 
 
         # measures specific to action potentials:
-        if (peak_v > 10 or ed_peakamp > 60) \
+        if (peak_v > 40 or ed_peakamp > 50) \
             and peak_idx < len(voltage_recording) - spikewindow_insamples:
 
             #threshold: 10% of max. dV/dt
@@ -346,29 +351,30 @@ def get_events_measures(peaks_idcs,
                 n_spikeshoulderpeaks = len(spikeshoulderpeaks)
 
             # after-hyperpolarization measures
-                ahptrace = voltage_denoised[(peak_idx + returntothreshold_inidcs):
-                                             (peak_idx
-                                             + returntothreshold_inidcs
+                ahptrace = voltage_denoised[(threshold_idx + thresholdwidth_inidcs):
+                                             (threshold_idx + thresholdwidth_inidcs                                             + returntothreshold_inidcs
                                              + spikeahpwindow_insamples)]
-                if len(ahptrace) > spikeahpwindow_insamples \
+
+                if len(ahptrace) > spikeahpwindow_insamples - 2 \
                  and np.amin(ahptrace) < baseline_v:
                 # ahp min and amplitude
                     ahpmin_idx_inahptrace = np.argmin(ahptrace)
-                    ahpmin_idx = int(ahpmin_idx_inahptrace + peak_idx + returntothreshold_inidcs)
+                    ahpmin_idx = int(ahpmin_idx_inahptrace + threshold_idx + thresholdwidth_inidcs)
                     ahpamplitude = baseline_v - np.amin(ahptrace)
 
                 # ahp width
                     ahpwidth_inidcs = ahpmin_idx_inahptrace
-                    while ahptrace[ahpwidth_inidcs] <= baseline_v \
-                     and len(ahptrace) < ahpwidth_inidcs:
+                    while ahptrace[ahpwidth_inidcs] < baseline_v \
+                     and ahpwidth_inidcs < len(ahptrace) - 1:
                         ahpwidth_inidcs += 1
-                    ahpend_idx = int(peak_idx + returntothreshold_inidcs + ahpwidth_inidcs + 1)
-                    if voltage_denoised[ahpend_idx] <= baseline_v:
+                    ahpend_idx = int(threshold_idx + thresholdwidth_inidcs + ahpwidth_inidcs + 1)
+                    if voltage_denoised[ahpend_idx] < baseline_v:
                         ahpend_idx = float('nan')
                     ahp_totalwidth_inidcs = ahpend_idx - threshold_idx + thresholdwidth_inidcs
                     ahp_width = ahp_totalwidth_inidcs * sampling_period_inms
 
-                elif baseline_v <= np.amin(ahptrace) <= threshold_v:
+                elif len(ahptrace) > spikewindow_insamples \
+                 and np.amin(ahptrace) <= threshold_v:
                     ahp_width = 0 # set to 0 if v decayed back to below threshold value
                     ahpmin_idx = float('nan')
                     ahpamplitude = float('nan')

@@ -144,7 +144,7 @@ class SingleNeuron:
             break
 
         if not self.rawdata_path:
-            print('files matching neuron name exactly were not found')
+            print('no files matching neuron name were found')
 
 
     # get all 'clean' data and any stored analysis results for singleneuron
@@ -616,13 +616,69 @@ class SingleNeuron:
         for run in unique_runs:
             block = self.get_bwgroup_as_block(run, subdirectories_list, reader=reader)
             self.rawdata_blocks.append(block)
-            #segments and channel_indexes - indexes and units (on analogsignals)
-            #block.file_origin as a unique pointer to the original raw data files
 
 
     # reading .ibw files
     def files_reader_ibw(self):
-        print('function under construction')
+        # go to the folder containing the raw data and get a list of ibw files
+        os.chdir(self.rawdata_path)
+        ibwfiles_list = [filename for filename in os.listdir() if filename.endswith('.ibw')]
+        # get a list of unique runs (each run should have multiple files that together will be one block)
+        runs_list = [filename[0:3] for filename in ibwfiles_list]
+        unique_runs = list(set(runs_list))
+        unique_runs.sort()
+        for run in unique_runs:
+            # get the names of all the files associated with this run
+            run_traces = [filename for filename in ibwfiles_list if filename.startswith(run)]
+            vtrace_name = [name for name in run_traces if 'S1' in name][0]
+            itrace_name = [name for name in run_traces if 'S2' in name][0]
+            if len (run_traces) == 3:
+                auxtrace_name = [name for name in run_traces if 'S3' in name][0]
+                auxsignals_reader = io.IgorIO(filename=auxtrace_name)
+                auxsignals = auxsignals_reader.read_analogsignal()
+            vtrace_reader = io.IgorIO(filename=vtrace_name)
+            vsignals = vtrace_reader.read_analogsignal()
+            itrace_reader = io.IgorIO(filename=itrace_name)
+            isignals = itrace_reader.read_analogsignal()
+
+            # setting up an empty block with the right number of channel_indexes:
+            block = Block()
+            for i in range(len(run_traces)):
+                chidx = ChannelIndex(index=i, channel_names=['Channel Group ' + str(i)])
+                block.channel_indexes.append(chidx)
+
+            # setting up the block with right number of segments
+            block.file_origin = vtrace_name[0:3] + vtrace_name[6:]
+            if 'spontactivity' in block.file_origin:  # by my conventions, spontactivity protocols are the only ones using 'continuous mode', and these never have a third recording channel.
+                no_of_segments = 1
+                vsignals = np.transpose(vsignals).reshape(-1, 1)
+                isignals = np.transpose(isignals).reshape(-1, 1)
+            else:
+                no_of_segments = len(vsignals[1, :])
+
+            for i in range(no_of_segments):
+                segment = Segment(name=block.file_origin + str(i))
+                block.segments.append(segment)
+
+            # adding the raw data
+            for idx, segment in enumerate(block.segments):
+                single_v_analogsignal = vsignals[:, idx].rescale('mV')
+                segment.analogsignals.append(single_v_analogsignal)
+                single_v_analogsignal.channel_index = block.channel_indexes[0]
+                block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
+
+                single_i_analogsignal = isignals[:, idx].rescale('pA')
+                segment.analogsignals.append(single_i_analogsignal)
+                single_i_analogsignal.channel_index = block.channel_indexes[1]
+                block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
+
+                if len(run_traces) == 3:
+                    single_aux_analogsignal = auxsignals[:, idx]
+                    segment.analogsignals.append(single_aux_analogsignal)
+                    single_aux_analogsignal.channel_index = block.channel_indexes[2]
+                    block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
+
+            self.rawdata_blocks.append(block)
 
 
     @staticmethod

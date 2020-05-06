@@ -16,6 +16,8 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+
+cell20200310G = SingleNeuron('20200310G')
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
 cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')

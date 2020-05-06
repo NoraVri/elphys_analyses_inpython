@@ -14,6 +14,7 @@ from neo.core import Block, Segment, ChannelIndex
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import quantities as pq
 import pandas as pd
 
 # imports of functions I wrote
@@ -100,25 +101,42 @@ class SingleNeuron:
         This function currently works for .abf-files (one folder per singleneuron)
         and pxp-files (one file per singleneuron; each file has an internal folder-structure).
         """
+        search_name = re.split('(\D)', self.name)
+        search_name = search_name[0] + search_name[1]
+
         for folder_name in os.listdir(self.path):
 
             subdirectory_path = self.path + '\\' + folder_name
+            searchitems_list = [item for item in os.listdir(subdirectory_path)
+                                if search_name in item]
 
-            if self.name in os.listdir(subdirectory_path):
-                self.rawdata_recordingtype = 'abf'
-                self.rawdata_path = subdirectory_path+'\\'+self.name
-                self.files_reader_abf()
+            if len(searchitems_list) > 0:
+                for item in searchitems_list:
+                    if len(item.split('.')) == 2 and item.split('.')[1] == 'pxp':
+                        self.rawdata_recordingtype = 'pxp'
+                        self.rawdata_path = subdirectory_path
+                        self.files_reader_pxp()
 
-            elif (self.name + '.pxp') in os.listdir(subdirectory_path):
-                self.rawdata_recordingtype = 'pxp'
-                self.rawdata_path = subdirectory_path
-                self.files_reader_pxp()
+                    elif len(item.split('.')) == 1:
+                        subdirectory_path = subdirectory_path + '\\' + item
+                        recording_files = [file for file in os.listdir(subdirectory_path)
+                                     if file.endswith(('.ibw',
+                                                       '.abf',
+                                                       '.txt'))]
+                        if len(recording_files) > 0:
+                            file_type = recording_files[0].split(sep='.')[1]
 
-            elif (self.name + '_asibws') in os.listdir(subdirectory_path):
-                self.rawdata_recordingtype = 'ibw'
-                self.rawdata_path = subdirectory_path+'\\'+self.name+'_asibws'
-                self.files_reader_ibw()
-                print('this code is under construction')
+                            self.rawdata_path = subdirectory_path
+                            self.rawdata_recordingtype = file_type
+
+                        if self.rawdata_recordingtype == 'abf':
+                            self.files_reader_abf()
+
+                        if self.rawdata_recordingtype == 'ibw':
+                            self.files_reader_ibw()
+
+                        if self.rawdata_recordingtype == 'txt':
+                            print('txt file importing not yet available')
 
             else:
                 continue
@@ -127,50 +145,6 @@ class SingleNeuron:
 
         if not self.rawdata_path:
             print('files matching neuron name exactly were not found')
-
-
-    # remove channels on which singleneuron is not recorded from a rawdata_block
-    def rawdata_remove_nonrecordingchannel(self, file_origin, non_recording_channel):
-        """ This function takes the name of a file/block and the number of the recording channel-set (voltage and current)
-        on which singleneuron is not recorded.
-        It returns self.rawdata_blocks with the superfluous traces removed from the relevant file,
-        and updates rawdata_readingnotes accordingly.
-        """
-        if not self.rawdata_readingnotes.get('nonrecordingchannels'):
-            self.rawdata_readingnotes['nonrecordingchannels'] = {}
-
-        for block in self.rawdata_blocks:
-            if block.file_origin == file_origin:
-                if non_recording_channel == 1:
-                    block.channel_indexes[0:2] = []
-                    for segment in block.segments:
-                        segment.analogsignals[0:2] = []
-                elif non_recording_channel == 2:
-                    block.channel_indexes[2:4] = []
-                    for segment in block.segments:
-                        segment.analogsignals[2:4] = []
-                else: print('input valid channel-set number: 1 or 2')
-
-                if file_origin not in self.rawdata_readingnotes['nonrecordingchannels'].keys():
-                    self.rawdata_readingnotes['nonrecordingchannels'].update({
-                        file_origin: non_recording_channel
-                    })
-
-
-    # remove a block that does not contain any actual data for singleneuron
-    def rawdata_remove_nonrecordingblock(self, file_origin):
-        """ This function takes the name of a recording file/block as input,
-        and returns self.rawdata_blocks without the recording by that name.
-        rawdata_readingnotes get updated with the names of the blocks that are removed.
-        """
-        if not self.rawdata_readingnotes.get('nonrecordingblocks'):
-            self.rawdata_readingnotes['nonrecordingblocks'] = []
-
-        for i, block in enumerate(self.rawdata_blocks):
-            if block.file_origin == file_origin:
-                self.rawdata_blocks.__delitem__(i)
-                if file_origin not in self.rawdata_readingnotes['nonrecordingblocks']:
-                    self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
 
 
     # get all 'clean' data and any stored analysis results for singleneuron
@@ -211,14 +185,121 @@ class SingleNeuron:
                     self.passive_decay = {}
 
         if self.rawdata_readingnotes.get('nonrecordingchannels'):
-            for filename, channelno in \
+            for filename, dictionary in \
                     self.rawdata_readingnotes['nonrecordingchannels'].items():
-                self.rawdata_remove_nonrecordingchannel(filename, channelno)
+                self.rawdata_remove_nonrecordingchannel(filename,
+                                                        dictionary['nonrecordingchannel'],
+                                                        dictionary['is_pairedrecording'])
 
         if self.rawdata_readingnotes.get('nonrecordingblocks'):
             for filename in self.rawdata_readingnotes['nonrecordingblocks']:
                 self.rawdata_remove_nonrecordingblock(filename)
 
+        if self.rawdata_readingnotes.get('nonrecordingtimeslices'):
+            for filename, dictionary in \
+                    self.rawdata_readingnotes['nonrecordingtimeslices'].items():
+                self.rawdata_remove_nonrecordingtimeslice(filename,
+                                                  trace_start_t=dictionary['t_start'],
+                                                  trace_end_t=dictionary['t_end'],
+                                                  segment_idx=dictionary['segment_idx'])
+
+
+    # remove a block that does not contain any actual data for singleneuron
+    def rawdata_remove_nonrecordingblock(self, file_origin):
+        """ This function takes the name of a recording file/block as input,
+        and returns self.rawdata_blocks without the recording by that name.
+        rawdata_readingnotes get updated with the names of the blocks that are removed.
+        """
+        if not self.rawdata_readingnotes.get('nonrecordingblocks'):
+            self.rawdata_readingnotes['nonrecordingblocks'] = []
+
+        for i, block in enumerate(self.rawdata_blocks):
+            if block.file_origin == file_origin:
+                self.rawdata_blocks.__delitem__(i)
+                if file_origin not in self.rawdata_readingnotes['nonrecordingblocks']:
+                    self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
+
+
+    # remove channels on which singleneuron is not recorded from a rawdata_block
+    def rawdata_remove_nonrecordingchannel(self, file_origin,
+                                           non_recording_channel,
+                                           pairedrecording=False):
+        """ This function takes the name of a file/block and the number of the recording channel-set (voltage and current)
+        on which singleneuron is not recorded.
+        It returns self.rawdata_blocks with the superfluous traces removed from the relevant file,
+        and updates rawdata_readingnotes accordingly.
+        """
+        if not self.rawdata_readingnotes.get('nonrecordingchannels'):
+            self.rawdata_readingnotes['nonrecordingchannels'] = {}
+
+        for block in self.rawdata_blocks:
+            if block.file_origin == file_origin:
+                if non_recording_channel == 1:
+                    block.channel_indexes[0:2] = []
+                    for segment in block.segments:
+                        segment.analogsignals[0:2] = []
+                elif non_recording_channel == 2:
+                    block.channel_indexes[2:4] = []
+                    for segment in block.segments:
+                        segment.analogsignals[2:4] = []
+                else: print('input valid channel-set number: 1 or 2')
+
+                if pairedrecording:
+                    block.annotate(is_paired=True)
+
+                if file_origin not in self.rawdata_readingnotes['nonrecordingchannels'].keys():
+                    self.rawdata_readingnotes['nonrecordingchannels'].update({
+                        file_origin: {'nonrecordingchannel': non_recording_channel,
+                                      'is_pairedrecording': pairedrecording}
+                    })
+
+
+    # remove parts of individual traces where singleneuron is not yet/no longer being recorded
+    def rawdata_remove_nonrecordingtimeslice(self, file_origin,
+                                             trace_start_t=None,
+                                             trace_end_t=None,
+                                             segment_idx=None):
+        """ This function takes the name of the file/block from which a time-slice is to be removed,
+        and the start and end time of the part of the trace that should be kept.
+        If not segment index is provided, it's assumed to be 0 (the single segment on blocks that have just one long trace).
+        It returns self.rawdata_blocks with the superfluous data removed,
+        and updates rawdata_readingnotes accordingly.
+        """
+        if not self.rawdata_readingnotes.get('nonrecordingtimeslices'):
+            self.rawdata_readingnotes['nonrecordingtimeslices'] = {}
+
+        if not segment_idx:
+            segment_idx = 0
+
+        if trace_start_t:
+            start_t = trace_start_t * pq.s
+        else: start_t = trace_start_t
+
+        if trace_end_t:
+            end_t = trace_end_t * pq.s
+        else: end_t = trace_end_t
+
+        for block in self.rawdata_blocks:
+            if block.file_origin == file_origin:
+                block_idx = self.rawdata_blocks.index(block)
+                segmentslice_tokeep = block.segments[segment_idx].time_slice(
+                                                t_start=start_t,
+                                                t_stop=end_t)
+                self.rawdata_blocks[block_idx].segments[segment_idx] = segmentslice_tokeep
+                self.rawdata_blocks[block_idx].channel_indexes[0].analogsignals[
+                    segment_idx] = segmentslice_tokeep.analogsignals[0]
+                self.rawdata_blocks[block_idx].channel_indexes[1].analogsignals[
+                    segment_idx] = segmentslice_tokeep.analogsignals[1]
+                if len(segmentslice_tokeep.analogsignals) == 3:
+                    self.rawdata_blocks[block_idx].channel_indexes[2].analogsignals[
+                        segment_idx] = segmentslice_tokeep.analogsignals[2]
+
+                if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+                    self.rawdata_readingnotes['nonrecordingtimeslices'].update({
+                        file_origin: {'t_start': trace_start_t,
+                                      't_end': trace_end_t,
+                                      'segment_idx': segment_idx}
+                    })
 
 
 # %% functions for plotting/seeing stuff

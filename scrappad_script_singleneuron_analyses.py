@@ -20,7 +20,9 @@ from singleneuron_analyses_functions import get_depolarizingevents
 cell20190805A = SingleNeuron('20190805A')
 cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
-# cell20190805A.plot_allrawdata()
+cell20190805A.rawdata_remove_nonrecordingtimeslice('gapFree_0001.abf',
+                                                   trace_start_t=13)
+cell20190805A.plot_allrawdata()
 
 # a_segment = cell20190805A.rawdata_blocks[0].segments[0].time_slice(
 #     t_start=150*pq.s, t_stop=200*pq.s)
@@ -30,7 +32,7 @@ cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
 #                                              oscfilter_lpfreq=25,
 #                                              peakwindow=7,
 #                                              spikeahpwindow=250, plot='on')
-
+# %%
 cell20190805A.get_depolarizingevents_fromrawdata(oscfilter_lpfreq=25,
                                                  peakwindow=7,
                                                  spikeahpwindow=250)

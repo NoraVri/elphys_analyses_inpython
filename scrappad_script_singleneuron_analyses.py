@@ -16,12 +16,16 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+
+cell20200310G = SingleNeuron('20200310G')
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
-# cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
-# cell20190805A.plot_allrawdata()
 
+cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
+cell20190805A.rawdata_remove_nonrecordingtimeslice('gapFree_0001.abf',
+                                                   trace_start_t=13)
+cell20190805A.plot_allrawdata()
 # a_segment = cell20190805A.rawdata_blocks[0].segments[0].time_slice(
 #     t_start=150*pq.s, t_stop=200*pq.s)
 
@@ -35,6 +39,7 @@ cell20190805A = SingleNeuron('20190805A')
 #                                                  peakwindow=7,
 #                                                  spikeahpwindow=250)
 # cell20190805A.write_results()
+
 
 cell20190805A.depolarizing_events.hist(column=['amplitude', 'rise_time', 'half_width'],
                                        bins=50)

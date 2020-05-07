@@ -20,32 +20,37 @@ import singleneuron_analyses_functions as snafs
 
 
 # plotting all traces of a block, in individual subplots per channel
-def plot_block(block, events_to_mark='none'):
+def plot_block(block, events_to_mark='none', time_axis_unit = 'ms'):
     """ takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     If a subthreshold events or action potentials DataFrame is passed through,
     baselinev and peakv points will be marked accordingly.
     """
     # getting the time axis all traces have in common
-    time_axis = block.channel_indexes[0].analogsignals[0].times
-    time_axis = time_axis.rescale('ms')
+    # time_axis = block.channel_indexes[0].analogsignals[0].times
+    # time_axis = time_axis.rescale('ms')
     # making one subplot per active recording channel
     nsubplots = len(block.channel_indexes)
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
     # plotting all the traces of the block
     for i in range(nsubplots):
-        traces = np.transpose(np.squeeze(np.array(list(iter(
-                                block.channel_indexes[i].analogsignals)))))
-        traces_unit = block.channel_indexes[i].analogsignals[0].units
-        axes[i].plot(time_axis, traces)
+        for analogsignal in block.channel_indexes[i].analogsignals:
+            time_axis = analogsignal.times.rescale(time_axis_unit)
+            trace_unit = analogsignal.units
+            trace_forplotting = np.squeeze(np.array(analogsignal))
+        # traces = np.transpose(np.squeeze(np.array(list(iter(
+        #                         block.channel_indexes[i].analogsignals)))))
+        # traces_unit = block.channel_indexes[i].analogsignals[0].units
+            axes[i].plot(time_axis, trace_forplotting)
         axes[i].set_xlabel('time (ms)')
-        axes[i].set_ylabel(str(traces_unit))
+        axes[i].set_ylabel(str(trace_unit))
 
     # marking event baselines and peaks, if applicable
     if isinstance(events_to_mark, pd.DataFrame):
         block_events = events_to_mark.loc[
                             events_to_mark['file_origin'] == block.file_origin]
         for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
+            time_axis = signal.times.rescale('ms')
             vtrace = np.squeeze(np.array(signal))
             trace_events = block_events.loc[block_events['segment_idx'] == idx]
             axes[0].scatter(time_axis[list(trace_events['baselinev_idx'])],

@@ -16,33 +16,57 @@ import quantities as pq
 os.chdir("D:\\hujigoogledrive\\research_YaromLabWork\\Code_inPython\\elphysDataAnalyses_working")
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_depolarizingevents
+from singleneuron_analyses_functions import apply_rawvtrace_manipulations
 
+# %%
+a_singleneuron = SingleNeuron('20200310G')
+a_full_signal = a_singleneuron.rawdata_blocks[10].segments[0].analogsignals[0]
+# %%
+a_singleneuron = SingleNeuron('20190805A')
+a_full_signal = a_singleneuron.rawdata_blocks[2].segments[0].analogsignals[0].time_slice(t_start=300*pq.s,t_stop=450*pq.s)
+# %%
+time_axis = a_full_signal.times
+sampling_freq = float(a_full_signal.sampling_rate)
+a_signal = np.squeeze(np.array(a_full_signal))
+_, v_oscs, _, inst_phase, inst_freq = apply_rawvtrace_manipulations(a_signal,
+                                                                    30, 5000,
+                                                                    sampling_freq,
+                                                                    time_axis, plot='on')
+# v_oscs_centered = v_oscs - np.mean(v_oscs)
+#
+# plt.figure()
+# plt.plot(time_axis, a_signal, label='raw v')
+# plt.plot(time_axis, v_oscs_centered, label='osctrace')
+# plt.plot(time_axis, inst_phase, label='inst. phase')
+# plt.plot(time_axis[1:], inst_freq, label='inst. freq.')
+# plt.legend()
+# %%
 cell20200310G = SingleNeuron('20200310G')
 # %% importing of a couple of 'best representative' recordings
 cell20190805A = SingleNeuron('20190805A')
 
-cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
-cell20190805A.rawdata_remove_nonrecordingtimeslice('gapFree_0001.abf',
-                                                   trace_start_t=13)
-cell20190805A.plot_allrawdata()
+# cell20190805A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20190805A.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', 1)
+# cell20190805A.rawdata_remove_nonrecordingtimeslice('gapFree_0001.abf',
+#                                                    trace_start_t=13)
+# cell20190805A.plot_allrawdata()
 # a_segment = cell20190805A.rawdata_blocks[0].segments[0].time_slice(
 #     t_start=150*pq.s, t_stop=200*pq.s)
-
+#
 # plt.close('all')
 # apsdict, depolsdict = get_depolarizingevents(a_segment,
 #                                              oscfilter_lpfreq=25,
 #                                              peakwindow=7,
 #                                              spikeahpwindow=250, plot='on')
 
-# cell20190805A.get_depolarizingevents_fromrawdata(oscfilter_lpfreq=25,
-#                                                  peakwindow=7,
-#                                                  spikeahpwindow=250)
+cell20190805A.get_depolarizingevents_fromrawdata(oscfilter_lpfreq=25,
+                                                 peakwindow=7,
+                                                 spikeahpwindow=250)
 # cell20190805A.write_results()
 
 
-cell20190805A.depolarizing_events.hist(column=['amplitude', 'rise_time', 'half_width'],
-                                       bins=50)
+# cell20190805A.depolarizing_events.hist(column=['amplitude', 'rise_time', 'half_width'],
+#                                        bins=50)
 # %%
 cell20190805A.depolarizing_events.plot.scatter(x='rise_time', y='amplitude',
                                                c='edtrace_rise_time',colormap='viridis')

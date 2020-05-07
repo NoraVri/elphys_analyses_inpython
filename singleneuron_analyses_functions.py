@@ -64,11 +64,13 @@ def get_depolarizingevents(single_segment,
     # and low-pass to get 'only the STOs'.
     # Subtract both from raw voltage to get trace for event-detection.
     (voltage_eventdetecttrace,
-     voltage_oscillationstrace, voltage_noisetrace) = apply_filters_torawdata(
+     voltage_oscillationstrace, voltage_noisetrace,
+     voltage_approxphase, voltage_approxinstfreq) = apply_rawvtrace_manipulations(
                                                         voltage_recording,
                                                         oscfilter_lpfreq,
                                                         noisefilter_hpfreq,
                                                         sampling_frequency,
+                                                        time_axis,
                                                         plot)
 
     #taking the ms-by-ms derivative, and adjusting time axis accordingly
@@ -97,6 +99,8 @@ def get_depolarizingevents(single_segment,
                                                 voltage_oscillationstrace,
                                                 voltage_noisetrace,
                                                 voltage_eventdetecttrace,
+                                                voltage_approxphase,
+                                                voltage_approxinstfreq,
                                                 current_recording,
                                                 ms_insamples,
                                                 spikewindow_insamples,
@@ -106,14 +110,9 @@ def get_depolarizingevents(single_segment,
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
     if plot == 'on':
-        figure,axes = plt.subplots(3,1,sharex='all')
+        figure,axes = plt.subplots(2,1,sharex='all')
         axes[0].plot(time_axis,voltage_recording,
                      color='blue',label='raw data')
-        axes[0].plot(time_axis, voltage_oscillationstrace,
-                     color='green', label='low-pass filtered data')
-        axes[0].plot(time_axis, voltage_recording-voltage_noisetrace,
-                     color='grey', label='high-pass filtered data subtracted')
-
         axes[0].scatter(time_axis[depolswithpeaks_idcs], voltage_recording[depolswithpeaks_idcs],
                         color='green')
         axes[0].scatter(time_axis[peaks_idcs], voltage_recording[peaks_idcs],
@@ -123,43 +122,30 @@ def get_depolarizingevents(single_segment,
         axes[0].legend()
 
         axes[1].plot(time_axis, voltage_eventdetecttrace,
-                     color='black', label='event-detect trace')
+                     color='blue',
+                     linewidth=2,
+                     label='event-detect trace')
         axes[1].scatter(time_axis[depolswithpeaks_idcs], voltage_eventdetecttrace[depolswithpeaks_idcs],
                         color='green')
         axes[1].scatter(time_axis[peaks_idcs], voltage_eventdetecttrace[peaks_idcs],
                         color='red')
-        axes[1].legend()
 
-        axes[2].plot(time_axis_derivative,voltage_permsderivative,
+        axes[1].plot(time_axis_derivative,voltage_permsderivative,
                      color='black')
-        # axes[2].set_ylim(-1, 2)
-        axes[2].scatter(time_axis_derivative[alldepols_idcs], voltage_permsderivative[alldepols_idcs],
-                        color='green')
-        axes[2].set_xlabel('time (ms)')
-        axes[2].set_title('ms-by-ms derivative of filtered voltage')
+        axes[1].scatter(time_axis_derivative[alldepols_idcs], voltage_permsderivative[alldepols_idcs],
+                        color='blue')
+        axes[1].set_xlabel('time (ms)')
+        axes[1].legend()
 
     return actionpotentials_resultsdictionary, depolarizingevents_resultsdictionary
 
 # sub-functions:
 # applying filters and getting the event-detect trace
-def apply_filters_torawdata(voltage_recording,
-                            oscfilter_lpfreq, noisefilter_hpfreq,
-                            sampling_frequency,
-                            plot):
-    # generating the filters, and applying them to the raw data
-    lowpass_sos = signal.butter(2, oscfilter_lpfreq, btype='lowpass',
-                                fs=sampling_frequency, output='sos')
-    voltage_oscillationstrace = signal.sosfiltfilt(lowpass_sos, voltage_recording)
-
-    highpass_sos = signal.butter(1, noisefilter_hpfreq, btype='highpass',
-                                 fs=sampling_frequency, output='sos')
-    voltage_noisetrace = signal.sosfiltfilt(highpass_sos, voltage_recording)
-    # subtracting the filtered data from the raw
-    voltage_eventdetecttrace = (voltage_recording
-                                - voltage_oscillationstrace
-                                - voltage_noisetrace)
-
-    # getting the filters' impulse responses for plotting
+def apply_rawvtrace_manipulations(voltage_recording,
+                                  oscfilter_lpfreq, noisefilter_hpfreq,
+                                  sampling_frequency, time_axis,
+                                  plot):
+    # plotting the filters' impulse response functions:
     lowpass_dlti = signal.dlti(*signal.butter(2, oscfilter_lpfreq, btype='lowpass',
                                               fs=sampling_frequency, output='ba'))
     t_lp, y_lp = lowpass_dlti.impulse(n=2000)
@@ -176,7 +162,54 @@ def apply_filters_torawdata(voltage_recording,
         plt.ylabel('amplitude')
         plt.title('impulse response functions')
 
-    return voltage_eventdetecttrace, voltage_oscillationstrace, voltage_noisetrace
+    # applying filters to the raw data
+    lowpass_sos = signal.butter(2, oscfilter_lpfreq, btype='lowpass',
+                                fs=sampling_frequency, output='sos')
+    voltage_oscillationstrace = signal.sosfiltfilt(lowpass_sos, voltage_recording)
+
+    highpass_sos = signal.butter(1, noisefilter_hpfreq, btype='highpass',
+                                 fs=sampling_frequency, output='sos')
+    voltage_noisetrace = signal.sosfiltfilt(highpass_sos, voltage_recording)
+    # subtracting the filtered data from the raw
+    voltage_eventdetecttrace = (voltage_recording
+                                - voltage_oscillationstrace
+                                - voltage_noisetrace)
+
+    # getting the instantaneous phase and frequency from the hilbert transform of the data
+    # TODO: replace the line below with code that does proper mean-centering (in traces with current pulses applied this gives particularly unreliable results)
+    voltage_osctrace_meancentered = voltage_oscillationstrace - np.mean(voltage_oscillationstrace)
+    voltage_osctrace_analyticsignal = signal.hilbert(voltage_osctrace_meancentered)
+    voltage_approxphase = np.angle(voltage_osctrace_analyticsignal)
+    voltage_approxinstfreq = ((np.diff(np.unwrap(voltage_approxphase))
+                               / (2.0*np.pi) * sampling_frequency))
+
+    voltage_meancentered = voltage_recording - voltage_noisetrace - np.mean(voltage_recording)
+    voltage_analyticsignal = signal.hilbert(voltage_meancentered)
+    vraw_approxphase = np.angle(voltage_analyticsignal)
+    # vraw_approxinstfreq = ((np.diff(np.unwrap(vraw_approxphase))
+    #                         / (2.0*np.pi) * sampling_frequency))
+
+    if plot == 'on':
+        figure, axes = plt.subplots(3, 1, sharex='all')
+        axes[0].plot(time_axis, voltage_recording, label='raw recording')
+        axes[0].plot(time_axis, voltage_recording - voltage_noisetrace, label='noise-substracted voltage')
+        axes[0].plot(time_axis, voltage_oscillationstrace, label='lp-filtered at '+str(oscfilter_lpfreq)+'Hz')
+        axes[0].legend()
+        axes[1].plot(time_axis, voltage_osctrace_meancentered, label='mean-centered osctrace')
+        axes[1].plot(time_axis, voltage_meancentered, label='mean-centered raw voltage')
+        axes[1].plot(time_axis, voltage_noisetrace, label='hp-filtered at '+str(noisefilter_hpfreq)+'Hz')
+        axes[1].legend()
+        axes[2].plot(time_axis, voltage_approxphase, label='osctrace phase')
+        axes[2].plot(time_axis[1:], voltage_approxinstfreq, label='osctrace inst.freq.')
+        axes[2].plot(time_axis, vraw_approxphase, label='de-noised v phase')
+        # axes[2].plot(time_axis[1:], vraw_approxinstfreq, label='de-noised v inst.freq.')
+        axes[2].legend()
+
+    return voltage_eventdetecttrace, \
+           voltage_oscillationstrace, \
+           voltage_noisetrace, \
+           voltage_approxphase, \
+           voltage_approxinstfreq
 
 
 # differentiating: getting the mV/ms change in voltage for each index on the recording trace
@@ -257,6 +290,8 @@ def get_events_measures(peaks_idcs,
                         voltage_oscillationstrace,
                         voltage_noisetrace,
                         voltage_eventdetecttrace,
+                        voltage_approxphase,
+                        voltage_approxinstfreq,
                         current_recording,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
                         sampling_period_inms):
@@ -290,6 +325,10 @@ def get_events_measures(peaks_idcs,
         current_applied = np.mean(current_recording[baseline_idx:peak_idx])
         if abs(current_applied) <= 7:
             current_applied = 0
+
+        # approximate oscillation phase and instantaneous frequency
+        approx_oscphase = voltage_approxphase[baseline_idx]
+        approx_instfreq = voltage_approxinstfreq[baseline_idx]
 
         # rise-time: time from 10% - 90% of peak amp
         fullrisetrace = voltage_denoised[baseline_idx:peak_idx + 1]  # this way the snippet includes peak_idx
@@ -401,6 +440,8 @@ def get_events_measures(peaks_idcs,
 
             actionpotentials_dictionary['applied_current'].append(current_applied)
             actionpotentials_dictionary['approx_oscslope'].append(prebaseline_vslope)
+            actionpotentials_dictionary['approx_oscinstphase'].append(approx_oscphase)
+            actionpotentials_dictionary['approx_oscinstfreq'].append(approx_instfreq)
 
             actionpotentials_dictionary['peakv_idx'].append(peak_idx)
             actionpotentials_dictionary['baselinev_idx'].append(baseline_idx)
@@ -448,6 +489,8 @@ def get_events_measures(peaks_idcs,
             depolarizingevents_dictionary['width_at10%amp'].append(width)
             depolarizingevents_dictionary['applied_current'].append(current_applied)
             depolarizingevents_dictionary['approx_oscslope'].append(prebaseline_vslope)
+            depolarizingevents_dictionary['approx_oscinstphase'].append(approx_oscphase)
+            depolarizingevents_dictionary['approx_oscinstfreq'].append(approx_instfreq)
 
             depolarizingevents_dictionary['edtrace_baselinev'].append(ed_baseline_v)
             depolarizingevents_dictionary['edtrace_amplitude'].append(ed_peakamp)
@@ -484,6 +527,8 @@ def make_depolarizingevents_measures_dictionaries():
         'ahp_width': [],
         'applied_current': [],
         'approx_oscslope': [],
+        'approx_oscinstphase': [],
+        'approx_oscinstfreq': [],
 
         'peakv_idx': [],
         'baselinev_idx': [],
@@ -505,6 +550,8 @@ def make_depolarizingevents_measures_dictionaries():
         'width_at10%amp': [],
         'applied_current': [],
         'approx_oscslope': [],
+        'approx_oscinstphase': [],
+        'approx_oscinstfreq': [],
 
         'edtrace_baselinev': [],
         'edtrace_amplitude': [],

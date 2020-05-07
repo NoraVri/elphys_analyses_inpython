@@ -523,8 +523,8 @@ class SingleNeuron:
             for i, segment in enumerate(block.segments):
                 (segment_actionpotentials,
                  segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
-                                                            segment,
-                                                            **self.rawdata_readingnotes['getdepolarizingevents_settings'])
+                        segment,
+                        **self.rawdata_readingnotes['getdepolarizingevents_settings'])
 
                 trace_origin = [block.file_origin]
                 segment_idx = [i]

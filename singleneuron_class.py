@@ -36,6 +36,9 @@ class SingleNeuron:
         self.rawdata_blocks = []            # all recorded raw data, as a list of Neo block objects
                                             # the readingnotes-dictionary contains all default kwargs settings, for each of the singleneuron analyses class-methods.
         self.rawdata_readingnotes = {
+
+            'specialchemicals_applied': {},
+
             'getdepolarizingevents_settings': {
                 'min_depolspeed': 0.1,
                 'min_depolamp': 0.2,

@@ -33,11 +33,10 @@ class SingleNeuron:
         self.path = path                    # folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
         self.rawdata_path = []              # gets updated with the exact filepath leading to singleneuron's raw data files once they are found.
         self.rawdata_recordingtype = None   # raw data file(s) type; gets updated once data files are found.
-        self.rawdata_blocks = []            # all recorded raw data, as a list of Neo block objects
+        self.blocks = []            # all recorded raw data, as a list of Neo block objects
                                             # the readingnotes-dictionary contains all default kwargs settings, for each of the singleneuron analyses class-methods.
+        self.experiment_metadata = pd.Series()
         self.rawdata_readingnotes = {
-
-            'specialchemicals_applied': {},
 
             'getdepolarizingevents_settings': {
                 'min_depolspeed': 0.1,
@@ -104,57 +103,64 @@ class SingleNeuron:
         This function currently works for .abf-files (one folder per singleneuron)
         and pxp-files (one file per singleneuron; each file has an internal folder-structure).
         """
-        search_name = re.split('(\D)', self.name)
-        search_name = search_name[0] + search_name[1]
+        neuronnamesplit = re.split('(\D)', self.name)
+        experiment_date = int(neuronnamesplit[0])
+        search_name = neuronnamesplit[0] + neuronnamesplit[1]
+        experiments_metadata = pd.read_csv(self.path + '\\myData_experiments_metadata.csv')
+        self.experiment_metadata = experiments_metadata.loc[experiments_metadata.date == experiment_date]
 
-        for folder_name in os.listdir(self.path):
-
-            subdirectory_path = self.path + '\\' + folder_name
-            searchitems_list = [item for item in os.listdir(subdirectory_path)
-                                if search_name in item]
-
-            if len(searchitems_list) > 0:
-                for item in searchitems_list:
-                    if len(item.split('.')) == 2 and item.split('.')[1] == 'pxp':
-                        self.rawdata_recordingtype = 'pxp'
-                        self.rawdata_path = subdirectory_path
-                        self.files_reader_pxp()
-
-                    elif len(item.split('.')) == 1:
-                        subdirectory_path = subdirectory_path + '\\' + item
-                        recording_files = [file for file in os.listdir(subdirectory_path)
-                                     if file.endswith(('.ibw',
-                                                       '.abf',
-                                                       '.txt'))]
-                        if len(recording_files) > 0:
-                            file_type = recording_files[0].split(sep='.')[1]
-
-                            self.rawdata_path = subdirectory_path
-                            self.rawdata_recordingtype = file_type
-
-                        if self.rawdata_recordingtype == 'abf':
-                            self.files_reader_abf()
-
-                        if self.rawdata_recordingtype == 'ibw':
-                            self.files_reader_ibw()
-
-                        if self.rawdata_recordingtype == 'txt':
-                            print('txt file importing not yet available')
-
-            else:
+        for name in os.listdir(self.path):
+            if len(name.split('.')) > 1: #it's a file name
                 continue
 
-            break
+            else:
+                subdirectory_path = self.path + '\\' + name
+                searchitems_list = [item for item in os.listdir(subdirectory_path)
+                                    if search_name in item]
+
+                if len(searchitems_list) > 0:
+                    for item in searchitems_list:
+                        if len(item.split('.')) == 2 and item.split('.')[1] == 'pxp':
+                            self.rawdata_recordingtype = 'pxp'
+                            self.rawdata_path = subdirectory_path
+
+
+                        elif len(item.split('.')) == 1:
+                            subdirectory_path = subdirectory_path + '\\' + item
+                            recording_files = [file for file in os.listdir(subdirectory_path)
+                                         if file.endswith(('.ibw',
+                                                           '.abf',
+                                                           '.txt'))]
+                            if len(recording_files) > 0:
+                                file_type = recording_files[0].split(sep='.')[1]
+
+                                self.rawdata_path = subdirectory_path
+                                self.rawdata_recordingtype = file_type
+                else:
+                    continue
 
         if not self.rawdata_path:
             print('no files matching neuron name were found')
 
+        elif self.rawdata_recordingtype == 'abf':
+            self.files_reader_abf()
 
-    # get all 'clean' data and any stored analysis results for singleneuron
+        elif self.rawdata_recordingtype == 'pxp':
+            self.files_reader_pxp()
+
+        elif self.rawdata_recordingtype == 'ibw':
+            self.files_reader_ibw()
+
+        elif self.rawdata_recordingtype == 'txt':
+            print('txt file importing not yet available')
+
+
+    # apply all 'cleaning notes' and get any stored analysis results for singleneuron
     def get_singleneuron_storedresults(self):
         """ This function finds any files in the 'myResults' folder bearing singleneuron's name,
         and adds their contents to the relevant containers on this instance of singleneuron.
         """
+
         resultsfilespaths_list = []  # getting a list of paths to each of the relevant results files
         for folder in os.listdir(self.path):
             if folder.startswith('myResults'):
@@ -206,6 +212,9 @@ class SingleNeuron:
                                                   trace_end_t=dictionary['t_end'],
                                                   segment_idx=dictionary['segment_idx'])
 
+        if self.rawdata_readingnotes.get('chemicalsapplied_blocks'):
+            self.rawdata_note_chemicalinbath(self.rawdata_readingnotes['chemicalsapplied_blocks'])
+
 
     # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
@@ -216,9 +225,9 @@ class SingleNeuron:
         if not self.rawdata_readingnotes.get('nonrecordingblocks'):
             self.rawdata_readingnotes['nonrecordingblocks'] = []
 
-        for i, block in enumerate(self.rawdata_blocks):
+        for i, block in enumerate(self.blocks):
             if block.file_origin == file_origin:
-                self.rawdata_blocks.__delitem__(i)
+                self.blocks.__delitem__(i)
                 if file_origin not in self.rawdata_readingnotes['nonrecordingblocks']:
                     self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
 
@@ -235,7 +244,7 @@ class SingleNeuron:
         if not self.rawdata_readingnotes.get('nonrecordingchannels'):
             self.rawdata_readingnotes['nonrecordingchannels'] = {}
 
-        for block in self.rawdata_blocks:
+        for block in self.blocks:
             if block.file_origin == file_origin:
                 if non_recording_channel == 1:
                     block.channel_indexes[0:2] = []
@@ -282,19 +291,19 @@ class SingleNeuron:
             end_t = trace_end_t * pq.s
         else: end_t = trace_end_t
 
-        for block in self.rawdata_blocks:
+        for block in self.blocks:
             if block.file_origin == file_origin:
-                block_idx = self.rawdata_blocks.index(block)
+                block_idx = self.blocks.index(block)
                 segmentslice_tokeep = block.segments[segment_idx].time_slice(
                                                 t_start=start_t,
                                                 t_stop=end_t)
-                self.rawdata_blocks[block_idx].segments[segment_idx] = segmentslice_tokeep
-                self.rawdata_blocks[block_idx].channel_indexes[0].analogsignals[
+                self.blocks[block_idx].segments[segment_idx] = segmentslice_tokeep
+                self.blocks[block_idx].channel_indexes[0].analogsignals[
                     segment_idx] = segmentslice_tokeep.analogsignals[0]
-                self.rawdata_blocks[block_idx].channel_indexes[1].analogsignals[
+                self.blocks[block_idx].channel_indexes[1].analogsignals[
                     segment_idx] = segmentslice_tokeep.analogsignals[1]
                 if len(segmentslice_tokeep.analogsignals) == 3:
-                    self.rawdata_blocks[block_idx].channel_indexes[2].analogsignals[
+                    self.blocks[block_idx].channel_indexes[2].analogsignals[
                         segment_idx] = segmentslice_tokeep.analogsignals[2]
 
                 if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
@@ -304,6 +313,15 @@ class SingleNeuron:
                                       'segment_idx': segment_idx}
                     })
 
+    # note which blocks have special chemicals applied
+    def rawdata_note_chemicalinbath(self, *block_identifiers):
+        # TODO: turn identifier into a list of the names of the blocks that have drugs applied.
+        if self.experiment_metadata.empty \
+        or self.experiment_metadata.specialchemicals_type.empty:
+            print('no notes on chemicals applied have been found.')
+        else:
+            self.rawdata_readingnotes['chemicalsapplied_blocks'] = block_identifiers
+
 
 # %% functions for plotting/seeing stuff
 
@@ -312,7 +330,7 @@ class SingleNeuron:
     def get_blocknames(self, printing='on'):
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them.
         """
-        blocks_list = [block.file_origin for block in self.rawdata_blocks]
+        blocks_list = [block.file_origin for block in self.blocks]
 
         if printing == 'on':
             print(blocks_list)
@@ -324,7 +342,7 @@ class SingleNeuron:
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index (voltage/current/aux).
         """
-        for block in self.rawdata_blocks:
+        for block in self.blocks:
             plots.plot_block(block)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
@@ -336,7 +354,7 @@ class SingleNeuron:
         """
         blocknames_list = self.get_blocknames(printing='off')
         for block_name in block_file_origin:
-            block = self.rawdata_blocks[blocknames_list.index(block_name)]
+            block = self.blocks[blocknames_list.index(block_name)]
             plots.plot_block(block, events_to_mark)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
@@ -391,7 +409,7 @@ class SingleNeuron:
         # plotting events:
         if newplot_per_block:
             for block_name in unique_blocks_forplotting:
-                rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+                rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
                 # making a new plot for each block, getting the figure and axis handles out
                 figure, axis = plots.plot_singleblock_events(rawdata_block,
@@ -416,7 +434,7 @@ class SingleNeuron:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + ' depolarizing events')
             for block_name in unique_blocks_forplotting:
-                rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+                rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 
                 plots.plot_singleblock_events(rawdata_block, block_events,
@@ -468,7 +486,7 @@ class SingleNeuron:
         allblocks_nameslist = self.get_blocknames(printing = 'off')
 
         for block_name in uniqueblocks_nameslist:
-            rawdata_block = self.rawdata_blocks[allblocks_nameslist.index(block_name)]
+            rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
             block_events = events_forplotting.loc[
                 events_forplotting['file_origin'] == block_name]
             unique_vtraces = list(set(block_events['segment_idx']))
@@ -522,7 +540,7 @@ class SingleNeuron:
         # initializing empty measures-dictionaries
         all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
         # getting all events: looping over each block, and each trace within each block
-        for block in self.rawdata_blocks:
+        for block in self.blocks:
             for i, segment in enumerate(block.segments):
                 (segment_actionpotentials,
                  segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
@@ -581,7 +599,7 @@ class SingleNeuron:
                 epoch_infos = reader._axon_info['dictEpochInfoPerDAC'] #returns some more metadata on stimulus waveforms
                 block.annotate(epoch_infos=epoch_infos)
 
-                self.rawdata_blocks.append(block)
+                self.blocks.append(block)
 
 
     # reading .pxp files
@@ -618,7 +636,7 @@ class SingleNeuron:
         #getting one block per run
         for run in unique_runs:
             block = self.get_bwgroup_as_block(run, subdirectories_list, reader=reader)
-            self.rawdata_blocks.append(block)
+            self.blocks.append(block)
 
 
     # reading .ibw files
@@ -681,7 +699,7 @@ class SingleNeuron:
                     single_aux_analogsignal.channel_index = block.channel_indexes[2]
                     block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
 
-            self.rawdata_blocks.append(block)
+            self.blocks.append(block)
 
 
     @staticmethod

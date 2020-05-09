@@ -33,7 +33,7 @@ class SingleNeuron:
         self.path = path                    # folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
         self.rawdata_path = []              # gets updated with the exact filepath leading to singleneuron's raw data files once they are found.
         self.rawdata_recordingtype = None   # raw data file(s) type; gets updated once data files are found.
-        self.blocks = []            # all recorded raw data, as a list of Neo block objects
+        self.blocks = []                    # all recorded raw data, as a list of Neo block objects
                                             # the readingnotes-dictionary contains all default kwargs settings, for each of the singleneuron analyses class-methods.
         self.experiment_metadata = pd.Series()
         self.rawdata_readingnotes = {
@@ -212,9 +212,6 @@ class SingleNeuron:
                                                   trace_end_t=dictionary['t_end'],
                                                   segment_idx=dictionary['segment_idx'])
 
-        if self.rawdata_readingnotes.get('chemicalsapplied_blocks'):
-            self.rawdata_note_chemicalinbath(self.rawdata_readingnotes['chemicalsapplied_blocks'])
-
 
     # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
@@ -223,13 +220,16 @@ class SingleNeuron:
         rawdata_readingnotes get updated with the names of the blocks that are removed.
         """
         if not self.rawdata_readingnotes.get('nonrecordingblocks'):
-            self.rawdata_readingnotes['nonrecordingblocks'] = []
+            nonrecordingblocks_list = []
+            self.rawdata_readingnotes['nonrecordingblocks'] = nonrecordingblocks_list
+        else: nonrecordingblocks_list = self.rawdata_readingnotes['nonrecordingblocks']
 
         for i, block in enumerate(self.blocks):
             if block.file_origin == file_origin:
                 self.blocks.__delitem__(i)
-                if file_origin not in self.rawdata_readingnotes['nonrecordingblocks']:
-                    self.rawdata_readingnotes['nonrecordingblocks'].append(file_origin)
+                if file_origin not in nonrecordingblocks_list:
+                    nonrecordingblocks_list.append(file_origin)
+        self.rawdata_readingnotes['nonrecordingblocks'] = nonrecordingblocks_list
 
 
     # remove channels on which singleneuron is not recorded from a rawdata_block
@@ -313,14 +313,30 @@ class SingleNeuron:
                                       'segment_idx': segment_idx}
                     })
 
+
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):
-        # TODO: turn identifier into a list of the names of the blocks that have drugs applied.
+        """
+        """
+        # checking that information on chemicals applied is present in the experimentday metadata
         if self.experiment_metadata.empty \
         or self.experiment_metadata.specialchemicals_type.empty:
             print('no notes on chemicals applied have been found.')
         else:
-            self.rawdata_readingnotes['chemicalsapplied_blocks'] = block_identifiers
+            # adding 'chemicals applied' to the rawdata reading notes
+            if self.rawdata_readingnotes.get('chemicalsapplied_blocks'):
+                blockswithchemicals_list = self.rawdata_readingnotes['chemicalsapplied_blocks']
+            else:
+                blockswithchemicals_list = []
+                self.rawdata_readingnotes['chemicalsapplied_blocks'] = blockswithchemicals_list
+            # adding any blocks containing the identifier(s) to the list of blocks with chemicals applied
+            blocknames_list = self.get_blocknames(printing='off')
+            for identifier in block_identifiers:
+                chemicalsapplied_blocks = [block for block in blocknames_list if identifier in block]
+                for block in chemicalsapplied_blocks:
+                    if block not in blockswithchemicals_list:
+                        blockswithchemicals_list.append(block)
+            self.rawdata_readingnotes['chemicalsapplied_blocks'] = blockswithchemicals_list
 
 
 # %% functions for plotting/seeing stuff
@@ -338,12 +354,12 @@ class SingleNeuron:
 
 
     # plotting all raw data, as recorded
-    def plot_allrawdata(self):
+    def plot_allrawdata(self, **kwargs):
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index (voltage/current/aux).
         """
         for block in self.blocks:
-            plots.plot_block(block)
+            plots.plot_block(block, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
 

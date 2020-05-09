@@ -20,7 +20,7 @@ import singleneuron_analyses_functions as snafs
 
 
 # plotting all traces of a block, in individual subplots per channel
-def plot_block(block, events_to_mark='none', time_axis_unit = 'ms'):
+def plot_block(block, events_to_mark='none', time_axis_unit = 'ms', segments_overlayed=True):
     """ takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     If a subthreshold events or action potentials DataFrame is passed through,
@@ -34,15 +34,17 @@ def plot_block(block, events_to_mark='none', time_axis_unit = 'ms'):
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
     # plotting all the traces of the block
     for i in range(nsubplots):
-        for analogsignal in block.channel_indexes[i].analogsignals:
-            time_axis = analogsignal.times.rescale(time_axis_unit)
-            trace_unit = analogsignal.units
+        analogsignals = block.channel_indexes[i].analogsignals
+        trace_unit = analogsignals[0].units
+        for analogsignal in analogsignals:
+            if segments_overlayed:
+                time_axis = analogsignals[0].times
+            else:
+                time_axis = analogsignal.times
+            time_axis = time_axis.rescale(time_axis_unit)
             trace_forplotting = np.squeeze(np.array(analogsignal))
-        # traces = np.transpose(np.squeeze(np.array(list(iter(
-        #                         block.channel_indexes[i].analogsignals)))))
-        # traces_unit = block.channel_indexes[i].analogsignals[0].units
             axes[i].plot(time_axis, trace_forplotting)
-        axes[i].set_xlabel('time (ms)')
+        axes[i].set_xlabel('time  in '+time_axis_unit)
         axes[i].set_ylabel(str(trace_unit))
 
     # marking event baselines and peaks, if applicable
@@ -59,8 +61,6 @@ def plot_block(block, events_to_mark='none', time_axis_unit = 'ms'):
             axes[0].scatter(time_axis[list(trace_events['peakv_idx'])],
                             vtrace[list(trace_events['peakv_idx'])],
                             color='red')
-
-
 
 
 # %% depolarizing events and action potentials - line plots of raw data

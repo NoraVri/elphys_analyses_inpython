@@ -28,16 +28,30 @@ class SingleNeuron:
     def __init__(self,
                  singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
+        """
+        singleneuron_name should be a unique identifier for the recording, with a date (YYYYMMDD) and letter (uppercase)
+            that also appear on the raw data folder/file belonging to singleneuron.
+        path should be to a folder containing:
+            1. folder(s) containing folder(s) and/or file(s) of raw data
+            2. a 'myResults' folder where analyses notes/results are stored and read from
+            3. the 'myData_experiments_metadata' file.
 
-        self.name = singleneuron_name       # a unique name, that appears literally on all raw data files recorded for this singleneuron
-        self.path = path                    # folder containing: 1. folder(s) with raw data and 2. 'myResults' folder where analyses notes/results are stored.
-        self.rawdata_path = []              # gets updated with the exact filepath leading to singleneuron's raw data files once they are found.
-        self.rawdata_recordingtype = None   # raw data file(s) type; gets updated once data files are found.
-        self.blocks = []                    # all recorded raw data, as a list of Neo block objects
-                                            # the readingnotes-dictionary contains all default kwargs settings, for each of the singleneuron analyses class-methods.
+        All raw data belonging to singleneuron are returned as a list of neo block objects.
+        If files with singleneuron_name are found in the 'myResults' folder,
+        raw data adjustments are applied based on notes found in rawdata_readingnotes,
+        and objects containing analyses results are added to the class instance.
+
+        Manipulations to the class instance can be saved (to be recreated on the next instance call)
+        by calling the write_results()-method.
+        """
+        self.name = singleneuron_name
+        self.path = path
+        self.rawdata_path = []  # gets updated with the exact filepath leading to singleneuron's raw data files.
+        self.rawdata_recordingtype = None
+        self.blocks = []
+
         self.experiment_metadata = pd.Series()
         self.rawdata_readingnotes = {
-
             'getdepolarizingevents_settings': {
                 'min_depolspeed': 0.1,
                 'min_depolamp': 0.2,
@@ -48,10 +62,10 @@ class SingleNeuron:
                 'oscfilter_lpfreq': 20,
                 'plot': 'off'
             }
-        }       # Notes are updated with non-default kwargs needed to exactly recreate
-                    # analyses results inside each method.
-                # The objects containing analyses results are updated
-                    # inside the method that gets them, or from stored results.
+        }
+        # Notes are updated with non-default kwargs needed to exactly recreate analyses results
+        # inside the class method.
+
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
@@ -60,14 +74,16 @@ class SingleNeuron:
         self.get_singleneuron_rawdata()
         self.get_singleneuron_storedresults()
 
-
     # save all results currently present on the singleneuron instance
     def write_results(self):
+
         """
         this function saves all analysis results belonging to the singleneuron instance
         to a folder on path labeled 'myResults'.
+        !! There should be only one folder with a name starting with 'myResults' on the path.
         Each results-table is stored in a separate .csv file, and the parameter values
-        used to get them (stored in self.rawdata_readingnotes) are stored as a .json.
+        used to get them (as well as all other notes needed to exactly recreate the class instance
+        stored in self.rawdata_readingnotes) are saved as a .json.
         """
         results_folder = [folder for folder in os.listdir(self.path)
                           if folder.startswith('myResults')]
@@ -92,9 +108,9 @@ class SingleNeuron:
         else:
             print('no results folder found')
 
-
     # get all raw electrophysiology recordings associated with singleneuron
     def get_singleneuron_rawdata(self):
+
         """ This function uses singleneuron_name and path to find the
         raw data file(s) recorded from singleneuron.
         Once the right path is found, it calls on the relevant files_reader (defined further below)
@@ -103,37 +119,34 @@ class SingleNeuron:
         This function currently works for .abf-files (one folder per singleneuron)
         and pxp-files (one file per singleneuron; each file has an internal folder-structure).
         """
-        neuronnamesplit = re.split('(\D)', self.name)
+        neuronnamesplit = re.split("(\D)", self.name)
         experiment_date = int(neuronnamesplit[0])
         search_name = neuronnamesplit[0] + neuronnamesplit[1]
         experiments_metadata = pd.read_csv(self.path + '\\myData_experiments_metadata.csv')
-        self.experiment_metadata = experiments_metadata.loc[experiments_metadata.date == experiment_date]
+        self.experiment_metadata = experiments_metadata.loc[
+                                    experiments_metadata.date == experiment_date]
 
         for name in os.listdir(self.path):
-            if len(name.split('.')) > 1: #it's a file name
+            if len(name.split('.')) > 1:  # it's a file name
                 continue
 
             else:
                 subdirectory_path = self.path + '\\' + name
                 searchitems_list = [item for item in os.listdir(subdirectory_path)
                                     if search_name in item]
-
                 if len(searchitems_list) > 0:
                     for item in searchitems_list:
+
                         if len(item.split('.')) == 2 and item.split('.')[1] == 'pxp':
                             self.rawdata_recordingtype = 'pxp'
                             self.rawdata_path = subdirectory_path
 
-
                         elif len(item.split('.')) == 1:
                             subdirectory_path = subdirectory_path + '\\' + item
                             recording_files = [file for file in os.listdir(subdirectory_path)
-                                         if file.endswith(('.ibw',
-                                                           '.abf',
-                                                           '.txt'))]
+                                               if file.endswith(('.ibw', '.abf', '.txt'))]
                             if len(recording_files) > 0:
                                 file_type = recording_files[0].split(sep='.')[1]
-
                                 self.rawdata_path = subdirectory_path
                                 self.rawdata_recordingtype = file_type
                 else:
@@ -154,13 +167,13 @@ class SingleNeuron:
         elif self.rawdata_recordingtype == 'txt':
             print('txt file importing not yet available')
 
-
     # apply all 'cleaning notes' and get any stored analysis results for singleneuron
     def get_singleneuron_storedresults(self):
         """ This function finds any files in the 'myResults' folder bearing singleneuron's name,
         and adds their contents to the relevant containers on this instance of singleneuron.
+        Also, any manipulations to clean the raw data are applied again based on the data
+        stored in rawdata_readingnotes.
         """
-
         resultsfilespaths_list = []  # getting a list of paths to each of the relevant results files
         for folder in os.listdir(self.path):
             if folder.startswith('myResults'):
@@ -208,10 +221,9 @@ class SingleNeuron:
             for filename, dictionary in \
                     self.rawdata_readingnotes['nonrecordingtimeslices'].items():
                 self.rawdata_remove_nonrecordingtimeslice(filename,
-                                                  trace_start_t=dictionary['t_start'],
-                                                  trace_end_t=dictionary['t_end'],
-                                                  segment_idx=dictionary['segment_idx'])
-
+                                                          trace_start_t=dictionary['t_start'],
+                                                          trace_end_t=dictionary['t_end'],
+                                                          segment_idx=dictionary['segment_idx'])
 
     # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
@@ -222,7 +234,8 @@ class SingleNeuron:
         if not self.rawdata_readingnotes.get('nonrecordingblocks'):
             nonrecordingblocks_list = []
             self.rawdata_readingnotes['nonrecordingblocks'] = nonrecordingblocks_list
-        else: nonrecordingblocks_list = self.rawdata_readingnotes['nonrecordingblocks']
+        else:
+            nonrecordingblocks_list = self.rawdata_readingnotes['nonrecordingblocks']
 
         for i, block in enumerate(self.blocks):
             if block.file_origin == file_origin:
@@ -231,14 +244,15 @@ class SingleNeuron:
                     nonrecordingblocks_list.append(file_origin)
         self.rawdata_readingnotes['nonrecordingblocks'] = nonrecordingblocks_list
 
-
     # remove channels on which singleneuron is not recorded from a rawdata_block
     def rawdata_remove_nonrecordingchannel(self, file_origin,
                                            non_recording_channel,
                                            pairedrecording=False):
-        """ This function takes the name of a file/block and the number of the recording channel-set (voltage and current)
+        """ This function takes the name of a file/block and
+        the number of the recording channel-set (voltage and current)
         on which singleneuron is not recorded.
-        It returns self.rawdata_blocks with the superfluous traces removed from the relevant file,
+        It returns self.rawdata_blocks with the superfluous traces
+        removed from the relevant file,
         and updates rawdata_readingnotes accordingly.
         """
         if not self.rawdata_readingnotes.get('nonrecordingchannels'):
@@ -254,7 +268,8 @@ class SingleNeuron:
                     block.channel_indexes[2:4] = []
                     for segment in block.segments:
                         segment.analogsignals[2:4] = []
-                else: print('input valid channel-set number: 1 or 2')
+                else:
+                    print('input valid channel-set number: 1 or 2')
 
                 if pairedrecording:
                     block.annotate(is_paired=True)
@@ -265,7 +280,6 @@ class SingleNeuron:
                                       'is_pairedrecording': pairedrecording}
                     })
 
-
     # remove parts of individual traces where singleneuron is not yet/no longer being recorded
     def rawdata_remove_nonrecordingtimeslice(self, file_origin,
                                              trace_start_t=None,
@@ -273,7 +287,8 @@ class SingleNeuron:
                                              segment_idx=None):
         """ This function takes the name of the file/block from which a time-slice is to be removed,
         and the start and end time of the part of the trace that should be kept.
-        If not segment index is provided, it's assumed to be 0 (the single segment on blocks that have just one long trace).
+        If not segment index is provided, it's assumed to be 0
+        (the single segment on blocks that have just one long trace).
         It returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
         """
@@ -285,11 +300,13 @@ class SingleNeuron:
 
         if trace_start_t:
             start_t = trace_start_t * pq.s
-        else: start_t = trace_start_t
+        else:
+            start_t = trace_start_t
 
         if trace_end_t:
             end_t = trace_end_t * pq.s
-        else: end_t = trace_end_t
+        else:
+            end_t = trace_end_t
 
         for block in self.blocks:
             if block.file_origin == file_origin:
@@ -313,14 +330,12 @@ class SingleNeuron:
                                       'segment_idx': segment_idx}
                     })
 
-
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):
         """
         """
         # checking that information on chemicals applied is present in the experimentday metadata
-        if self.experiment_metadata.empty \
-        or self.experiment_metadata.specialchemicals_type.empty:
+        if self.experiment_metadata.empty or self.experiment_metadata.specialchemicals_type.empty:
             print('no notes on chemicals applied have been found.')
         else:
             # adding 'chemicals applied' to the rawdata reading notes
@@ -332,54 +347,52 @@ class SingleNeuron:
             # adding any blocks containing the identifier(s) to the list of blocks with chemicals applied
             blocknames_list = self.get_blocknames(printing='off')
             for identifier in block_identifiers:
-                chemicalsapplied_blocks = [block for block in blocknames_list if identifier in block]
+                chemicalsapplied_blocks = [block for block in blocknames_list
+                                           if identifier in block]
                 for block in chemicalsapplied_blocks:
                     if block not in blockswithchemicals_list:
                         blockswithchemicals_list.append(block)
             self.rawdata_readingnotes['chemicalsapplied_blocks'] = blockswithchemicals_list
 
-
 # %% functions for plotting/seeing stuff
-
 
     # getting a list of all block names
     def get_blocknames(self, printing='on'):
-        """ returns the (file)names of all the blocks of singleneuron as a list, and prints them.
-        """
+        """ returns the (file)names of all the blocks of singleneuron as a list, and prints them."""
         blocks_list = [block.file_origin for block in self.blocks]
-
         if printing == 'on':
             print(blocks_list)
         return blocks_list
-
 
     # plotting all raw data, as recorded
     def plot_allrawdata(self, **kwargs):
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index (voltage/current/aux).
+        optional kwargs:
+        events_to_mark='none', time_axis_unit='ms', segments_overlayed=True
         """
         for block in self.blocks:
             plots.plot_block(block, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
-
     # plotting specific blocks, optionally with action potentials or depolarizing events marked
-    def plot_blocks_byname(self, *block_file_origin, events_to_mark='none'):
-        """takes the name of the file from which the rawdata_block was created
-        and plots only that block (separate subplots for each channel_index).
+    def plot_blocks_byname(self, *block_file_origin, **kwargs):
+        """takes the name(s) of the file from which the rawdata_block was created
+        and plots only that/those block(s) (separate subplots for each channel_index).
+        optional kwargs:
+        events_to_mark='none', time_axis_unit='ms', segments_overlayed=True
         """
         blocknames_list = self.get_blocknames(printing='off')
         for block_name in block_file_origin:
             block = self.blocks[blocknames_list.index(block_name)]
-            plots.plot_block(block, events_to_mark)
+            plots.plot_block(block, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
-
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents_overlayed(self, condition_series=pd.Series(),
-                                   get_subthreshold_events = True,
-                                   newplot_per_block=False, blocknames_list = None,
-                                   colorby_measure = '', color_lims = [],
+                                   get_subthreshold_events=True,
+                                   newplot_per_block=False, blocknames_list=None,
+                                   colorby_measure='', color_lims=[],
                                    **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
@@ -387,7 +400,8 @@ class SingleNeuron:
         representing the original raw recorded events.
 
         Optional inputs:
-        condition_series: a Pandas True/False series (same length as depolarizingevents) marking a subset of events for plotting.
+        condition_series: a Pandas True/False series (same length as depolarizingevents)
+            marking a subset of events for plotting.
         newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
         [blocknames_list]: a list of block names (== block.file_origin) marking a subset of blocks for event-plotting.
         'colorby_measure': key of a depolarizingevents_measure to color-code the lines by.
@@ -408,7 +422,8 @@ class SingleNeuron:
             events_for_plotting = self.depolarizing_events
         else:
             events_for_plotting = self.action_potentials
-        # if required, set colorbar limits (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
+        # if required, set colorbar limits
+        # (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
         if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
             color_lims = [events_for_plotting[colorby_measure].min(),
                           events_for_plotting[colorby_measure].max()]
@@ -428,12 +443,13 @@ class SingleNeuron:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
                 # making a new plot for each block, getting the figure and axis handles out
-                figure, axis = plots.plot_singleblock_events(rawdata_block,
-                                                             block_events,
-                                              self.rawdata_readingnotes['getdepolarizingevents_settings'],
-                                              colorby_measure=colorby_measure,
-                                              color_lims=color_lims,
-                                              **kwargs)
+                figure, axis = plots.plot_singleblock_events(
+                    rawdata_block,
+                    block_events,
+                    self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                    colorby_measure=colorby_measure,
+                    color_lims=color_lims,
+                    **kwargs)
                 # setting axis properties and figure title
                 axis_title = 'voltage'
                 if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
@@ -446,7 +462,7 @@ class SingleNeuron:
                 figure.suptitle(self.name + block_name)
 
         else:
-            #initializing the figure:
+            # initializing the figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + ' depolarizing events')
             for block_name in unique_blocks_forplotting:
@@ -469,14 +485,14 @@ class SingleNeuron:
                 axis_title += ' normalized'
             axis.set_title(axis_title)
             if colorby_measure:
-                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap), label=colorby_measure)
-
+                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap),
+                                label=colorby_measure)
 
     # plotting (subsets of) action potentials or depolarizing events, individually with measures marked
     def plot_individualdepolevents_withmeasures(self, condition_series=pd.Series(),
-                                                get_subthreshold_events = True,
-                                                plotwindow_inms = 40,
-                                                prebaselinewindow_inms = 5):
+                                                get_subthreshold_events=True,
+                                                plotwindow_inms=40,
+                                                prebaselinewindow_inms=5):
         """ This function plots the subset of events for which the condition is True,
         each a separate figure. By default, subthreshold events are plotted,
         with one subplot showing the raw voltage trace and one showing the
@@ -499,7 +515,7 @@ class SingleNeuron:
         else:
             events_forplotting = self.action_potentials
         uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
-        allblocks_nameslist = self.get_blocknames(printing = 'off')
+        allblocks_nameslist = self.get_blocknames(printing='off')
 
         for block_name in uniqueblocks_nameslist:
             rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
@@ -516,13 +532,9 @@ class SingleNeuron:
                         self.rawdata_readingnotes['getdepolarizingevents_settings'],
                         plotwindow_inms, prebaselinewindow_inms)
 
-
-
 # %% functions for analyzing raw data
 
-
 # %% depolarizing events (subthreshold ones and action potentials)
-
 
     # getting the action_potentials and depolarizing_events DataFames
     def get_depolarizingevents_fromrawdata(self, **kwargs):
@@ -583,10 +595,7 @@ class SingleNeuron:
         self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
         self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
 
-
-
 # %% the actual reading in of raw data from files
-
 
     # reading .abf files
     def files_reader_abf(self):
@@ -608,15 +617,14 @@ class SingleNeuron:
         os.chdir(self.rawdata_path)
         for file in os.listdir():
             if file.endswith(".abf"):
-                print(self.rawdata_path+'file'+file)
                 reader = io.AxonIO(filename=file)
-
-                block = reader.read()[0] #the general read function returns one block per file, with segments/channel_indexes assigned automatically.
+                # for abf's, the general read function returns one block per file
+                # with segments/channel_indexes assigned automatically and units scaled to mV/pA where relevant.
+                block = reader.read()[0]
                 epoch_infos = reader._axon_info['dictEpochInfoPerDAC'] #returns some more metadata on stimulus waveforms
                 block.annotate(epoch_infos=epoch_infos)
 
                 self.blocks.append(block)
-
 
     # reading .pxp files
     def files_reader_pxp(self):
@@ -638,22 +646,21 @@ class SingleNeuron:
         file_name = self.rawdata_path+'\\'+self.name+'.pxp'
         reader = io.IgorIO(filename=file_name)
         _, filesystem = packed.load(file_name)
-        #getting the names of the subderictories that contain recorded data
+        # getting the names of the subderictories that contain recorded data
         subdirectories_list = []
         for key, value in filesystem['root'][b'SutterPatch'][b'Data'].items():
             key_converted = key.decode("utf-8")
             result = re.search(r'R([0-9]*)_S([0-9]*)_', key_converted)
             if result:
                 subdirectories_list.append(key_converted)
-        #get the number of unique runs, and import data as one block per run
+        # get the number of unique runs, and import data as one block per run
         runs_list = [item[0:3] for item in subdirectories_list]
         unique_runs = list(set(runs_list))
         unique_runs.sort()
-        #getting one block per run
+        # getting one block per run
         for run in unique_runs:
             block = self.get_bwgroup_as_block(run, subdirectories_list, reader=reader)
             self.blocks.append(block)
-
 
     # reading .ibw files
     def files_reader_ibw(self):
@@ -717,19 +724,18 @@ class SingleNeuron:
 
             self.blocks.append(block)
 
-
     @staticmethod
     # helper function to files_reader_pxp
     def get_bwgroup_as_block(run, subdirectories_list, reader):
-        #getting the traces belonging to this run
+        # getting the traces belonging to this run
         traces_names = [item for item in subdirectories_list if item.startswith(run)]
-        #setting up an empty block with the right number of channel_indexes:
+        # setting up an empty block with the right number of channel_indexes:
         block = Block()
         for i in range(len(traces_names)):
-            chidx = ChannelIndex(index=i,channel_names=['Channel Group '+str(i)])
+            chidx = ChannelIndex(index=i, channel_names=['Channel Group '+str(i)])
             block.channel_indexes.append(chidx)
 
-        #importing the raw analogsignals for each channel
+        # importing the raw analogsignals for each channel
         vtrace_name = [name for name in traces_names if 'S1' in name][0]
         itrace_name = [name for name in traces_names if 'S2' in name][0]
         if len(traces_names) == 3:
@@ -738,9 +744,12 @@ class SingleNeuron:
         vsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+vtrace_name)
         isignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+itrace_name)
 
-        #setting up the block with right number of segments
+        # setting up the block with right number of segments
         block.file_origin = vtrace_name[0:3] + vtrace_name[6:]
-        if 'spontactivity' in block.file_origin: #by my conventions, spontactivity protocols are the only ones using 'continuous mode', and these never have a third recording channel.
+        if 'spontactivity' in block.file_origin:
+            # refactoring segments into single long trace;
+            # by my conventions, spontactivity protocols are the only ones using 'continuous mode',
+            # and these never have a third recording channel.
             no_of_segments = 1
             vsignals = np.transpose(vsignals).reshape(-1,1)
             isignals = np.transpose(isignals).reshape(-1,1)
@@ -751,7 +760,7 @@ class SingleNeuron:
             segment = Segment(name=block.file_origin+str(i))
             block.segments.append(segment)
 
-        #adding the raw data to the block's channel_indexes/segments
+        # adding the raw data to the block's channel_indexes/segments
         for idx, segment in enumerate(block.segments):
             single_v_analogsignal = vsignals[:,idx].rescale('mV')
             segment.analogsignals.append(single_v_analogsignal)

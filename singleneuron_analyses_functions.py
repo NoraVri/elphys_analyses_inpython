@@ -33,12 +33,12 @@ def get_depolarizingevents(single_segment,
     and noise from the raw voltage.
     Then, points where the ms-by-ms derivative of the event-detect voltage
     is larger than min_depolspeed are examined, and baseline- and peak-points marked
-    if they are found.
+    if a peak, and then a decay in voltage after the peak are found.
     Finally, if event passes criteria for being marked as an
     action potential or a depolarizing event, the event and its measures are
     added to the relevant dictionary.
     If plot is not 'off', all traces and points gotten along the way from raw data to
-    detected events are plotted, in a single figure.
+    detected events are plotted.
 
     This function assumes the following conventions:
     In the input raw data: voltage in mV, current in pA, and time-units in s.
@@ -139,12 +139,16 @@ def get_depolarizingevents(single_segment,
 
     return actionpotentials_resultsdictionary, depolarizingevents_resultsdictionary
 
+
 # sub-functions:
 # applying filters and getting the event-detect trace
 def apply_rawvtrace_manipulations(voltage_recording,
                                   oscfilter_lpfreq, noisefilter_hpfreq,
                                   sampling_frequency, time_axis,
-                                  plot):
+                                  plot='off'):
+    """ This function takes the raw voltage recording and applies filtering and the hilbert transform
+    to get traces for use in event-detection.
+    """
     # plotting the filters' impulse response functions:
     lowpass_dlti = signal.dlti(*signal.butter(2, oscfilter_lpfreq, btype='lowpass',
                                               fs=sampling_frequency, output='ba'))
@@ -226,6 +230,9 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
                            current_recording,
                            ms_insamples, peakwindow_insamples,
                            min_depolspeed, min_depolamp):
+    """ This function finds and returns points where depolarizations occur in the voltage derivative,
+    as well as the baseline-points and peak-points of any depolarizations that are found to have these.
+    """
     depolarizations = []
     depols_with_peaks = []
     peaks_idcs = []
@@ -295,7 +302,10 @@ def get_events_measures(peaks_idcs,
                         current_recording,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
                         sampling_period_inms):
-
+    """ This function loops over all peaks/baselines indices and measures parameters for each event.
+    Events are sorted into action potentials and subthreshold events
+    depending on event amplitude/peakv.
+    """
     (actionpotentials_dictionary,
      depolarizingevents_dictionary) = make_depolarizingevents_measures_dictionaries()
 
@@ -319,7 +329,7 @@ def get_events_measures(peaks_idcs,
 
         # vslope: slope in voltage in the ms before the event's baseline_idx
         prebaseline_vslope = (voltage_oscillationstrace[baseline_idx] -
-                              voltage_oscillationstrace[baseline_idx - ms_insamples]) # in mV/ms
+                              voltage_oscillationstrace[baseline_idx - ms_insamples])  # in mV/ms
 
         # current applied
         current_applied = np.mean(current_recording[baseline_idx:peak_idx])
@@ -350,11 +360,10 @@ def get_events_measures(peaks_idcs,
         half_width = halfwidth_inidcs * sampling_period_inms
 
 
-        # measures specific to action potentials:
-        if (peak_v > 40 or ed_peakamp > 50) \
-            and peak_idx < len(voltage_recording) - spikewindow_insamples:
-
-            #threshold: 10% of max. dV/dt
+# measures specific to action potentials:
+        if (peak_v > 40 or ed_peakamp > 50) and peak_idx < (len(voltage_recording)
+                                                            - spikewindow_insamples):
+        # threshold: 10% of max. dV/dt
             fullspikev = voltage_denoised[
                          baseline_idx:peak_idx + spikewindow_insamples]
             fullspikev_diff = np.diff(fullspikev)
@@ -366,14 +375,15 @@ def get_events_measures(peaks_idcs,
             threshold_idx = baseline_idx + thrshd_idx
             threshold_v = voltage_denoised[threshold_idx]
 
-            #threshold-width: AP width at threshold v
+        # threshold-width: AP width at threshold v
             returntothreshold_inidcs = descend_vtrace_until(descendtrace, threshold_v)
             thresholdwidth_inidcs = peak_idx + returntothreshold_inidcs - threshold_idx
             threshold_width = thresholdwidth_inidcs * sampling_period_inms
 
-            # count spikelets on spike shoulder
-            if np.isnan(threshold_width): # if voltage did not decay back down to threshold value,
-                # any peaks occurring within 5 ms from the spike peak are taken to be spike-shoulder peaks
+        # count spikelets on spike shoulder:
+                # if voltage did not decay back down to threshold value, any peaks occurring
+                # within 5 ms from the spike peak are taken to be spike-shoulder peaks
+            if np.isnan(threshold_width):
                 spikeshoulderpeaks = [idx for idx in peaks_idcs
                                       if peak_idx < idx < (peak_idx + 5 * ms_insamples)]
                 n_spikeshoulderpeaks = len(spikeshoulderpeaks)
@@ -382,7 +392,6 @@ def get_events_measures(peaks_idcs,
                 ahpamplitude = float('nan')
                 ahpend_idx = float('nan')
                 ahp_width = float('nan')
-
             else:
                 # any peaks occurring before v decays back down to threshold are taken to be spike-shoulder peaks
                 spikeshoulderpeaks = [idx for idx in peaks_idcs
@@ -390,21 +399,20 @@ def get_events_measures(peaks_idcs,
                 n_spikeshoulderpeaks = len(spikeshoulderpeaks)
 
             # after-hyperpolarization measures
-                ahptrace = voltage_denoised[(threshold_idx + thresholdwidth_inidcs):
-                                             (threshold_idx + thresholdwidth_inidcs                                             + returntothreshold_inidcs
-                                             + spikeahpwindow_insamples)]
+                ahptrace = voltage_denoised[
+                           (threshold_idx + thresholdwidth_inidcs):(threshold_idx
+                                                                    + thresholdwidth_inidcs
+                                                                    + spikeahpwindow_insamples)]
 
-                if len(ahptrace) > spikeahpwindow_insamples - 2 \
-                 and np.amin(ahptrace) < baseline_v:
-                # ahp min and amplitude
+                if len(ahptrace) > spikeahpwindow_insamples - 2 and np.amin(ahptrace) < baseline_v:
+        # ahp min and amplitude
                     ahpmin_idx_inahptrace = np.argmin(ahptrace)
                     ahpmin_idx = int(ahpmin_idx_inahptrace + threshold_idx + thresholdwidth_inidcs)
                     ahpamplitude = baseline_v - np.amin(ahptrace)
 
-                # ahp width
+        # ahp width
                     ahpwidth_inidcs = ahpmin_idx_inahptrace
-                    while ahptrace[ahpwidth_inidcs] < baseline_v \
-                     and ahpwidth_inidcs < len(ahptrace) - 1:
+                    while ahptrace[ahpwidth_inidcs] < baseline_v and ahpwidth_inidcs < len(ahptrace) - 1:
                         ahpwidth_inidcs += 1
                     ahpend_idx = int(threshold_idx + thresholdwidth_inidcs + ahpwidth_inidcs + 1)
                     if voltage_denoised[ahpend_idx] < baseline_v:
@@ -412,14 +420,13 @@ def get_events_measures(peaks_idcs,
                     ahp_totalwidth_inidcs = ahpend_idx - threshold_idx + thresholdwidth_inidcs
                     ahp_width = ahp_totalwidth_inidcs * sampling_period_inms
 
-                elif len(ahptrace) > spikewindow_insamples \
-                 and np.amin(ahptrace) <= threshold_v:
-                    ahp_width = 0 # set to 0 if v decayed back to below threshold value
+                elif len(ahptrace) > spikewindow_insamples and np.amin(ahptrace) <= threshold_v:
+                    ahp_width = 0  # set to 0 if v decayed back to below threshold value
                     ahpmin_idx = float('nan')
                     ahpamplitude = float('nan')
                     ahpend_idx = float('nan')
 
-                else: # set measures to nan if they cannot be taken
+                else:  # set measures to nan if they cannot be taken
                     ahpmin_idx = float('nan')
                     ahpamplitude = float('nan')
                     ahpend_idx = float('nan')
@@ -451,9 +458,9 @@ def get_events_measures(peaks_idcs,
             actionpotentials_dictionary['ahp_min_idx'].append(ahpmin_idx)
             actionpotentials_dictionary['ahp_end_idx'].append(ahpend_idx)
 
-        # measures specific to depolarizing events:
+# measures specific to depolarizing events:
         else:
-            # rise-time in the event-detect trace
+        # rise-time in the event-detect trace
             ed_fullrisetrace = voltage_eventdetecttrace[baseline_idx:peak_idx]
             ed_risetrace_clipped1 = ed_fullrisetrace[
                                     ed_fullrisetrace >= ed_baseline_v + 0.1 * ed_peakamp]
@@ -462,7 +469,7 @@ def get_events_measures(peaks_idcs,
                             ed_risetrace_clipped1 <= ed_baseline_v + 0.9 * ed_peakamp]
             ed_rise_time = len(ed_risetrace_clipped2) * sampling_period_inms
 
-            # half-width in the event-detect trace
+        # half-width in the event-detect trace
             ed_descendtrace = voltage_eventdetecttrace[
                               peak_idx:peak_idx + spikewindow_insamples]
             ed_halfhalfwidth_inidcs = len(ed_fullrisetrace[
@@ -472,7 +479,7 @@ def get_events_measures(peaks_idcs,
                                                                  ed_baseline_v + 0.5 * ed_peakamp)
             ed_half_width = (ed_halfhalfwidth_inidcs + ed_secondhalfhalfwidth_inidcs) * sampling_period_inms
 
-            # width: time from rise-start (@10% of amp) until rise-start_v re-reached
+        # width: time from rise-start (@10% of amp) until rise-start_v re-reached
             pastpeakwidth_inidcs = descend_vtrace_until(descendtrace,
                                                         baseline_v + 0.1 * peakamp)
             width = (peak_idx - risestart_idx + pastpeakwidth_inidcs) * sampling_period_inms
@@ -511,8 +518,8 @@ def get_events_measures(peaks_idcs,
 # helper-functions:
 # making empty dictionaries with keys for all events measures
 def make_depolarizingevents_measures_dictionaries():
-    # function for creating 'empty' dictionaries, with only a key
-    # for each of the measures that will be taken for each event
+    """This function creates 'empty' dictionaries with
+    a key for each measure that will be taken for each event. """
     actionpotentials_measures = {
         'peakv': [],
         'baselinev': [],
@@ -537,8 +544,8 @@ def make_depolarizingevents_measures_dictionaries():
         'threshold_idx': [],
         'ahp_min_idx': [],
         'ahp_end_idx': [],
-        'file_origin' : [],
-        'segment_idx' : [],
+        'file_origin': [],
+        'segment_idx': [],
     }
 
     depolarizingevents_measures = {
@@ -565,8 +572,8 @@ def make_depolarizingevents_measures_dictionaries():
         'edtrace_rt_start_idx': [],
         'hw_start_idx': [],
         'edtrace_hw_start_idx': [],
-        'file_origin' : [],
-        'segment_idx' : [],
+        'file_origin': [],
+        'segment_idx': [],
     }
     return actionpotentials_measures, depolarizingevents_measures
 
@@ -576,7 +583,8 @@ def descend_vtrace_until(vtracesnippet, v_stop_value):
 
     idx = 0
     while idx < len(vtracesnippet) - 2 \
-     and (vtracesnippet[idx] >= v_stop_value or vtracesnippet[idx + 1] >= v_stop_value):
+        and (vtracesnippet[idx] >= v_stop_value
+             or vtracesnippet[idx + 1] >= v_stop_value):
         idx += 1
 
     if vtracesnippet[idx] <= v_stop_value:

@@ -195,7 +195,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     for segment_idx in segments_for_plotting_idcs:
         segment_eventsmeasures = block_eventsmeasures.loc[block_eventsmeasures['segment_idx'] == segment_idx]
         vtrace_asanalogsignal = rawdata_block.segments[segment_idx].analogsignals[0]
-        time_axis = vtrace_asanalogsignal.time_axis
+        time_axis = vtrace_asanalogsignal.times
         sampling_frequency = float(vtrace_asanalogsignal.sampling_rate)
         sampling_period_inms = float(vtrace_asanalogsignal.sampling_period) * 1000
         vtrace = np.squeeze(np.array(vtrace_asanalogsignal))

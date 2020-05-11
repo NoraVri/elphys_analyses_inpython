@@ -51,18 +51,7 @@ class SingleNeuron:
         self.blocks = []
 
         self.experiment_metadata = pd.Series()
-        self.rawdata_readingnotes = {
-            'getdepolarizingevents_settings': {
-                'min_depolspeed': 0.1,
-                'min_depolamp': 0.2,
-                'peakwindow': 5,
-                'spikewindow': 40,
-                'spikeahpwindow': 150,
-                'noisefilter_hpfreq': 3000,
-                'oscfilter_lpfreq': 20,
-                'plot': 'off'
-            }
-        }
+        self.rawdata_readingnotes = {}
         # Notes are updated with non-default kwargs needed to exactly recreate analyses results
         # inside the class method.
 
@@ -220,10 +209,10 @@ class SingleNeuron:
         if self.rawdata_readingnotes.get('nonrecordingtimeslices'):
             for filename, dictionary in \
                     self.rawdata_readingnotes['nonrecordingtimeslices'].items():
-                self.rawdata_remove_nonrecordingtimeslice(filename,
-                                                          trace_start_t=dictionary['t_start'],
-                                                          trace_end_t=dictionary['t_end'],
-                                                          segment_idx=dictionary['segment_idx'])
+                self.rawdata_remove_nonrecordingsection(filename,
+                                                        trace_start_t=dictionary['t_start'],
+                                                        trace_end_t=dictionary['t_end'],
+                                                        segment_idx=dictionary['segment_idx'])
 
     # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
@@ -281,14 +270,15 @@ class SingleNeuron:
                     })
 
     # remove parts of individual traces where singleneuron is not yet/no longer being recorded
-    def rawdata_remove_nonrecordingtimeslice(self, file_origin,
-                                             trace_start_t=None,
-                                             trace_end_t=None,
-                                             segment_idx=None):
-        """ This function takes the name of the file/block from which a time-slice is to be removed,
-        and the start and end time of the part of the trace that should be kept.
-        If not segment index is provided, it's assumed to be 0
-        (the single segment on blocks that have just one long trace).
+    def rawdata_remove_nonrecordingsection(self, file_origin,
+                                           trace_start_t=None,
+                                           trace_end_t=None,
+                                           segment_idx=None):
+        """ This function takes the name of the file/block from which a section is to be removed.
+        If a start and/or end time are provided (one or the other has to be),
+        segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace) and the segment is
+        adjusted to start and/or end at the new time(s).
+        If a segment_idx is provided, this segment will be removed from the block.
         It returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
         """
@@ -296,39 +286,44 @@ class SingleNeuron:
             self.rawdata_readingnotes['nonrecordingtimeslices'] = {}
 
         if not segment_idx:
-            segment_idx = 0
+            if trace_start_t:
+                start_t = trace_start_t * pq.s
+            if trace_end_t:
+                end_t = trace_end_t * pq.s
 
-        if trace_start_t:
-            start_t = trace_start_t * pq.s
+            block_idx = self.get_blocknames(printing='off').index(file_origin)
+            block = self.blocks[block_idx]
+
+            if trace_start_t and not trace_end_t:
+                segmentslice_tokeep = block.segments[0].time_slice(
+                                        t_start=start_t)
+            elif trace_end_t and not trace_start_t:
+                segmentslice_tokeep = block.segments[0].time_slice(
+                                        t_start=block.segments[0].t_start,
+                                        t_stop=end_t)
+            else:
+                segmentslice_tokeep = block.segments[0].time_slice(
+                                        t_start=start_t,
+                                        t_stop=end_t)
+            self.blocks[block_idx].segments[0] = segmentslice_tokeep
+            for i, ch_idx in enumerate(self.blocks[block_idx].channel_indexes):
+                self.blocks[block_idx].channel_indexes[i].analogsignals[0] = segmentslice_tokeep.analogsignals[i]
+
         else:
-            start_t = trace_start_t
+            for block in self.blocks:
+                if block.file_origin == file_origin:
+                    block_idx = self.blocks.index(block)
+                    self.blocks[block_idx].segments.remove(self.blocks[block_idx].segments[segment_idx])
+                    for i, ch_idx in enumerate(self.blocks[block_idx].channel_indexes):
+                        self.blocks[block_idx].channel_indexes[i].analogsignals.remove(
+                            self.blocks[block_idx].channel_indexes[i].analogsignals[segment_idx])
 
-        if trace_end_t:
-            end_t = trace_end_t * pq.s
-        else:
-            end_t = trace_end_t
-
-        for block in self.blocks:
-            if block.file_origin == file_origin:
-                block_idx = self.blocks.index(block)
-                segmentslice_tokeep = block.segments[segment_idx].time_slice(
-                                                t_start=start_t,
-                                                t_stop=end_t)
-                self.blocks[block_idx].segments[segment_idx] = segmentslice_tokeep
-                self.blocks[block_idx].channel_indexes[0].analogsignals[
-                    segment_idx] = segmentslice_tokeep.analogsignals[0]
-                self.blocks[block_idx].channel_indexes[1].analogsignals[
-                    segment_idx] = segmentslice_tokeep.analogsignals[1]
-                if len(segmentslice_tokeep.analogsignals) == 3:
-                    self.blocks[block_idx].channel_indexes[2].analogsignals[
-                        segment_idx] = segmentslice_tokeep.analogsignals[2]
-
-                if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-                    self.rawdata_readingnotes['nonrecordingtimeslices'].update({
-                        file_origin: {'t_start': trace_start_t,
-                                      't_end': trace_end_t,
-                                      'segment_idx': segment_idx}
-                    })
+        if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+            self.rawdata_readingnotes['nonrecordingtimeslices'].update({
+                file_origin: {'t_start': trace_start_t,
+                              't_end': trace_end_t,
+                              'segment_idx': segment_idx}
+            })
 
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):
@@ -561,6 +556,17 @@ class SingleNeuron:
         single, representative segment first to find good settings for kwargs.
         !! Once satisfied with the results, run self.write_results() to save the data !!
         """
+        if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
+                                                            'min_depolspeed': 0.1,
+                                                            'min_depolamp': 0.2,
+                                                            'peakwindow': 5,
+                                                            'spikewindow': 40,
+                                                            'spikeahpwindow': 150,
+                                                            'noisefilter_hpfreq': 3000,
+                                                            'oscfilter_lpfreq': 20,
+                                                            'plot': 'off'}
+
         for key, value in kwargs.items():
             if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
                 self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value

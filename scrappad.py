@@ -1,11 +1,55 @@
+import os
+import re
 import numpy as np
 import quantities as pq
 import matplotlib.pyplot as plt
 import pandas as pd
 
 from singleneuron_class import SingleNeuron
+
+from neo.core import Block, ChannelIndex, Segment, AnalogSignal
 # %%
-cell20190805A1 = SingleNeuron('20190805A1')
+
+
+path = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive\myData_YaromLabRig\\20160829\\160829A"
+os.chdir(path)
+fileslist_txt = [file for file in os.listdir() if file.endswith('.txt')]
+
+trigin_files = [file for file in fileslist_txt if '_' not in file]
+dumperfiles = [file for file in fileslist_txt if '_' in file]
+
+# %%
+a_trigin_file = trigin_files[-1]
+trigin_file_data = pd.read_table(a_trigin_file, header=None)
+
+sampling_interval = trigin_file_data.iloc[0,1] * pq.s
+currentsignals_list = []
+voltagesignals_list = []
+for i in range(1, len(trigin_file_data), 4):
+    current_analogsignal = AnalogSignal(trigin_file_data.iloc[i,:], units=pq.nA,
+                                        sampling_period=sampling_interval)
+    voltage_analogsignal = AnalogSignal(trigin_file_data.iloc[i+1,:], units=pq.mV,
+                                        sampling_period=sampling_interval)
+    currentsignals_list.append(current_analogsignal)
+    voltagesignals_list.append(voltage_analogsignal)
+
+# %%
+a_dumper_file = dumperfiles[0]
+with open(a_dumper_file, 'r') as file:
+    recording_channels = file.readline()
+    time_metadata = file.readline()
+sampling_interval = float(re.split('\t', time_metadata)[0]) * pq.ms
+dumper_file_data = pd.read_table(a_dumper_file, header=None, skiprows=2)
+voltage_analogsignal = AnalogSignal(dumper_file_data.iloc[:,0], units=pq.mV,
+                                    sampling_period=sampling_interval)
+current_analogsignal = AnalogSignal(dumper_file_data.iloc[:,1], units=pq.pA,
+                                    sampling_period=sampling_interval)
+figure,axes = plt.subplots(2,1,sharex='all')
+axes[0].plot(voltage_analogsignal.times,np.array(voltage_analogsignal))
+axes[1].plot(current_analogsignal.times,np.array(current_analogsignal))
+
+# %%
+# cell20190805A1 = SingleNeuron('20190805A1')
 # all_blocks = cell20190805A1.get_blocknames(printing='off')
 # recording_block = all_blocks[0]
 # nonrecording_blocks = all_blocks[1:]
@@ -19,13 +63,13 @@ cell20190805A1 = SingleNeuron('20190805A1')
 # cell20190805A1.get_depolarizingevents_fromrawdata()
 # cell20190805A1.write_results()
 # %%
-cell20190805A2 = SingleNeuron('20190805A2')
-cell20190805A2.plot_depolevents_overlayed(get_subthreshold_events=False,
-                                          do_baselining=True,
-                                          colorby_measure='baselinev')
-cell20190805A2.plot_depolevents_overlayed(cell20190805A2.depolarizing_events.amplitude > 3,
-                                          do_baselining=True,
-                                          colorby_measure='baselinev')
+# cell20190805A2 = SingleNeuron('20190805A2')
+# cell20190805A2.plot_depolevents_overlayed(get_subthreshold_events=False,
+#                                           do_baselining=True,
+#                                           colorby_measure='baselinev')
+# cell20190805A2.plot_depolevents_overlayed(cell20190805A2.depolarizing_events.amplitude > 3,
+#                                           do_baselining=True,
+#                                           colorby_measure='baselinev')
 # all_blocks = cell20190805A2.get_blocknames(printing='off')
 # nonrecording_block = all_blocks[0]
 # recording_blocks = all_blocks[1:]

@@ -738,11 +738,19 @@ class SingleNeuron:
         txtfiles_list = [filename for filename in os.listdir() if filename.endswith('.txt')]
 
         for datafile in txtfiles_list:
+            print('currently processing file: ')
+            # in my .txt-file data there are always just two recording channels: V and I
+            # getting one block per file, with all the channel_indexes/segments/analogsignals
+            block = Block()
+            for i in range(2):
+                chidx = ChannelIndex(index=i)
+                block.channel_indexes.append(chidx)
 
             voltagesignals_list = []
             currentsignals_list = []
             with open(datafile, 'r') as file:
                 firstline = file.readline()
+                # in Dumper files, the first line gives the channels; in TrigIn files, it's the time axis
                 if len(firstline) > 100:
                     file_data = pd.read_table(datafile, header=None)
                     sampling_interval = file_data.iloc[0,1] * pq.s
@@ -776,11 +784,6 @@ class SingleNeuron:
                     voltagesignals_list.append(voltage_analogsignal)
                     currentsignals_list.append(current_analogsignal)
 
-            block = Block()
-            for i in range(2):
-                chidx = ChannelIndex(index=i)
-                block.channel_indexes.append(chidx)
-
             block.file_origin = datafile
             no_of_segments = len(voltagesignals_list)
             for i in range(no_of_segments):
@@ -799,31 +802,6 @@ class SingleNeuron:
                 block.channel_indexes[1].analogsignals.append(current_signal)
 
             self.blocks.append(block)
-
-
-
-    # # adding the raw data
-    # for idx, segment in enumerate(block.segments):
-    #     single_v_analogsignal = vsignals[:, idx].rescale('mV')
-    #     single_v_analogsignal.file_origin = block.file_origin
-    #     segment.analogsignals.append(single_v_analogsignal)
-    #     single_v_analogsignal.channel_index = block.channel_indexes[0]
-    #     block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
-    #
-    #     single_i_analogsignal = isignals[:, idx].rescale('pA')
-    #     single_i_analogsignal.file_origin = block.file_origin
-    #     segment.analogsignals.append(single_i_analogsignal)
-    #     single_i_analogsignal.channel_index = block.channel_indexes[1]
-    #     block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
-    #
-    #     if len(run_traces) == 3:
-    #         single_aux_analogsignal = auxsignals[:, idx]
-    #         single_aux_analogsignal.file_origin = block.file_origin
-    #         segment.analogsignals.append(single_aux_analogsignal)
-    #         single_aux_analogsignal.channel_index = block.channel_indexes[2]
-    #         block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
-    #
-    # self.blocks.append(block)
 
     @staticmethod
     # helper function to files_reader_pxp

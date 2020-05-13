@@ -10,7 +10,7 @@ import re
 import json
 from igor import packed
 from neo import io
-from neo.core import Block, Segment, ChannelIndex
+from neo.core import Block, Segment, ChannelIndex, AnalogSignal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,7 +46,7 @@ class SingleNeuron:
         """
         self.name = singleneuron_name
         self.path = path
-        self.rawdata_path = []  # gets updated with the exact filepath leading to singleneuron's raw data files.
+        self.rawdata_path = ''  # gets updated with the exact filepath leading to singleneuron's raw data files.
         self.rawdata_recordingtype = None
         self.blocks = []
 
@@ -154,7 +154,7 @@ class SingleNeuron:
             self.files_reader_ibw()
 
         elif self.rawdata_recordingtype == 'txt':
-            print('txt file importing not yet available')
+            self.files_reader_txt()
 
     # apply all 'cleaning notes' and get any stored analysis results for singleneuron
     def get_singleneuron_storedresults(self):
@@ -694,7 +694,7 @@ class SingleNeuron:
             # setting up an empty block with the right number of channel_indexes:
             block = Block()
             for i in range(len(run_traces)):
-                chidx = ChannelIndex(index=i, channel_names=['Channel Group ' + str(i)])
+                chidx = ChannelIndex(index=i, channel_names=['Channel ' + str(i)])
                 block.channel_indexes.append(chidx)
 
             # setting up the block with right number of segments
@@ -713,22 +713,117 @@ class SingleNeuron:
             # adding the raw data
             for idx, segment in enumerate(block.segments):
                 single_v_analogsignal = vsignals[:, idx].rescale('mV')
+                single_v_analogsignal.file_origin = block.file_origin
                 segment.analogsignals.append(single_v_analogsignal)
                 single_v_analogsignal.channel_index = block.channel_indexes[0]
                 block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
 
                 single_i_analogsignal = isignals[:, idx].rescale('pA')
+                single_i_analogsignal.file_origin = block.file_origin
                 segment.analogsignals.append(single_i_analogsignal)
                 single_i_analogsignal.channel_index = block.channel_indexes[1]
                 block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
 
                 if len(run_traces) == 3:
                     single_aux_analogsignal = auxsignals[:, idx]
+                    single_aux_analogsignal.file_origin = block.file_origin
                     segment.analogsignals.append(single_aux_analogsignal)
                     single_aux_analogsignal.channel_index = block.channel_indexes[2]
                     block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
 
             self.blocks.append(block)
+
+    def files_reader_txt(self):
+        os.chdir(self.rawdata_path)
+        txtfiles_list = [filename for filename in os.listdir() if filename.endswith('.txt')]
+
+        for datafile in txtfiles_list:
+
+            voltagesignals_list = []
+            currentsignals_list = []
+            with open(datafile, 'r') as file:
+                firstline = file.readline()
+                if len(firstline) > 100:
+                    file_data = pd.read_table(datafile, header=None)
+                    sampling_interval = file_data.iloc[0,1] * pq.s
+                    for i in range(1, len(file_data), 4):
+                        current_analogsignal = AnalogSignal(file_data.iloc[i, :],
+                                                            units=pq.nA,
+                                                            sampling_period=sampling_interval)
+                        current_analogsignal = current_analogsignal.rescale('pA')
+                        current_analogsignal.file_origin = datafile
+                        voltage_analogsignal = AnalogSignal(file_data.iloc[i + 1, :],
+                                                            units=pq.mV,
+                                                            sampling_period=sampling_interval)
+                        voltage_analogsignal.file_origin = datafile
+
+                        currentsignals_list.append(current_analogsignal)
+                        voltagesignals_list.append(voltage_analogsignal)
+                else:
+                    file_data = pd.read_table(datafile, header=None, skiprows=2)
+                    sampling_interval_str = file.readline()
+                    sampling_interval = float(
+                        re.split('\t', sampling_interval_str)[0]) * pq.ms
+                    voltage_analogsignal = AnalogSignal(file_data.iloc[:, 0],
+                                                        units=pq.mV,
+                                                        sampling_period=sampling_interval)
+                    voltage_analogsignal.file_origin = datafile
+                    current_analogsignal = AnalogSignal(file_data.iloc[:, 1],
+                                                        units=pq.pA,
+                                                        sampling_period=sampling_interval)
+                    current_analogsignal.file_origin = datafile
+
+                    voltagesignals_list.append(voltage_analogsignal)
+                    currentsignals_list.append(current_analogsignal)
+
+            block = Block()
+            for i in range(2):
+                chidx = ChannelIndex(index=i)
+                block.channel_indexes.append(chidx)
+
+            block.file_origin = datafile
+            no_of_segments = len(voltagesignals_list)
+            for i in range(no_of_segments):
+                segment = Segment(name=datafile+str(i))
+                block.segments.append(segment)
+
+            for idx, segment in enumerate(block.segments):
+                voltage_signal = voltagesignals_list[idx]
+                voltage_signal.channel_index = block.channel_indexes[0]
+                segment.analogsignals.append(voltage_signal)
+                block.channel_indexes[0].analogsignals.append(voltage_signal)
+
+                current_signal = currentsignals_list[idx]
+                current_signal.channel_index = block.channel_indexes[1]
+                segment.analogsignals.append(current_signal)
+                block.channel_indexes[1].analogsignals.append(current_signal)
+
+            self.blocks.append(block)
+
+
+
+    # # adding the raw data
+    # for idx, segment in enumerate(block.segments):
+    #     single_v_analogsignal = vsignals[:, idx].rescale('mV')
+    #     single_v_analogsignal.file_origin = block.file_origin
+    #     segment.analogsignals.append(single_v_analogsignal)
+    #     single_v_analogsignal.channel_index = block.channel_indexes[0]
+    #     block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
+    #
+    #     single_i_analogsignal = isignals[:, idx].rescale('pA')
+    #     single_i_analogsignal.file_origin = block.file_origin
+    #     segment.analogsignals.append(single_i_analogsignal)
+    #     single_i_analogsignal.channel_index = block.channel_indexes[1]
+    #     block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
+    #
+    #     if len(run_traces) == 3:
+    #         single_aux_analogsignal = auxsignals[:, idx]
+    #         single_aux_analogsignal.file_origin = block.file_origin
+    #         segment.analogsignals.append(single_aux_analogsignal)
+    #         single_aux_analogsignal.channel_index = block.channel_indexes[2]
+    #         block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
+    #
+    # self.blocks.append(block)
 
     @staticmethod
     # helper function to files_reader_pxp
@@ -738,7 +833,7 @@ class SingleNeuron:
         # setting up an empty block with the right number of channel_indexes:
         block = Block()
         for i in range(len(traces_names)):
-            chidx = ChannelIndex(index=i, channel_names=['Channel Group '+str(i)])
+            chidx = ChannelIndex(index=i, channel_names=['Channel '+str(i)])
             block.channel_indexes.append(chidx)
 
         # importing the raw analogsignals for each channel
@@ -769,17 +864,20 @@ class SingleNeuron:
         # adding the raw data to the block's channel_indexes/segments
         for idx, segment in enumerate(block.segments):
             single_v_analogsignal = vsignals[:,idx].rescale('mV')
+            single_v_analogsignal.file_origin = block.file_origin
             segment.analogsignals.append(single_v_analogsignal)
             single_v_analogsignal.channel_index = block.channel_indexes[0]
             block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
 
             single_i_analogsignal = isignals[:,idx].rescale('pA')
+            single_i_analogsignal.file_origin = block.file_origin
             segment.analogsignals.append(single_i_analogsignal)
             single_i_analogsignal.channel_index = block.channel_indexes[1]
             block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
 
             if len(traces_names) == 3:
                 single_aux_analogsignal = auxsignals[:,idx]
+                single_aux_analogsignal.file_origin = block.file_origin
                 segment.analogsignals.append(single_aux_analogsignal)
                 single_aux_analogsignal.channel_index = block.channel_indexes[2]
                 block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)

@@ -8,9 +8,12 @@ import pandas as pd
 from singleneuron_class import SingleNeuron
 
 from neo.core import Block, ChannelIndex, Segment, AnalogSignal
+
 # %%
+cell20160829D = SingleNeuron('20160829D')
 
 
+# %%
 path = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive\myData_YaromLabRig\\20160829\\160829A"
 os.chdir(path)
 fileslist_txt = [file for file in os.listdir() if file.endswith('.txt')]
@@ -28,10 +31,17 @@ voltagesignals_list = []
 for i in range(1, len(trigin_file_data), 4):
     current_analogsignal = AnalogSignal(trigin_file_data.iloc[i,:], units=pq.nA,
                                         sampling_period=sampling_interval)
+    current_analogsignal = current_analogsignal.rescale('pA')
     voltage_analogsignal = AnalogSignal(trigin_file_data.iloc[i+1,:], units=pq.mV,
                                         sampling_period=sampling_interval)
     currentsignals_list.append(current_analogsignal)
     voltagesignals_list.append(voltage_analogsignal)
+
+voltage_analogsignal = voltagesignals_list[2]
+current_analogsignal = currentsignals_list[2]
+figure,axes = plt.subplots(2,1,sharex='all')
+axes[0].plot(voltage_analogsignal.times,np.array(voltage_analogsignal))
+axes[1].plot(current_analogsignal.times,np.array(current_analogsignal))
 
 # %%
 a_dumper_file = dumperfiles[0]

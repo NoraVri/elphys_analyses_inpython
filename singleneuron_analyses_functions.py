@@ -51,6 +51,10 @@ def get_depolarizingevents(single_segment,
     time_axis = time_axis.rescale('ms').magnitude
     voltage_recording = np.array(np.squeeze(single_voltage_trace))              # !Make sure it's in mV
     current_recording = np.array(np.squeeze(single_segment.analogsignals[1]))   # !Make sure it's in pA
+    if len(single_segment.analogsignals) == 3:
+        auxttl_recording = np.array(np.squeeze(single_segment.analogsignals[2]))
+    else:
+        auxttl_recording = None
     sampling_frequency = float(single_voltage_trace.sampling_rate)              # !Make sure it's in Hz
     sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000
 
@@ -105,7 +109,8 @@ def get_depolarizingevents(single_segment,
                                                 ms_insamples,
                                                 spikewindow_insamples,
                                                 spikeahpwindow_insamples,
-                                                sampling_period_inms)
+                                                sampling_period_inms,
+                                                auxttl_recording)
 
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
@@ -301,7 +306,8 @@ def get_events_measures(peaks_idcs,
                         voltage_approxinstfreq,
                         current_recording,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
-                        sampling_period_inms):
+                        sampling_period_inms,
+                        auxttl_recording):
     """ This function loops over all peaks/baselines indices and measures parameters for each event.
     Events are sorted into action potentials and subthreshold events
     depending on event amplitude/peakv.
@@ -335,6 +341,15 @@ def get_events_measures(peaks_idcs,
         current_applied = np.mean(current_recording[baseline_idx:peak_idx])
         if abs(current_applied) <= 7:
             current_applied = 0
+
+        # ttl applied (light or puff or whatever)
+        if not auxttl_recording:
+            ttlpulse_applied = False
+        else:
+            if auxttl_recording[baseline_idx] > 5:
+                ttlpulse_applied = True
+            else:
+                ttlpulse_applied = False
 
         # approximate oscillation phase and instantaneous frequency
         approx_oscphase = voltage_approxphase[baseline_idx]
@@ -446,6 +461,8 @@ def get_events_measures(peaks_idcs,
             actionpotentials_dictionary['ahp_width'].append(ahp_width)
 
             actionpotentials_dictionary['applied_current'].append(current_applied)
+            actionpotentials_dictionary['applied_ttlpulse'].append(ttlpulse_applied)
+
             actionpotentials_dictionary['approx_oscslope'].append(prebaseline_vslope)
             actionpotentials_dictionary['approx_oscinstphase'].append(approx_oscphase)
             actionpotentials_dictionary['approx_oscinstfreq'].append(approx_instfreq)
@@ -494,7 +511,10 @@ def get_events_measures(peaks_idcs,
             depolarizingevents_dictionary['rise_time'].append(rise_time)
             depolarizingevents_dictionary['half_width'].append(half_width)
             depolarizingevents_dictionary['width_at10%amp'].append(width)
+
             depolarizingevents_dictionary['applied_current'].append(current_applied)
+            depolarizingevents_dictionary['applied_ttlpulse'].append(ttlpulse_applied)
+
             depolarizingevents_dictionary['approx_oscslope'].append(prebaseline_vslope)
             depolarizingevents_dictionary['approx_oscinstphase'].append(approx_oscphase)
             depolarizingevents_dictionary['approx_oscinstfreq'].append(approx_instfreq)
@@ -533,6 +553,8 @@ def make_depolarizingevents_measures_dictionaries():
         'ahp_amplitude': [],
         'ahp_width': [],
         'applied_current': [],
+        'applied_ttlpulse': [],
+
         'approx_oscslope': [],
         'approx_oscinstphase': [],
         'approx_oscinstfreq': [],
@@ -556,6 +578,8 @@ def make_depolarizingevents_measures_dictionaries():
         'half_width': [],
         'width_at10%amp': [],
         'applied_current': [],
+        'applied_ttlpulse': [],
+
         'approx_oscslope': [],
         'approx_oscinstphase': [],
         'approx_oscinstfreq': [],

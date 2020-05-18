@@ -276,8 +276,8 @@ class SingleNeuron:
                                            segment_idx=None):
         """ This function takes the name of the file/block from which a section is to be removed.
         If a start and/or end time are provided (one or the other has to be),
-        segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace) and the segment is
-        adjusted to start and/or end at the new time(s).
+        segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace)
+        and the segment is adjusted to start and/or end at the new time(s).
         If a segment_idx is provided, this segment will be removed from the block.
         It returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
@@ -285,7 +285,7 @@ class SingleNeuron:
         if not self.rawdata_readingnotes.get('nonrecordingtimeslices'):
             self.rawdata_readingnotes['nonrecordingtimeslices'] = {}
 
-        if not segment_idx:
+        if not isinstance(segment_idx, int):
             if trace_start_t:
                 start_t = trace_start_t * pq.s
             if trace_end_t:
@@ -306,17 +306,21 @@ class SingleNeuron:
                                         t_start=start_t,
                                         t_stop=end_t)
             self.blocks[block_idx].segments[0] = segmentslice_tokeep
-            for i, ch_idx in enumerate(self.blocks[block_idx].channel_indexes):
+            for i, _ in enumerate(self.blocks[block_idx].channel_indexes):
                 self.blocks[block_idx].channel_indexes[i].analogsignals[0] = segmentslice_tokeep.analogsignals[i]
 
         else:
             for block in self.blocks:
                 if block.file_origin == file_origin:
                     block_idx = self.blocks.index(block)
-                    self.blocks[block_idx].segments.remove(self.blocks[block_idx].segments[segment_idx])
-                    for i, ch_idx in enumerate(self.blocks[block_idx].channel_indexes):
-                        self.blocks[block_idx].channel_indexes[i].analogsignals.remove(
-                            self.blocks[block_idx].channel_indexes[i].analogsignals[segment_idx])
+                    self.blocks[block_idx].segments.remove(
+                        self.blocks[block_idx].segments[segment_idx])
+                    chidxs = self.blocks[block_idx].channel_indexes
+                    for i, chidx in enumerate(chidxs):
+                        analogsignals = chidx.analogsignals
+                        del analogsignals[segment_idx]
+                        chidx.analogsignals = analogsignals
+                        self.blocks[block_idx].channel_indexes[i] = chidx
 
         if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
             self.rawdata_readingnotes['nonrecordingtimeslices'].update({
@@ -388,6 +392,7 @@ class SingleNeuron:
                                    get_subthreshold_events=True,
                                    newplot_per_block=False, blocknames_list=None,
                                    colorby_measure='', color_lims=[],
+                                   plt_title='',
                                    **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
@@ -454,12 +459,12 @@ class SingleNeuron:
                 if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
                     axis_title += ' normalized'
                 axis.set_title(axis_title)
-                figure.suptitle(self.name + block_name)
+                figure.suptitle(self.name + block_name + plt_title)
 
         else:
             # initializing the figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
-            plt.suptitle(self.name + ' depolarizing events')
+            plt.suptitle(self.name + plt_title)
             for block_name in unique_blocks_forplotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
@@ -527,6 +532,37 @@ class SingleNeuron:
                         self.rawdata_readingnotes['getdepolarizingevents_settings'],
                         plotwindow_inms, prebaselinewindow_inms)
 
+    def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,
+                                          return_dicts=False,
+                                          **kwargs):
+        segment = self.blocks[block_idx].segments[segment_idx]
+
+        if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
+                                                            'min_depolspeed': 0.1,
+                                                            'min_depolamp': 0.2,
+                                                            'peakwindow': 5,
+                                                            'spikewindow': 40,
+                                                            'spikeahpwindow': 150,
+                                                            'noisefilter_hpfreq': 3000,
+                                                            'oscfilter_lpfreq': 20,
+                                                            'plot': 'off'}
+
+        stored_kwargs = self.rawdata_readingnotes['getdepolarizingevents_settings']
+
+
+        for key, value in kwargs.items():
+            if key in stored_kwargs.keys():
+                stored_kwargs[key] = value
+
+        stored_kwargs['plot'] = 'on'
+        apsdict, depolsdict = snafs.get_depolarizingevents(
+            segment,
+            **stored_kwargs)
+
+        if return_dicts:
+            return apsdict, depolsdict
+
 # %% functions for analyzing raw data
 
 # %% depolarizing events (subthreshold ones and action potentials)
@@ -549,7 +585,7 @@ class SingleNeuron:
         'spikeahpwindow': time after threshold-width end within which AHP end is expected to occur.
         'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
-        'plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.
+        ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
         The recommended workflow is to use snafs.get_depolarizingevents() on a (time_slice of)

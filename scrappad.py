@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from singleneuron_class import SingleNeuron
-
+import singleneuron_analyses_functions as snafs
 from neo.core import Block, ChannelIndex, Segment, AnalogSignal
 
 # %%
@@ -73,20 +73,36 @@ axes[1].plot(current_analogsignal.times,np.array(current_analogsignal))
 # cell20190805A1.get_depolarizingevents_fromrawdata()
 # cell20190805A1.write_results()
 # %%
-# cell20190805A2 = SingleNeuron('20190805A2')
-# cell20190805A2.plot_depolevents_overlayed(get_subthreshold_events=False,
-#                                           do_baselining=True,
-#                                           colorby_measure='baselinev')
-# cell20190805A2.plot_depolevents_overlayed(cell20190805A2.depolarizing_events.amplitude > 3,
-#                                           do_baselining=True,
-#                                           colorby_measure='baselinev')
+cell20190805A2 = SingleNeuron('20190805A2')
+
 # all_blocks = cell20190805A2.get_blocknames(printing='off')
 # nonrecording_block = all_blocks[0]
 # recording_blocks = all_blocks[1:]
 # cell20190805A2.rawdata_remove_nonrecordingblock(nonrecording_block)
 # cell20190805A2.rawdata_remove_nonrecordingchannel(recording_blocks[0],1)
 #
-# cell20190805A2.plot_allrawdata(time_axis_unit='s')
-# cell20190805A2.rawdata_remove_nonrecordingtimeslice(recording_blocks[0],trace_start_t=12.7)
+# # cell20190805A2.plot_allrawdata(time_axis_unit='s')
+# cell20190805A2.rawdata_remove_nonrecordingsection(recording_blocks[0],trace_start_t=12.7)
 # cell20190805A2.rawdata_note_chemicalinbath('withBlocker')
+# cell20190805A2.write_results()
+plt.close('all')
+a_segment = cell20190805A2.blocks[3].segments[0].time_slice(t_start=150*pq.s, t_stop=250*pq.s)
+another_segment = cell20190805A2.blocks[0].segments[0].time_slice(t_start=490*pq.s, t_stop=540*pq.s)
+# %%
+apsdict, depolsdict = snafs.get_depolarizingevents(a_segment,
+                                                   min_depolspeed=0.08,
+                                                   min_depolamp=0.15,
+                                                   # oscfilter_lpfreq=15,
+                                                   plot='on')
+
+anotherapsdict, anotherdepolsdict = snafs.get_depolarizingevents(another_segment,
+                                                                 min_depolspeed=0.08,
+                                                                 min_depolamp=0.15,
+                                                                 plot='on')
 # cell20190805A2.get_depolarizingevents_fromrawdata()
+# cell20190805A2.plot_depolevents_overlayed(get_subthreshold_events=False,
+#                                           do_baselining=True,
+#                                           colorby_measure='baselinev')
+# cell20190805A2.plot_depolevents_overlayed(cell20190805A2.depolarizing_events.amplitude > 3,
+#                                           do_baselining=True,
+#                                           colorby_measure='baselinev')

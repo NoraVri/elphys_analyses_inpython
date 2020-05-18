@@ -202,7 +202,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 
         # optional: getting the event-detect trace instead of the raw vtrace
         if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-            vtrace, _, _ = snafs.apply_rawvtrace_manipulations(
+            vtrace, _, _, _, _ = snafs.apply_rawvtrace_manipulations(
                                                  vtrace,
                                                  getdepolarizingevents_settings['oscfilter_lpfreq'],
                                                  getdepolarizingevents_settings['noisefilter_hpfreq'],

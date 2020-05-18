@@ -115,7 +115,7 @@ def get_depolarizingevents(single_segment,
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
     if plot == 'on':
-        figure,axes = plt.subplots(2,1,sharex='all')
+        figure,axes = plt.subplots(3,1,sharex='all')
         axes[0].plot(time_axis,voltage_recording,
                      color='blue',label='raw data')
         axes[0].scatter(time_axis[depolswithpeaks_idcs], voltage_recording[depolswithpeaks_idcs],
@@ -131,16 +131,21 @@ def get_depolarizingevents(single_segment,
                      linewidth=2,
                      label='event-detect trace')
         axes[1].scatter(time_axis[depolswithpeaks_idcs], voltage_eventdetecttrace[depolswithpeaks_idcs],
-                        color='green')
+                        color='green',
+                        label='event baseline point')
         axes[1].scatter(time_axis[peaks_idcs], voltage_eventdetecttrace[peaks_idcs],
-                        color='red')
-
-        axes[1].plot(time_axis_derivative,voltage_permsderivative,
-                     color='black')
-        axes[1].scatter(time_axis_derivative[alldepols_idcs], voltage_permsderivative[alldepols_idcs],
-                        color='blue')
-        axes[1].set_xlabel('time (ms)')
+                        color='red',
+                        label='event peak')
         axes[1].legend()
+
+        axes[2].plot(time_axis_derivative,voltage_permsderivative,
+                     color='black',
+                     label='event-detect trace derivative')
+        axes[2].scatter(time_axis_derivative[alldepols_idcs], voltage_permsderivative[alldepols_idcs],
+                        color='blue',
+                        label='depolarizations-candidates')
+        axes[2].set_xlabel('time (ms)')
+        axes[2].legend()
 
     return actionpotentials_resultsdictionary, depolarizingevents_resultsdictionary
 
@@ -186,33 +191,37 @@ def apply_rawvtrace_manipulations(voltage_recording,
 
     # getting the instantaneous phase and frequency from the hilbert transform of the data
     # TODO: replace the line below with code that does proper mean-centering (in traces with current pulses applied this gives particularly unreliable results)
-    voltage_osctrace_meancentered = voltage_oscillationstrace - np.mean(voltage_oscillationstrace)
+    centering_value = np.mean(voltage_recording)
+    voltage_osctrace_meancentered = voltage_oscillationstrace - centering_value
     voltage_osctrace_analyticsignal = signal.hilbert(voltage_osctrace_meancentered)
     voltage_approxphase = np.angle(voltage_osctrace_analyticsignal)
     voltage_approxinstfreq = ((np.diff(np.unwrap(voltage_approxphase))
                                / (2.0*np.pi) * sampling_frequency))
 
-    voltage_meancentered = voltage_recording - voltage_noisetrace - np.mean(voltage_recording)
+    voltage_meancentered = voltage_recording - voltage_noisetrace - centering_value
     voltage_analyticsignal = signal.hilbert(voltage_meancentered)
     vraw_approxphase = np.angle(voltage_analyticsignal)
-    # vraw_approxinstfreq = ((np.diff(np.unwrap(vraw_approxphase))
-    #                         / (2.0*np.pi) * sampling_frequency))
 
     if plot == 'on':
-        figure, axes = plt.subplots(3, 1, sharex='all')
-        axes[0].plot(time_axis, voltage_recording, label='raw recording')
-        axes[0].plot(time_axis, voltage_recording - voltage_noisetrace, label='noise-substracted voltage')
-        axes[0].plot(time_axis, voltage_oscillationstrace, label='lp-filtered at '+str(oscfilter_lpfreq)+'Hz')
+        figure, axes = plt.subplots(2, 1, sharex='all')
+        axes[0].plot(time_axis, voltage_recording - centering_value,
+                     color='blue',
+                     label='raw recording, mean centered')
+        axes[0].plot(time_axis, voltage_oscillationstrace - centering_value,
+                     color='black',
+                     label='lp-filtered at '+str(oscfilter_lpfreq)+'Hz')
         axes[0].legend()
-        axes[1].plot(time_axis, voltage_osctrace_meancentered, label='mean-centered osctrace')
-        axes[1].plot(time_axis, voltage_meancentered, label='mean-centered raw voltage')
-        axes[1].plot(time_axis, voltage_noisetrace, label='hp-filtered at '+str(noisefilter_hpfreq)+'Hz')
+        axes[0].plot(time_axis, voltage_noisetrace,
+                     label='hp-filtered at '+str(noisefilter_hpfreq)+'Hz')
+        axes[0].set_ylabel('mean V = '+ str(centering_value))
+        axes[0].legend()
+        axes[1].plot(time_axis, voltage_approxphase, label='osctrace phase')
+        axes[1].plot(time_axis[1:], voltage_approxinstfreq,
+                     color='black',
+                     label='osctrace inst.freq.')
+        axes[1].plot(time_axis, vraw_approxphase, label='de-noised v phase')
+        axes[1].set_ylim([-5, 40])
         axes[1].legend()
-        axes[2].plot(time_axis, voltage_approxphase, label='osctrace phase')
-        axes[2].plot(time_axis[1:], voltage_approxinstfreq, label='osctrace inst.freq.')
-        axes[2].plot(time_axis, vraw_approxphase, label='de-noised v phase')
-        # axes[2].plot(time_axis[1:], vraw_approxinstfreq, label='de-noised v inst.freq.')
-        axes[2].legend()
 
     return voltage_eventdetecttrace, \
            voltage_oscillationstrace, \
@@ -245,11 +254,15 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
         # skip points that refer to places on already-identified events
         if peaks_idcs and idx < peaks_idcs[-1]:
             continue
-        # 1. identify possible depolarizing event-start points: dV/dt > min_depolspeed
-        # for a duration of at least 0.5ms
-        elif voltage_derivative[idx] >= min_depolspeed \
-        and [v_diff >= min_depolspeed
-             for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]]:
+        # 1. identify possible depolarizing event-start points:
+        # - dV/dt > 2 * min_depolspeed, or:
+        # - dV/dt < 10% of min_depolspeed some time in the ms before idx
+        # - dV/dt > min_depolspeed for a duration of at least 0.5ms
+        elif voltage_derivative[idx] > 2 * min_depolspeed \
+            or (voltage_derivative[idx] >= min_depolspeed
+            and np.min(voltage_derivative[idx-ms_insamples:idx]) < 0.1 * min_depolspeed
+            and [v_diff >= min_depolspeed
+                 for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]]):
 
             depol_idx = idx  # depol_idx will mark the baseline_v point, if a proper peak can be found to go with it
             depolarizations.append(depol_idx)
@@ -343,10 +356,10 @@ def get_events_measures(peaks_idcs,
             current_applied = 0
 
         # ttl applied (light or puff or whatever)
-        if not auxttl_recording:
+        if auxttl_recording is None:
             ttlpulse_applied = False
         else:
-            if auxttl_recording[baseline_idx] > 5:
+            if auxttl_recording[baseline_idx] > 1:
                 ttlpulse_applied = True
             else:
                 ttlpulse_applied = False

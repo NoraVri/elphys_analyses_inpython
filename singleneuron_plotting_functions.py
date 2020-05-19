@@ -95,7 +95,11 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
     """
     # creating the event-trace and corresponding time axis
     event_trace = vtrace[plot_startidx:plot_startidx + int(plotwindow_inms / sampling_period_inms)]
-    time_axis = np.linspace(start=0, stop=plotwindow_inms, num=len(event_trace))
+    if plot_startidx + int(plotwindow_inms / sampling_period_inms) > len(vtrace):
+        newplotwindow_inms = (len(vtrace) - plot_startidx) * sampling_period_inms
+        time_axis = np.linspace(start=0, stop=newplotwindow_inms, num=len(event_trace))
+    else:
+        time_axis = np.linspace(start=0, stop=plotwindow_inms, num=len(event_trace))
 
     # optional: baselining and/or normalizing
     if do_baselining and not eventmeasures_series.empty and get_measures_type == 'raw':

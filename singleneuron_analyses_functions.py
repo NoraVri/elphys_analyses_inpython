@@ -389,8 +389,7 @@ def get_events_measures(peaks_idcs,
 
 
 # measures specific to action potentials:
-        if (peak_v > 40 or ed_peakamp > 50) and peak_idx < (len(voltage_recording)
-                                                            - spikewindow_insamples):
+        if (peak_v > 10 or ed_peakamp > 50):
         # threshold: 10% of max. dV/dt
             fullspikev = voltage_denoised[
                          baseline_idx:peak_idx + spikewindow_insamples]

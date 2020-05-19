@@ -275,7 +275,7 @@ class SingleNeuron:
                                            trace_end_t=None,
                                            segment_idx=None):
         """ This function takes the name of the file/block from which a section is to be removed.
-        If a start and/or end time are provided (one or the other has to be),
+        If a start and/or end time (in s) are provided (one or the other has to be),
         segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace)
         and the segment is adjusted to start and/or end at the new time(s).
         If a segment_idx is provided, this segment will be removed from the block.
@@ -406,6 +406,7 @@ class SingleNeuron:
         [blocknames_list]: a list of block names (== block.file_origin) marking a subset of blocks for event-plotting.
         'colorby_measure': key of a depolarizingevents_measure to color-code the lines by.
         [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
+        'plt_title': default='', string giving the title of the plot(s).
         'timealignto_measure': default='peakv_idx', but can be changed to any key representing a time measurement.
         prealignpoint_window_inms: default=10, length of the timewindow for plotting before the align-point.
         total_plotwindow_inms: default=50, total length of the window for plotting the events.
@@ -588,7 +589,7 @@ class SingleNeuron:
         ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
-        The recommended workflow is to use snafs.get_depolarizingevents() on a (time_slice of)
+        The recommended workflow is to use plot_eventdetecttraces_forsegment() on a (time_slice of a)
         single, representative segment first to find good settings for kwargs.
         !! Once satisfied with the results, run self.write_results() to save the data !!
         """

@@ -24,6 +24,7 @@ def get_depolarizingevents(single_segment,
                            min_depolspeed=0.1, min_depolamp=0.2,
                            peakwindow=5, spikewindow=40, spikeahpwindow=150,
                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
+                           ttleffect_windowinms = None,
                            plot='off'):
     """ This function finds depolarizing events and returns two dictionaries,
     containing the locations and measured parameters of action potentials
@@ -110,7 +111,8 @@ def get_depolarizingevents(single_segment,
                                                 spikewindow_insamples,
                                                 spikeahpwindow_insamples,
                                                 sampling_period_inms,
-                                                auxttl_recording)
+                                                auxttl_recording,
+                                                ttleffectwindow_inms=ttleffect_windowinms)
 
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
@@ -294,7 +296,7 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
                 ed_postpeaktrace = voltage_eventdetecttrace[
                                    peakv_idx + 1:peakv_idx + peakwindow_insamples + 1]
                 ed_postpeakmin = np.amin(ed_postpeaktrace)
-                ed_postpeakmax = np.amax(ed_postpeaktrace) - 0.05
+                ed_postpeakmax = np.amax(ed_postpeaktrace) - 0.05 # allow for a bit of noise
 
             if ed_postpeakmax > ed_peakv:
                 continue
@@ -320,7 +322,7 @@ def get_events_measures(peaks_idcs,
                         current_recording,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
                         sampling_period_inms,
-                        auxttl_recording):
+                        auxttl_recording, ttleffectwindow_inms=None):
     """ This function loops over all peaks/baselines indices and measures parameters for each event.
     Events are sorted into action potentials and subthreshold events
     depending on event amplitude/peakv.
@@ -358,8 +360,15 @@ def get_events_measures(peaks_idcs,
         # ttl applied (light or puff or whatever)
         if auxttl_recording is None:
             ttlpulse_applied = False
+        elif ttleffectwindow_inms is None:
+            if (auxttl_recording[baseline_idx] > 1) \
+                    or (auxttl_recording[peak_idx] > 1):
+                ttlpulse_applied = True
+            else:
+                ttlpulse_applied = False
         else:
-            if auxttl_recording[baseline_idx] > 1:
+            ttleffectwindow_insamples = int(ttleffectwindow_inms / sampling_period_inms)
+            if [auxttl > 1 for auxttl in auxttl_recording[baseline_idx-ttleffectwindow_insamples:peak_idx]]:
                 ttlpulse_applied = True
             else:
                 ttlpulse_applied = False

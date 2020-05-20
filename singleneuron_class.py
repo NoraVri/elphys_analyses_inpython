@@ -356,9 +356,27 @@ class SingleNeuron:
 # %% functions for plotting/seeing stuff
 
     # getting a list of all block names
-    def get_blocknames(self, printing='on'):
+    def get_blocknames(self, get_subset=False, printing='on'):
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them."""
-        blocks_list = [block.file_origin for block in self.blocks]
+        if get_subset is not False \
+                and ('no' in get_subset or 'without' in get_subset):
+            allblocks_list = [block.file_origin for block in self.blocks]
+            if 'chemicalsapplied_blocks' in self.rawdata_readingnotes.keys():
+                blocks_list = [block for block in allblocks_list
+                               if block not in self.rawdata_readingnotes['chemicalsapplied_blocks']]
+            else:
+                blocks_list = allblocks_list
+                print('no notes on chemicals applied were found; returning a list of all block names.')
+        elif get_subset is not False \
+                and 'chemicals' in get_subset:
+            if 'chemicalsapplied_blocks' in self.rawdata_readingnotes.keys():
+                blocks_list = self.rawdata_readingnotes['chemicalsapplied_blocks']
+            else:
+                blocks_list = []
+                print('no notes on chemicals applied were found; returning an empty list.')
+        else:
+            blocks_list = [block.file_origin for block in self.blocks]
+
         if printing == 'on':
             print(blocks_list)
         return blocks_list
@@ -547,10 +565,10 @@ class SingleNeuron:
                                                             'spikeahpwindow': 150,
                                                             'noisefilter_hpfreq': 3000,
                                                             'oscfilter_lpfreq': 20,
+                                                            'ttleffect_windowinms': None,
                                                             'plot': 'off'}
 
         stored_kwargs = self.rawdata_readingnotes['getdepolarizingevents_settings']
-
 
         for key, value in kwargs.items():
             if key in stored_kwargs.keys():
@@ -560,6 +578,7 @@ class SingleNeuron:
         apsdict, depolsdict = snafs.get_depolarizingevents(
             segment,
             **stored_kwargs)
+        stored_kwargs['plot'] = 'off'
 
         if return_dicts:
             return apsdict, depolsdict
@@ -580,12 +599,13 @@ class SingleNeuron:
         Inputs (all optional):
         'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
         'min_depolamp': minimal amplitude from baseline to a possible event peak.
-        'peakwindow': maximal time between a detected depolarization and an event peak (in ms), and
-          time after peak within which voltage should not get higher, and decay again to <80% of its amplitude.
+        'peakwindow': maximal time between a detected depolarization and an event peak (in ms),
+          and time after peak within which voltage should not get higher, and decay again to <80% of its amplitude.
         'spikewindow': time after peak within which half-width, threshold and whole-width are expected to occur.
         'spikeahpwindow': time after threshold-width end within which AHP end is expected to occur.
         'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
+        'ttleffect_windowinms': time after TTL pulse turns off but still has effects working through.
         ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
@@ -602,6 +622,7 @@ class SingleNeuron:
                                                             'spikeahpwindow': 150,
                                                             'noisefilter_hpfreq': 3000,
                                                             'oscfilter_lpfreq': 20,
+                                                            'ttleffect_windowinms': None,
                                                             'plot': 'off'}
 
         for key, value in kwargs.items():

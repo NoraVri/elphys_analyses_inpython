@@ -872,50 +872,63 @@ class SingleNeuron:
             chidx = ChannelIndex(index=i, channel_names=['Channel '+str(i)])
             block.channel_indexes.append(chidx)
 
-        # importing the raw analogsignals for each channel
-        vtrace_name = [name for name in traces_names if 'S1' in name][0]
-        itrace_name = [name for name in traces_names if 'S2' in name][0]
+        # importing the raw analogsignals for each channel - two or three signal groups per file
+        sg1_name = [name for name in traces_names if 'S1' in name][0]
+        sg2_name = [name for name in traces_names if 'S2' in name][0]
         if len(traces_names) == 3:
-            auxtrace_name = [name for name in traces_names if 'S3' in name][0]
-            auxsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+auxtrace_name)
-        vsignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+vtrace_name)
-        isignals = reader.read_analogsignal(path='root:SutterPatch:Data:'+itrace_name)
+            sg3_name = [name for name in traces_names if 'S3' in name][0]
+            sg3_signals = reader.read_analogsignal(path='root:SutterPatch:Data:'+sg3_name)
+        sg1_signals = reader.read_analogsignal(path='root:SutterPatch:Data:'+sg1_name)
+        sg2_signals = reader.read_analogsignal(path='root:SutterPatch:Data:'+sg2_name)
+        if len(traces_names) > 3:
+            print('too many traces to import:')
+            print(traces_names)
+            return []
 
         # setting up the block with right number of segments
-        block.file_origin = vtrace_name[0:3] + vtrace_name[6:]
+        block.file_origin = sg1_name[0:3] + sg1_name[6:]
         if 'spontactivity' in block.file_origin:
             # refactoring segments into single long trace;
             # by my conventions, spontactivity protocols are the only ones using 'continuous mode',
             # and these never have a third recording channel.
             no_of_segments = 1
-            vsignals = np.transpose(vsignals).reshape(-1,1)
-            isignals = np.transpose(isignals).reshape(-1,1)
+            sg1_signals = np.transpose(sg1_signals).reshape(-1,1)
+            sg2_signals = np.transpose(sg2_signals).reshape(-1,1)
         else:
-            no_of_segments = len(vsignals[1,:])
-
+            no_of_segments = len(sg1_signals[1,:])
         for i in range(no_of_segments):
             segment = Segment(name=block.file_origin+str(i))
             block.segments.append(segment)
 
-        # adding the raw data to the block's channel_indexes/segments
+        # adding the raw data to the block's channel_indexes/segments, in the correct order and units of measurement
+        if 'V' in str(sg1_signals[:,0].units):
+            voltage_signals = sg1_signals
+            current_signals = sg2_signals
+        elif 'A' in str(sg1_signals[:,0].units):
+            voltage_signals = sg2_signals
+            current_signals = sg1_signals
+        else:
+            print('could not import file: ' + block.file_origin)
+            return []
         for idx, segment in enumerate(block.segments):
-            single_v_analogsignal = vsignals[:,idx].rescale('mV')
+            single_v_analogsignal = voltage_signals[:,idx].rescale('mV')
             single_v_analogsignal.file_origin = block.file_origin
             segment.analogsignals.append(single_v_analogsignal)
             single_v_analogsignal.channel_index = block.channel_indexes[0]
             block.channel_indexes[0].analogsignals.append(single_v_analogsignal)
 
-            single_i_analogsignal = isignals[:,idx].rescale('pA')
+            single_i_analogsignal = current_signals[:,idx].rescale('pA')
             single_i_analogsignal.file_origin = block.file_origin
             segment.analogsignals.append(single_i_analogsignal)
             single_i_analogsignal.channel_index = block.channel_indexes[1]
             block.channel_indexes[1].analogsignals.append(single_i_analogsignal)
 
             if len(traces_names) == 3:
-                single_aux_analogsignal = auxsignals[:,idx]
+                single_aux_analogsignal = sg3_signals[:,idx]
                 single_aux_analogsignal.file_origin = block.file_origin
                 segment.analogsignals.append(single_aux_analogsignal)
                 single_aux_analogsignal.channel_index = block.channel_indexes[2]
                 block.channel_indexes[2].analogsignals.append(single_aux_analogsignal)
 
+        print(block.file_origin + ' raw data imported')
         return block

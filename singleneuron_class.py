@@ -896,6 +896,7 @@ class SingleNeuron:
             sg2_signals = np.transpose(sg2_signals).reshape(-1,1)
         else:
             no_of_segments = len(sg1_signals[1,:])
+
         for i in range(no_of_segments):
             segment = Segment(name=block.file_origin+str(i))
             block.segments.append(segment)
@@ -910,6 +911,7 @@ class SingleNeuron:
         else:
             print('could not import file: ' + block.file_origin)
             return []
+
         for idx, segment in enumerate(block.segments):
             single_v_analogsignal = voltage_signals[:,idx].rescale('mV')
             single_v_analogsignal.file_origin = block.file_origin

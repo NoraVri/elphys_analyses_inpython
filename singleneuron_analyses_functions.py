@@ -64,6 +64,10 @@ def get_depolarizingevents(single_segment,
     peakwindow_insamples = int(sampling_frequency / 1000 * peakwindow) # max distance from depol_idx to peak
     spikewindow_insamples = int(sampling_frequency / 1000 * spikewindow)
     spikeahpwindow_insamples = int(sampling_frequency / 1000 * spikeahpwindow)
+    if not ttleffect_windowinms is None:
+        ttleffect_windowinsamples = int(sampling_frequency / 1000 * ttleffect_windowinms)
+    else:
+        ttleffect_windowinsamples = None
 
     # filtering the raw voltage twice: high-pass to get 'only the noise',
     # and low-pass to get 'only the STOs'.
@@ -112,7 +116,7 @@ def get_depolarizingevents(single_segment,
                                                 spikeahpwindow_insamples,
                                                 sampling_period_inms,
                                                 auxttl_recording,
-                                                ttleffectwindow_inms=ttleffect_windowinms)
+                                                ttleffect_windowinsamples)
 
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
@@ -217,11 +221,12 @@ def apply_rawvtrace_manipulations(voltage_recording,
                      label='hp-filtered at '+str(noisefilter_hpfreq)+'Hz')
         axes[0].set_ylabel('mean V = '+ str(centering_value))
         axes[0].legend()
-        axes[1].plot(time_axis, voltage_approxphase, label='osctrace phase')
+        axes[1].plot(time_axis, vraw_approxphase, label='de-noised v phase')
+        axes[1].plot(time_axis, voltage_approxphase, label='osctrace phase',
+                     linewidth=2)
         axes[1].plot(time_axis[1:], voltage_approxinstfreq,
                      color='black',
                      label='osctrace inst.freq.')
-        axes[1].plot(time_axis, vraw_approxphase, label='de-noised v phase')
         axes[1].set_ylim([-5, 40])
         axes[1].legend()
 
@@ -322,7 +327,7 @@ def get_events_measures(peaks_idcs,
                         current_recording,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
                         sampling_period_inms,
-                        auxttl_recording, ttleffectwindow_inms=None):
+                        auxttl_recording, ttleffectwindow_insamples):
     """ This function loops over all peaks/baselines indices and measures parameters for each event.
     Events are sorted into action potentials and subthreshold events
     depending on event amplitude/peakv.
@@ -360,16 +365,17 @@ def get_events_measures(peaks_idcs,
         # ttl applied (light or puff or whatever)
         if auxttl_recording is None:
             ttlpulse_applied = False
-        elif ttleffectwindow_inms is None:
-            if (auxttl_recording[baseline_idx] > 1) \
-                    or (auxttl_recording[peak_idx] > 1):
-                ttlpulse_applied = True
-            else:
-                ttlpulse_applied = False
         else:
-            ttleffectwindow_insamples = int(ttleffectwindow_inms / sampling_period_inms)
-            if [auxttl > 1 for auxttl in auxttl_recording[baseline_idx-ttleffectwindow_insamples:peak_idx]]:
+            if auxttl_recording[baseline_idx] > 1:
                 ttlpulse_applied = True
+            elif auxttl_recording[peak_idx] > 1:
+                ttlpulse_applied = True
+            elif ttleffectwindow_insamples is not None:
+                auxttlsnippet = auxttl_recording[baseline_idx-ttleffectwindow_insamples:baseline_idx]
+                if (len(auxttlsnippet) > 0) and (np.amax(auxttlsnippet) > 1):
+                    ttlpulse_applied = True
+                else:
+                    ttlpulse_applied = False
             else:
                 ttlpulse_applied = False
 

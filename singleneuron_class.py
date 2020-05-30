@@ -393,17 +393,22 @@ class SingleNeuron:
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     # plotting specific blocks, optionally with action potentials or depolarizing events marked
-    def plot_blocks_byname(self, *block_file_origin, **kwargs):
-        """takes the name(s) of the file from which the rawdata_block was created
+    def plot_blocks_byname(self, *block_identifiers, **kwargs):
+        """takes (a part of) the name(s) of the file from which the rawdata_block was created
         and plots only that/those block(s) (separate subplots for each channel_index).
-        optional kwargs:
-        events_to_mark='none', time_axis_unit='ms', segments_overlayed=True
+        additional kwargs:
+        events_to_mark='none',
+        time_axis_unit='ms',
+        segments_overlayed=True
         """
-        blocknames_list = self.get_blocknames(printing='off')
-        for block_name in block_file_origin:
-            block = self.blocks[blocknames_list.index(block_name)]
-            plots.plot_block(block, **kwargs)
-            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+        allblocknames_list = self.get_blocknames(printing='off')
+        for identifier in block_identifiers:
+            blocknames_list = [blockname for blockname in allblocknames_list
+                               if identifier in blockname]
+            for blockname in blocknames_list:
+                block = self.blocks[allblocknames_list.index(blockname)]
+                plots.plot_block(block, **kwargs)
+                plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents_overlayed(self, condition_series=pd.Series(),
@@ -444,8 +449,10 @@ class SingleNeuron:
         # if required, set colorbar limits
         # (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
         if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
-            color_lims = [events_for_plotting[colorby_measure].min(),
+            colorlims = [events_for_plotting[colorby_measure].min(),
                           events_for_plotting[colorby_measure].max()]
+            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
+                                                                    colorlims)
         if colorby_measure and len(color_lims) == 2 and not newplot_per_block:
             colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
                                                                     color_lims)
@@ -503,8 +510,9 @@ class SingleNeuron:
             if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
                 axis_title += ' normalized'
             axis.set_title(axis_title)
+            # setting colorbar
             if colorby_measure:
-                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=colormap),
+                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
                                 label=colorby_measure)
 
     # plotting (subsets of) action potentials or depolarizing events, individually with measures marked

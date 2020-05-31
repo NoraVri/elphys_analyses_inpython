@@ -431,7 +431,7 @@ class SingleNeuron:
         [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
         'plt_title': default='', string giving the title of the plot(s).
         'timealignto_measure': default='peakv_idx', but can be changed to any key representing a time measurement.
-        prealignpoint_window_inms: default=10, length of the timewindow for plotting before the align-point.
+        prealignpoint_window_inms: default=5, length of the timewindow for plotting before the align-point.
         total_plotwindow_inms: default=50, total length of the window for plotting the events.
         get_measures_type: default='raw', if it's something else the event-detect trace will be recreated and used.
         do_baselining: if True, baselinev is subtracted from the event-trace.
@@ -562,6 +562,11 @@ class SingleNeuron:
     def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,
                                           return_dicts=False,
                                           **kwargs):
+        """ This function reproduces the results of get_depolarizing_events on a single trace,
+        showing all the figures in between.
+        For the list of kwargs, see get_depolarizing_events_fromrawdata.
+        ! Note: applying this function with new kwargs changes the rawdata_readingnotes accordingly
+        """
         segment = self.blocks[block_idx].segments[segment_idx]
 
         if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
@@ -590,6 +595,38 @@ class SingleNeuron:
 
         if return_dicts:
             return apsdict, depolsdict
+
+    def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
+                                            cmeasure=None,
+                                            get_subthresholdevents_measures=True,
+                                            **events_groups):
+        if get_subthresholdevents_measures:
+            events = self.depolarizing_events
+        else:
+            events = self.action_potentials
+
+        if len(events_groups) > 0:
+            figure, axes = plt.subplots(nrows=len(events_groups), ncols=1,
+                                        # sharex='col',
+                                        sharey='all')
+            for axis, eventgroupname, eventgroup in zip(axes,
+                                                        events_groups.keys(),
+                                                        events_groups.values()):
+                eventsgroup_measures = events[eventgroup]
+                eventsgroup_measures.plot.scatter(x=xmeasure,
+                                                  y=ymeasure,
+                                                  c=cmeasure,
+                                                  colormap='viridis',
+                                                  ax=axis)
+                axis.set_title(eventgroupname)
+        else:
+            figure, axis = plt.subplots(1, 1)
+            events.plot.scatter(x=xmeasure,
+                                y=ymeasure,
+                                c=cmeasure,
+                                colormap='viridis',
+                                ax=axis)
+            axis.set_title('all events')
 
 # %% functions for analyzing raw data
 

@@ -183,7 +183,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
         color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, color_lims)
     elif colorby_measure:
         color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures)
-        print('colorbar automatically generated from single-block data')
+        # print('colorbar automatically generated from single-block data')
 
     # optional: create figure axes to plot onto
     if not axis_object:

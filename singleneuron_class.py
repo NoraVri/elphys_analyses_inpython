@@ -465,6 +465,7 @@ class SingleNeuron:
 
         # plotting events:
         if newplot_per_block:
+            # making a new plot for each block
             for block_name in unique_blocks_forplotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
@@ -488,7 +489,7 @@ class SingleNeuron:
                 figure.suptitle(self.name + block_name + plt_title)
 
         else:
-            # initializing the figure:
+            # making a single figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + plt_title)
             for block_name in unique_blocks_forplotting:
@@ -514,6 +515,62 @@ class SingleNeuron:
             if colorby_measure:
                 figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
                                 label=colorby_measure)
+
+    def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=[],
+                                         get_subthreshold_events=True,
+                                         blocknames_list=None, plt_title='',
+                                         **kwargs):
+        """
+        This function plots groups of events overlayed, one color per group.
+        events_groups_series should be pd.Series of booleans, marking the positions
+            of the events to be plotted on the relevant pd.DataFrame (depolarizations or action potentials).
+        If get_subthreshold_events is not True, action potentials will be plotted.
+        If a blocknames_list is passed, events will be plotted only for those blocks.
+        If plt_title is passed, it is passed straight through to the figure's suptitle.
+        Other optional kwargs that can be passed through to plot_singleblock_events:
+        - timealignto_measure = 'peakv_idx' - by default, traces are aligned to event peaks; any
+            time-based event-measures are acceptable.
+        - prealignpoint_window_inms = 5 - startpoint of the displayed trace, in ms before the alignment-point.
+        - total_plotwindow_inms = 50 - the total length of traces to display.
+        - axis_object = None - by default, all events will be plotted in a new plot for this block; if
+            and axis object is passed, traces are plotted onto it and no new figure is created.
+        - get_measures_type - unless 'raw', the event-detect traces will be displayed instead of raw v.
+        - do_baselining and do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
+            depending on get_measures_type) values to do baselining and/or normalizing, respectively.
+        """
+        if get_subthreshold_events is True:
+            events_df = self.depolarizing_events
+        else:
+            events_df = self.action_potentials
+
+        color_lims = [0, len(events_groups) - 1]
+        colormap, cm_normalizer = plots.get_colors_forlineplots([],color_lims)
+
+        allblocks_nameslist = self.get_blocknames(printing='off')
+        if blocknames_list is not None:
+            blocks_forplotting = blocknames_list
+        else:
+            blocks_forplotting = allblocks_nameslist
+
+        figure, axis = plt.subplots(1,1)
+        for i, events_group in enumerate(events_groups):
+            events_for_plotting = events_df[events_group]
+            for block_name in blocks_forplotting:
+                rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
+                block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
+                if len(block_events) > 0:
+                    plots.plot_singleblock_events(rawdata_block, block_events,
+                                                  self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                                  axis_object=axis,
+                                                  linecolor=colormap(cm_normalizer(i)),
+                                                  label=('event group ' + str(i)),
+                                                  **kwargs)
+        colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                   ticks=list(range(len(events_groups)))
+                                   )
+        if len(group_labels) == len(events_groups):
+            colorbar.ax.set_yticklabels(group_labels)
+        plt.suptitle(plt_title)
 
     # plotting (subsets of) action potentials or depolarizing events, individually with measures marked
     def plot_individualdepolevents_withmeasures(self, condition_series=pd.Series(),
@@ -600,6 +657,13 @@ class SingleNeuron:
                                             cmeasure=None,
                                             get_subthresholdevents_measures=True,
                                             **events_groups):
+        """
+        This function creates an overview of scatterplots:
+        xmeasure vs ymeasure (optionally) colored by cmeasure,
+        in a separate subplot for each event-group.
+        events_groups should be a named pd.Series() of booleans marking the location
+            of events to be included in the scatter.
+        """
         if get_subthresholdevents_measures:
             events = self.depolarizing_events
         else:

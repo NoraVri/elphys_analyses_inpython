@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 
 # %% experiment: ChR activation in Thy1 mouse
-# singleneuron_data = SingleNeuron('20190527A')
+singleneuron_data = SingleNeuron('20190527A')
 
 # singleneuron_data = SingleNeuron('20190527C')
 #
@@ -11,7 +11,7 @@ import quantities as pq
 #
 # singleneuron_data = SingleNeuron('20190529D')
 #
-singleneuron_data = SingleNeuron('20190529E')
+# singleneuron_data = SingleNeuron('20190529E')
 # %%
 # neuron20190527A: used block no.12 to find good parameter settings
 # neuron20190527B: used block no.2 to find good parameter settings
@@ -27,13 +27,13 @@ singleneuron_data = SingleNeuron('20190529E')
 #                                                                           oscfilter_lpfreq=10,
 #                                                                           ttleffect_windowinms=3)
 
-singleneuron_data.get_depolarizingevents_fromrawdata(min_depolspeed=0.15,
-                                                     min_depolamp=0.15,
-                                                     # peakwindow=4,
-                                                     # noisefilter_hpfreq=2000,
-                                                     oscfilter_lpfreq=10,
-                                                     ttleffect_windowinms=3)
-singleneuron_data.write_results()
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolspeed=0.15,
+#                                                      min_depolamp=0.15,
+#                                                      # peakwindow=4,
+#                                                      # noisefilter_hpfreq=2000,
+#                                                      oscfilter_lpfreq=10,
+#                                                      ttleffect_windowinms=3)
+# singleneuron_data.write_results()
 # %%
 # seeing all APs
 evoked_aps = singleneuron_data.action_potentials.applied_ttlpulse
@@ -58,6 +58,12 @@ singleneuron_data.plot_depolevents_overlayed(spont_aps,
                                              prealignpoint_window_inms=20,
                                              total_plotwindow_inms=40,
                                              )
+
+singleneuron_data.plot_depoleventsgroups_overlayed(evoked_aps, spont_aps,
+                                                   group_labels=['evoked', 'spontaneous'],
+                                                   get_subthreshold_events=False,
+                                                   do_baselining=True,
+                                                   plt_title='all APs')
 # %%
 # scatters of all subthreshold events measures
 # singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
@@ -74,14 +80,15 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
 # neuron20190527C: -80 < baselinev < -30, amplitude > 2, rise_time < 2
 # neuron20190529B: amplitude > 1 - basically all evoked responses look like stacked fast-events
 # neuron20190529D: amplitude > 3, rise_time < 2 - but also: amplitude > 0.5, rise_time < 0.3
+# neuron20190529E: amplitude > 0.4, rise_time < 0.5
 
 fastevents_largerthan_params = {
-                                'amplitude':0.4,
+                                'amplitude':1.5,
                                 # 'baselinev':-80,
                                 }
 fastevents_smallerthan_params = {
-                                 # 'baselinev':-30,
-                                 'rise_time':0.5,
+                                 'baselinev':-25,
+                                 'rise_time':1,
                                  }
 
 possiblyfastevents_spont = spont_events
@@ -100,7 +107,7 @@ for key, value in fastevents_smallerthan_params.items():
 singleneuron_data.plot_depolevents_overlayed(possiblyfastevents_spont,
                                              colorby_measure='baselinev',
                                              do_baselining=True,
-                                             do_normalizing=True,
+                                             # do_normalizing=True,
                                              prealignpoint_window_inms=10,
                                              total_plotwindow_inms=25,
                                              # newplot_per_block=True,
@@ -116,3 +123,11 @@ singleneuron_data.plot_depolevents_overlayed(possiblyfastevents_evoked,
                                              total_plotwindow_inms=25,
                                              )
 plt.suptitle('evoked events')
+
+singleneuron_data.plot_depoleventsgroups_overlayed(possiblyfastevents_spont,
+                                                   possiblyfastevents_evoked,
+                                                   group_labels=['spontaneous', 'evoked'],
+                                                   # blocknames_list=blocksnames_list,
+                                                   do_baselining=True, do_normalizing=True,
+                                                   plt_title='presumably all fast-events')
+

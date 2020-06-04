@@ -175,7 +175,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     """
     # do not proceed unless event-measures data is provided
     if block_eventsmeasures.empty:
-        print('missing event-measures data')
+        print('no event-measures data for block ' + rawdata_block.file_origin)
         return
 
     # optional: setting the color mapping
@@ -184,6 +184,9 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     elif colorby_measure:
         color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures)
         # print('colorbar automatically generated from single-block data')
+    else:
+        color_map = []
+        cm_normalizer = []
 
     # optional: create figure axes to plot onto
     if not axis_object:
@@ -305,12 +308,13 @@ def plot_singlesegment_events_individually_withmeasures(get_subthreshold_events,
             axis.set_title('raw voltage')
 
 
-# helper functions:
+# %% helper functions:
 # getting colormap information
 def get_colors_forlineplots(colorby_measure, data):
-    colormap = mpl.cm.viridis
+    colormap = mpl.cm.cividis #viridis
     if isinstance(data, list) and len(data) == 2:
-        cm_normalizer = mpl.colors.Normalize(vmin=data[0], vmax=data[1])
+        cm_normalizer = mpl.colors.Normalize(vmin=data[0],
+                                             vmax=data[1])
     elif isinstance(data, pd.DataFrame):
         cm_normalizer = mpl.colors.Normalize(vmin=min(data[colorby_measure]),
                                              vmax=max(data[colorby_measure]))

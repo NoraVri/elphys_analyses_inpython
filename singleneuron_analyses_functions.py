@@ -20,7 +20,7 @@ import quantities as pq
 # the main function:
 # return all depolarizing events and action potentials for a single segment,
 # with measures, in two dictionaries (one for subtheshold events and one for APs).
-def get_depolarizingevents(single_segment,
+def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                            min_depolspeed=0.1, min_depolamp=0.2,
                            peakwindow=5, spikewindow=40, spikeahpwindow=150,
                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
@@ -117,6 +117,17 @@ def get_depolarizingevents(single_segment,
                                                 sampling_period_inms,
                                                 auxttl_recording,
                                                 ttleffect_windowinsamples)
+    # adding file_origin and segment_idx information
+    trace_origin = [block_file_origin]
+    segidx = [segment_idx]
+    actionpotentials_resultsdictionary['file_origin'] = \
+        trace_origin * len(actionpotentials_resultsdictionary['peakv'])
+    actionpotentials_resultsdictionary['segment_idx'] = \
+        segidx * len(actionpotentials_resultsdictionary['peakv'])
+    depolarizingevents_resultsdictionary['file_origin'] = \
+        trace_origin * len(depolarizingevents_resultsdictionary['peakv'])
+    depolarizingevents_resultsdictionary['segment_idx'] = \
+        segidx * len(depolarizingevents_resultsdictionary['peakv'])
 
     # if required, plotting the data (in all its shapes from raw to filtered to derivative)
     # with scatters of detected depolarizations peaks and baselines
@@ -643,3 +654,68 @@ def descend_vtrace_until(vtracesnippet, v_stop_value):
 
     else:
         return float('nan')
+
+# %% long-pulse response properties
+
+# the main function:
+# return all long-pulse related measurements for a single segment in a dictionary.
+def get_longpulsemeasures(block_file_origin, segment_idx, single_segment,
+                          maxresponse_timewindow):
+
+    # step1] prep:
+    # getting all the relevant data from the Neo/Segment object
+    single_voltage_trace = single_segment.analogsignals[0]
+    time_axis = single_voltage_trace.times
+    time_axis = time_axis.rescale('ms').magnitude
+    voltage_recording = np.array(np.squeeze(single_voltage_trace))              # !Make sure it's in mV
+    current_recording = np.array(np.squeeze(single_segment.analogsignals[1]))   # !Make sure it's in pA
+    sampling_frequency = float(single_voltage_trace.sampling_rate)              # !Make sure it's in Hz
+    sampling_period_inms = float(single_voltage_trace.sampling_period) * 1000
+
+    # parameter settings - default time windows:
+    ms_insamples = int(sampling_frequency / 1000)
+    maxresponsewindow_insamples = int(sampling_frequency / 1000 * maxresponse_timewindow) # max distance from depol_idx to peak
+
+
+
+
+    longpulsesmeasures_resultsdictionary = make_longpulsesmeasures_dictionary()
+
+    return longpulsesmeasures_resultsdictionary
+
+# helper-functions:
+# making an empty dictionary with keys for all long-pulses measures
+def make_longpulsesmeasures_dictionary():
+    longpulses_measures = {
+        # basic bookkeeping:
+        'file_origin': [],
+        'segment_idx': [],
+        'c_prepulse': [],                       # holding current before pulse
+        'c_pulse': [],                          # current applied during the pulse
+        'c_postpulse': [],                      # holding current after pulse
+        'c_stepsize': [],                       # current step size
+        'pulse_start_t': [],                    # time where current pulse starts (in ms relative to trace start)
+        'pulse_end_t': [],                      # time where current pulse ends
+        # measures common to all long-pulse traces:
+        'v_prepulse': [],                       # 'resting' voltage before pulse
+        'v_pulse_maxresponse': [],              # voltage at the maximal initial deflection after pulse applied
+        'v_pulse_maxresponse_t': [],            # time from pulse applied until maximal response reached
+        'v_pulse_maxresponse_stepsize': [],     # voltage step size from 'rest' to maximal initial deflection
+        'v_pulse_ss': [],                       # voltage at steady-state during pulse application
+        'v_pulse_ss_stepsize': [],              # voltage step size from 'rest' to steady-state
+        'v_postpulse_maxresponse': [],          # voltage at the maximal deflection after release from pulse
+        'v_postpulse_maxresponse_t': [],        # time from pulse released until maximal response reached
+        'v_postpulse_maxresponse_stepsize': [], # voltage step size from 'rest' to maximal deflection after pulse release
+        # measures for (some) hyperpolarizing pulses only:
+        'v_postpulse_adhp_max': [],             # voltage at the maximal after-depolarization-hyperpolarization
+        'v_postpulse_adhp_max_t': [],           # time from postpulse_maxresponse_t until postpulse_adhp_max
+        'v_postpulse_adhp_stepsize': [],        # voltage step size from 'rest' to maximal adhp value
+        'v_postpulse_adhp_total_t': [],         # time from postpulse_maxresponse_t to 'rest'v re-reached
+        # measures for (some) depolarizing pulses only:
+        'n_aps': [],                            # total number of action potentials fired during pulse
+        'aps_isi_min': [],                      # smallest inter-spike-interval
+        'aps_isi_max': [],                      # largest inter-spike interval
+        'aps_isi_mean': []                      # mean inter-spike interval
+    }
+
+    return longpulses_measures

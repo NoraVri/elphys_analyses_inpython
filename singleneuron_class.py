@@ -58,7 +58,7 @@ class SingleNeuron:
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
-        self.input_resistance = []
+        self.longpulse_measures = []
         self.passive_decay = []
         self.get_singleneuron_rawdata()
         self.get_singleneuron_storedresults()
@@ -355,6 +355,7 @@ class SingleNeuron:
 
 # %% functions for plotting/seeing stuff
 
+
     # getting a list of all block names
     def get_blocknames(self, get_subset=False, printing='on'):
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them."""
@@ -625,7 +626,7 @@ class SingleNeuron:
         ! Note: applying this function with new kwargs changes the rawdata_readingnotes accordingly
         """
         segment = self.blocks[block_idx].segments[segment_idx]
-
+        # if there are no saved values, set getdepolarizingevents-parameters to defaults
         if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
             self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
                                                             'min_depolspeed': 0.1,
@@ -637,18 +638,19 @@ class SingleNeuron:
                                                             'oscfilter_lpfreq': 20,
                                                             'ttleffect_windowinms': None,
                                                             'plot': 'off'}
-
-        stored_kwargs = self.rawdata_readingnotes['getdepolarizingevents_settings']
-
+        # get saved parameter values
+        stored_kwargs = {}
+        stored_kwargs.update(self.rawdata_readingnotes['getdepolarizingevents_settings'])
+        # update parameter values that have been passed as kwargs
         for key, value in kwargs.items():
             if key in stored_kwargs.keys():
                 stored_kwargs[key] = value
-
+        # plot event-detect results figures
         stored_kwargs['plot'] = 'on'
         apsdict, depolsdict = snafs.get_depolarizingevents(
+            self.blocks[block_idx].file_origin, segment_idx,
             segment,
             **stored_kwargs)
-        stored_kwargs['plot'] = 'off'
 
         if return_dicts:
             return apsdict, depolsdict
@@ -694,7 +696,6 @@ class SingleNeuron:
 
 # %% functions for analyzing raw data
 
-# %% depolarizing events (subthreshold ones and action potentials)
 
     # getting the action_potentials and depolarizing_events DataFames
     def get_depolarizingevents_fromrawdata(self, **kwargs):
@@ -716,6 +717,7 @@ class SingleNeuron:
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
         'ttleffect_windowinms': time after TTL pulse turns off but still has effects working through.
         ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
+        ! Any time this function runs, reading-notes are updated with any kwargs that are passed through.
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
         The recommended workflow is to use plot_eventdetecttraces_forsegment() on a (time_slice of a)
@@ -733,7 +735,7 @@ class SingleNeuron:
                                                             'oscfilter_lpfreq': 20,
                                                             'ttleffect_windowinms': None,
                                                             'plot': 'off'}
-
+        # updating reading-notes with new parameter settings if relevant kwargs are passed
         for key, value in kwargs.items():
             if key in self.rawdata_readingnotes['getdepolarizingevents_settings'].keys():
                 self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value
@@ -745,30 +747,34 @@ class SingleNeuron:
             for i, segment in enumerate(block.segments):
                 (segment_actionpotentials,
                  segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
-                        segment,
-                        **self.rawdata_readingnotes['getdepolarizingevents_settings'])
-
-                trace_origin = [block.file_origin]
-                segment_idx = [i]
-                segment_actionpotentials['file_origin'] = \
-                    trace_origin * len(segment_actionpotentials['peakv'])
-                segment_actionpotentials['segment_idx'] = \
-                    segment_idx * len(segment_actionpotentials['peakv'])
-                segment_subthresholddepolarizations['file_origin'] = \
-                    trace_origin * len(segment_subthresholddepolarizations['peakv'])
-                segment_subthresholddepolarizations['segment_idx'] = \
-                    segment_idx * len(segment_subthresholddepolarizations['peakv'])
-
+                    block.file_origin, i, segment,
+                    **self.rawdata_readingnotes['getdepolarizingevents_settings'])
                 # updating the measures-dictionaries with the results from a single trace
                 for key in all_actionpotentials:
                     all_actionpotentials[key] += segment_actionpotentials[key]
                 for key in all_depolarizations:
                     all_depolarizations[key] += segment_subthresholddepolarizations[key]
-
+        # converting the results to a DataFrame and attaching to the class instance
         self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
         self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
 
+    def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):
+        all_longpulsesmeasures = snafs.make_longpulsesmeasures_dictionary()
+
+        all_blocks = self.get_blocknames(printing='off')
+        for block in longpulses_blocks:
+            for i, segment in enumerate(self.blocks[all_blocks.index(block)]):
+                segment_longpulsesmeasures = snafs.get_longpulsemeasures(
+                    block, i, segment,
+                    **kwargs
+                )
+                for key in all_longpulsesmeasures:
+                    all_longpulsesmeasures[key] += segment_longpulsesmeasures[key]
+
+        self.longpulse_measures = pd.DataFrame(all_longpulsesmeasures).round(decimals=2)
+
 # %% the actual reading in of raw data from files
+
 
     # reading .abf files
     def files_reader_abf(self):

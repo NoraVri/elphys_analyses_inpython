@@ -659,11 +659,13 @@ def descend_vtrace_until(vtracesnippet, v_stop_value):
 
 # the main function:
 # return all long-pulse related measurements for a single segment in a dictionary.
-def get_longpulsemeasures(block_file_origin, segment_idx, single_segment,
-                          maxresponse_timewindow):
+def get_longpulsemeasures(block, segment_idx,
+                          maxresponse_timewindow=20,
+                          pulse_applied_window=[]):
 
     # step1] prep:
-    # getting all the relevant data from the Neo/Segment object
+    # getting all the relevant data from the Neo/Block object
+    single_segment = block.segments[segment_idx]
     single_voltage_trace = single_segment.analogsignals[0]
     time_axis = single_voltage_trace.times
     time_axis = time_axis.rescale('ms').magnitude
@@ -676,10 +678,19 @@ def get_longpulsemeasures(block_file_origin, segment_idx, single_segment,
     ms_insamples = int(sampling_frequency / 1000)
     maxresponsewindow_insamples = int(sampling_frequency / 1000 * maxresponse_timewindow) # max distance from depol_idx to peak
 
-
-
-
     longpulsesmeasures_resultsdictionary = make_longpulsesmeasures_dictionary()
+
+    # step2] determining where exactly the current pulse starts and ends
+
+    # step3] taking all the measurements
+
+    # finally] adding file_origin and segment_idx information
+    trace_origin = [block.file_origin]
+    segidx = [segment_idx]
+    longpulsesmeasures_resultsdictionary['file_origin'] = \
+        trace_origin * len(list(longpulsesmeasures_resultsdictionary.values())[0])
+    longpulsesmeasures_resultsdictionary['segment_idx'] = \
+        segidx * len(list(longpulsesmeasures_resultsdictionary.values())[0])
 
     return longpulsesmeasures_resultsdictionary
 
@@ -713,6 +724,7 @@ def make_longpulsesmeasures_dictionary():
         'v_postpulse_adhp_total_t': [],         # time from postpulse_maxresponse_t to 'rest'v re-reached
         # measures for (some) depolarizing pulses only:
         'n_aps': [],                            # total number of action potentials fired during pulse
+        'aps_peaks': [],                        # list of peaks_idcs for aps fired during pulse
         'aps_isi_min': [],                      # smallest inter-spike-interval
         'aps_isi_max': [],                      # largest inter-spike interval
         'aps_isi_mean': []                      # mean inter-spike interval

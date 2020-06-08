@@ -235,10 +235,10 @@ def apply_rawvtrace_manipulations(voltage_recording,
         axes[1].plot(time_axis, vraw_approxphase, label='de-noised v phase')
         axes[1].plot(time_axis, voltage_approxphase, label='osctrace phase',
                      linewidth=2)
-        axes[1].plot(time_axis[1:], voltage_approxinstfreq,
-                     color='black',
-                     label='osctrace inst.freq.')
-        axes[1].set_ylim([-5, 40])
+        # axes[1].plot(time_axis[1:], voltage_approxinstfreq,
+        #              color='black',
+        #              label='osctrace inst.freq.')
+        # axes[1].set_ylim([-5, 40])
         axes[1].legend()
 
     return voltage_eventdetecttrace, \

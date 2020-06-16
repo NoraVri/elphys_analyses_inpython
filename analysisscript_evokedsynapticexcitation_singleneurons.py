@@ -26,17 +26,20 @@ cell20190527Arawdata = SingleNeuron('20190527A')
 cell20190527Aevoked_events = cell20190527Arawdata.depolarizing_events.applied_ttlpulse
 cell20190527Aspont_events = ~cell20190527Arawdata.depolarizing_events.applied_ttlpulse
 
-cell20190527Arawdata.scatter_depolarizingevents_measures('amplitude', 'rise_time',
-                                                         cmeasure='baselinev',
-                                                         spontevents=cell20190527Aspont_events,
-                                                         evokedevents=cell20190527Aevoked_events)
+# cell20190527Arawdata.scatter_depolarizingevents_measures('amplitude', 'rise_time',
+#                                                          cmeasure='baselinev',
+#                                                          spontevents=cell20190527Aspont_events,
+#                                                          evokedevents=cell20190527Aevoked_events)
+# plt.suptitle('all detected events')
+
 # histogram of baselinev's
-cell20190527Arawdata.depolarizing_events.hist('baselinev',bins=80)
+# cell20190527Arawdata.depolarizing_events.hist('baselinev',bins=80)
+
 # events with baselinev > -25mV are in fact spike-shoulder peaks:
 spikeshoulderpeaks = cell20190527Arawdata.depolarizing_events.baselinev > -25
-cell20190527Arawdata.plot_depolevents_overlayed(spikeshoulderpeaks,
-                                                colorby_measure='baselinev',
-                                                prealignpoint_window_inms=20)
+# cell20190527Arawdata.plot_depolevents_overlayed(spikeshoulderpeaks,
+#                                                 colorby_measure='baselinev',
+#                                                 prealignpoint_window_inms=20)
 # updating events-tables accordingly.
 cell20190527Aevoked_events = cell20190527Aevoked_events \
                              & (~spikeshoulderpeaks)
@@ -53,7 +56,8 @@ cell20190527Arawdata.plot_depolevents_overlayed((cell20190527Aspont_events&proba
                                                 do_baselining=True,
                                                 do_normalizing=True,
                                                 prealignpoint_window_inms=5,
-                                                total_plotwindow_inms=20)
+                                                total_plotwindow_inms=20,
+                                                timealignto_measure='rt_start_idx')
 
 probablynotfastevents = (cell20190527Arawdata.depolarizing_events.amplitude > 2) \
                      & (cell20190527Arawdata.depolarizing_events.rise_time > 1.2)
@@ -64,6 +68,7 @@ cell20190527Arawdata.plot_depolevents_overlayed((cell20190527Aspont_events&proba
                                                 prealignpoint_window_inms=5,
                                                 total_plotwindow_inms=20)
 
-cell20190527Arawdata.scatter_depolarizingevents_measures('amplitude', 'rise_time',
+cell20190527Arawdata.scatter_depolarizingevents_measures('amplitude', 'rise_time_20_80',
                                                          cmeasure='half_width',
-                                                         prob_fes=probablyfastevents)
+                                                         prob_fes=cell20190527Aspont_events,
+                                                         )

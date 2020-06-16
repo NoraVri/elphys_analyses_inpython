@@ -682,19 +682,19 @@ class SingleNeuron:
                 eventsgroup_measures.plot.scatter(x=xmeasure,
                                                   y=ymeasure,
                                                   c=cmeasure,
-                                                  colormap='viridis',
+                                                  colormap='cividis',
                                                   ax=axis)
                 axis.set_title(eventgroupname)
 
         elif len(events_groups) == 1:
-            figure, axis = plt.subplots(1, 1, squeeze=False)
+            figure, axis = plt.subplots(1, 1)
             eventgroupname = list(events_groups.keys())[0]
             eventgroup = list(events_groups.values())[0]
             eventsgroup_measures = events[eventgroup]
             eventsgroup_measures.plot.scatter(x=xmeasure,
                                               y=ymeasure,
                                               c=cmeasure,
-                                              colormap='viridis',
+                                              colormap='cividis',
                                               ax=axis)
             axis.set_title(eventgroupname)
 
@@ -703,7 +703,7 @@ class SingleNeuron:
             events.plot.scatter(x=xmeasure,
                                 y=ymeasure,
                                 c=cmeasure,
-                                colormap='viridis',
+                                colormap='cividis',
                                 ax=axis)
             axis.set_title('all events')
 

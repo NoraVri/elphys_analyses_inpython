@@ -24,7 +24,7 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                            min_depolspeed=0.1, min_depolamp=0.2,
                            peakwindow=5, spikewindow=40, spikeahpwindow=150,
                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
-                           ttleffect_windowinms = None,
+                           ttleffect_windowinms=None,
                            plot='off'):
     """ This function finds depolarizing events and returns two dictionaries,
     containing the locations and measured parameters of action potentials
@@ -396,12 +396,19 @@ def get_events_measures(peaks_idcs,
 
         # rise-time: time from 10% - 90% of peak amp
         fullrisetrace = voltage_denoised[baseline_idx:peak_idx + 1]  # this way the snippet includes peak_idx
-        risetrace_clipped1 = fullrisetrace[
-            fullrisetrace >= baseline_v + 0.1 * peakamp]
+        risetrace_clipped1 = fullrisetrace[fullrisetrace >= baseline_v + 0.1 * peakamp]
         risestart_idx = int(peak_idx - len(risetrace_clipped1))
         risetrace_clipped2 = risetrace_clipped1[
             risetrace_clipped1 <= baseline_v + 0.9 * peakamp]
         rise_time = len(risetrace_clipped2) * sampling_period_inms
+        # rise-time from 20% - 80% of peak amp
+        rise20clipped_1 = fullrisetrace[fullrisetrace >= baseline_v + 0.2 * peakamp]
+        rise20start_idx = int(peak_idx - len(rise20clipped_1))
+        rise20_clipped2 = rise20clipped_1[rise20clipped_1 <= baseline_v + 0.8 * peakamp]
+        rise_time_20_80 = len(rise20_clipped2) * sampling_period_inms
+        # rise-time midpoint idx: point where event is at 50% of its amplitude
+        risetrace_clipped50 = fullrisetrace[fullrisetrace >= baseline_v + 0.5 * peakamp]
+        rise_midpoint_idx = int(peak_idx - len(risetrace_clipped50))
 
         # half-width: AP width at 50% of amplitude
         halfhalfwidth_inidcs = len(fullrisetrace[
@@ -490,6 +497,7 @@ def get_events_measures(peaks_idcs,
             actionpotentials_dictionary['baselinev'].append(baseline_v)
             actionpotentials_dictionary['amplitude'].append(peakamp)
             actionpotentials_dictionary['rise_time'].append(rise_time)
+            actionpotentials_dictionary['rise_time_20_80'].append(rise_time_20_80)
             actionpotentials_dictionary['half_width'].append(half_width)
             actionpotentials_dictionary['thresholdv'].append(threshold_v)
             actionpotentials_dictionary['threshold_width'].append(threshold_width)
@@ -508,6 +516,8 @@ def get_events_measures(peaks_idcs,
             actionpotentials_dictionary['peakv_idx'].append(peak_idx)
             actionpotentials_dictionary['baselinev_idx'].append(baseline_idx)
             actionpotentials_dictionary['rt_start_idx'].append(risestart_idx)
+            actionpotentials_dictionary['rt_midpoint_idx'].append(rise_midpoint_idx)
+            actionpotentials_dictionary['rise20start_idx'].append(rise20start_idx)
             actionpotentials_dictionary['hw_start_idx'].append(half_width_startidx)
             actionpotentials_dictionary['threshold_idx'].append(threshold_idx)
             actionpotentials_dictionary['ahp_min_idx'].append(ahpmin_idx)
@@ -547,6 +557,7 @@ def get_events_measures(peaks_idcs,
             depolarizingevents_dictionary['baselinev'].append(baseline_v)
             depolarizingevents_dictionary['amplitude'].append(peakamp)
             depolarizingevents_dictionary['rise_time'].append(rise_time)
+            depolarizingevents_dictionary['rise_time_20_80'].append(rise_time_20_80)
             depolarizingevents_dictionary['half_width'].append(half_width)
             depolarizingevents_dictionary['width_at10%amp'].append(width)
 
@@ -566,6 +577,8 @@ def get_events_measures(peaks_idcs,
             depolarizingevents_dictionary['peakv_idx'].append(peak_idx)
             depolarizingevents_dictionary['baselinev_idx'].append(baseline_idx)
             depolarizingevents_dictionary['rt_start_idx'].append(risestart_idx)
+            depolarizingevents_dictionary['rt_midpoint_idx'].append(rise_midpoint_idx)
+            depolarizingevents_dictionary['rise20start_idx'].append(rise20start_idx)
             depolarizingevents_dictionary['edtrace_rt_start_idx'].append(ed_risestart_idx)
             depolarizingevents_dictionary['hw_start_idx'].append(half_width_startidx)
             depolarizingevents_dictionary['edtrace_hw_start_idx'].append(ed_halfwidth_startidx)
@@ -583,6 +596,7 @@ def make_depolarizingevents_measures_dictionaries():
         'baselinev': [],
         'amplitude': [],
         'rise_time': [],
+        'rise_time_20_80': [],
         'half_width': [],
         'thresholdv': [],
         'threshold_width': [],
@@ -600,6 +614,8 @@ def make_depolarizingevents_measures_dictionaries():
         'peakv_idx': [],
         'baselinev_idx': [],
         'rt_start_idx': [],
+        'rt_midpoint_idx': [],
+        'rise20start_idx': [],
         'hw_start_idx': [],
         'threshold_idx': [],
         'ahp_min_idx': [],
@@ -613,6 +629,7 @@ def make_depolarizingevents_measures_dictionaries():
         'baselinev': [],
         'amplitude': [],
         'rise_time': [],
+        'rise_time_20_80': [],
         'half_width': [],
         'width_at10%amp': [],
         'applied_current': [],
@@ -631,6 +648,8 @@ def make_depolarizingevents_measures_dictionaries():
         'peakv_idx': [],
         'baselinev_idx': [],
         'rt_start_idx': [],
+        'rt_midpoint_idx': [],
+        'rise20start_idx': [],
         'edtrace_rt_start_idx': [],
         'hw_start_idx': [],
         'edtrace_hw_start_idx': [],

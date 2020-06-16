@@ -4,16 +4,38 @@ import quantities as pq
 import pandas as pd
 
 # %% experiment: ChR activation in Thy1 mouse
+#
 singleneuron_data = SingleNeuron('20190527A')
-
+#
 # singleneuron_data = SingleNeuron('20190527C')
 #
 # singleneuron_data = SingleNeuron('20190529B')
 #
+# singleneuron_data = SingleNeuron('20190529C')
+#
 # singleneuron_data = SingleNeuron('20190529D')
 #
 # singleneuron_data = SingleNeuron('20190529E')
-# %%
+
+# %% experiment: RubiGlu uncaging
+#
+# singleneuron_data = SingleNeuron('20200306C')
+#
+# singleneuron_data = SingleNeuron('20200308B')
+#
+# singleneuron_data = SingleNeuron('20200308C')
+#
+# singleneuron_data = SingleNeuron('20200308D')
+#
+# singleneuron_data = SingleNeuron('20200308E')
+#
+# singleneuron_data = SingleNeuron('20200310G')
+#
+# singleneuron_data = SingleNeuron('20200312C')
+#
+# singleneuron_data = SingleNeuron('20200312G')
+
+# %% setting parameters for get_depolarizingevents for each neuron
 # neuron20190527A: used block no.12 to find good parameter settings
 # neuron20190527B: used block no.2 to find good parameter settings
 # neuron20190529B: used block no.14 to find good parameter settings
@@ -35,8 +57,7 @@ singleneuron_data = SingleNeuron('20190527A')
 #                                                      oscfilter_lpfreq=10,
 #                                                      ttleffect_windowinms=3)
 # singleneuron_data.write_results()
-# %%
-# seeing all APs
+# %% seeing all detected APs
 evoked_aps = singleneuron_data.action_potentials.applied_ttlpulse
 spont_aps = ~singleneuron_data.action_potentials.applied_ttlpulse
 # colorscalelims = [-60, -35]
@@ -64,8 +85,10 @@ singleneuron_data.plot_depoleventsgroups_overlayed(evoked_aps, spont_aps,
                                                    group_labels=['evoked', 'spontaneous'],
                                                    get_subthreshold_events=False,
                                                    do_baselining=True,
+                                                   prealignpoint_window_inms=20,
+                                                   total_plotwindow_inms=40,
                                                    plt_title='all APs')
-# %%
+# %% looking at detected depolarizations
 # scatters of all subthreshold events measures
 # singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
 #                                                       cmeasure='baselinev')
@@ -75,8 +98,7 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
                                                       cmeasure='baselinev',
                                                       evokedevents=evoked_events,
                                                       spontevents=spont_events)
-# %%
-# trying to find fast-events
+# %% a quick look to see if we can isolate fast-events from among all depolarizations
 # neuron20190527A: baselinev < -25, amplitude > 1.5, rise_time < 1
 # neuron20190527C: -80 < baselinev < -30, amplitude > 2, rise_time < 2
 # neuron20190529B: amplitude > 1 - basically all evoked responses look like stacked fast-events
@@ -131,4 +153,3 @@ singleneuron_data.plot_depoleventsgroups_overlayed(possiblyfastevents_spont,
                                                    # blocknames_list=blocksnames_list,
                                                    do_baselining=True, do_normalizing=True,
                                                    plt_title='presumably all fast-events')
-

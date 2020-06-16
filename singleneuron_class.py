@@ -671,7 +671,7 @@ class SingleNeuron:
         else:
             events = self.action_potentials
 
-        if len(events_groups) > 0:
+        if len(events_groups) > 1:
             figure, axes = plt.subplots(nrows=len(events_groups), ncols=1,
                                         # sharex='col',
                                         sharey='all')
@@ -685,6 +685,19 @@ class SingleNeuron:
                                                   colormap='viridis',
                                                   ax=axis)
                 axis.set_title(eventgroupname)
+
+        elif len(events_groups) == 1:
+            figure, axis = plt.subplots(1, 1, squeeze=False)
+            eventgroupname = list(events_groups.keys())[0]
+            eventgroup = list(events_groups.values())[0]
+            eventsgroup_measures = events[eventgroup]
+            eventsgroup_measures.plot.scatter(x=xmeasure,
+                                              y=ymeasure,
+                                              c=cmeasure,
+                                              colormap='viridis',
+                                              ax=axis)
+            axis.set_title(eventgroupname)
+
         else:
             figure, axis = plt.subplots(1, 1)
             events.plot.scatter(x=xmeasure,

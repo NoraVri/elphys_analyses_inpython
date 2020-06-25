@@ -29,9 +29,24 @@ cell20190527C = SingleNeuron('20190527C')
 # activating inputs often evokes a giant (25 mV) fast-event, and in the seconds after that there's
 # some oscillations and tons of spikelets (otherwise nothing much of oscillations to be seen).
 # %%
-cell20190529A1 = SingleNeuron('20190529A')
+cell20190529A1 = SingleNeuron('20190529A1')
 # notes say only A2 was good, but that's not what it looks like in the data...
-# TODO: figure out what to do with this data
+# confirmed and reconfirmed: notes are wrong, it's the neuron on channel1 that's good (at least for a few blocks).
+# the neuron on channel2 was patched first, but lost not long after the neuron on ch1 was patched.
+# spont. activity (with fast-events and APs) and light pulses; no oscillations.
+# cell20190529A1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
+# cell20190529A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=285)
+# cell20190529A1.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# cell20190529A1.write_results()
+# %% no light-evoked activity recorded
+cell20190529A2 = SingleNeuron('20190529A2')
+# some spont. activity with clear fast-events and spikelets; no oscillations
+# blocksnames_list = cell20190529A2.get_blocknames(printing='off')
+# blocksnames_list.__delitem__(0)
+# for blockname in blocksnames_list:
+#     cell20190529A2.rawdata_remove_nonrecordingblock(blockname)
+# cell20190529A2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21, trace_end_t=582)
+# cell20190529A2.write_results()
 # %%
 cell20190529B = SingleNeuron('20190529B')
 # spont.activity and lots of light pulses; few spont. depolarizations and not oscillating.

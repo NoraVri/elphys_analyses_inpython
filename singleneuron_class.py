@@ -622,31 +622,34 @@ class SingleNeuron:
                                           **kwargs):
         """ This function reproduces the results of get_depolarizing_events on a single trace,
         showing all the figures in between.
+        If depolarizing-events detection has already been performed (and saved) for the singleneuron instance,
+        this function will use those parameter settings to reproduce plots; otherwise, default parameters will be used.
+        Adding kwargs will update those parameters for plotting the trace (without overwriting stored parameters).
         For the list of kwargs, see get_depolarizing_events_fromrawdata.
-        ! Note: applying this function with new kwargs changes the rawdata_readingnotes accordingly
         """
         segment = self.blocks[block_idx].segments[segment_idx]
-        # if there are no saved values, set getdepolarizingevents-parameters to defaults
-        if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
-            self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
-                                                            'min_depolspeed': 0.1,
-                                                            'min_depolamp': 0.2,
-                                                            'peakwindow': 5,
-                                                            'spikewindow': 40,
-                                                            'spikeahpwindow': 150,
-                                                            'noisefilter_hpfreq': 3000,
-                                                            'oscfilter_lpfreq': 20,
-                                                            'ttleffect_windowinms': None,
-                                                            'plot': 'off'}
-        # get saved parameter values
+        # if there are no saved values, set getdepolarizingevents-parameters to defaults; otherwise, use saved values
         stored_kwargs = {}
-        stored_kwargs.update(self.rawdata_readingnotes['getdepolarizingevents_settings'])
+        if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            stored_kwargs = {
+                            'min_depolspeed': 0.1,
+                            'min_depolamp': 0.2,
+                            'peakwindow': 5,
+                            'spikewindow': 40,
+                            'spikeahpwindow': 150,
+                            'noisefilter_hpfreq': 3000,
+                            'oscfilter_lpfreq': 20,
+                            'ttleffect_windowinms': None,
+                            'plot': 'on'}
+        else:
+            stored_kwargs.update(self.rawdata_readingnotes['getdepolarizingevents_settings'])
+            stored_kwargs['plot'] = 'on'
+
         # update parameter values that have been passed as kwargs
         for key, value in kwargs.items():
             if key in stored_kwargs.keys():
                 stored_kwargs[key] = value
         # plot event-detect results figures
-        stored_kwargs['plot'] = 'on'
         apsdict, depolsdict = snafs.get_depolarizingevents(
             self.blocks[block_idx].file_origin, segment_idx,
             segment,

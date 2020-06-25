@@ -3,11 +3,13 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
-# %% experiment: ChR activation in Thy1 mouse
-#
-singleneuron_data = SingleNeuron('20190527A')
+# %% list of neurons with light-evoked responses recordings
+# %% experiment: ChR activation in Thy1 mouse (experiment days 20190527 and 20190529)
+# singleneuron_data = SingleNeuron('20190527A')
 #
 # singleneuron_data = SingleNeuron('20190527C')
+#
+singleneuron_data = SingleNeuron('20190529A1')
 #
 # singleneuron_data = SingleNeuron('20190529B')
 #
@@ -17,7 +19,7 @@ singleneuron_data = SingleNeuron('20190527A')
 #
 # singleneuron_data = SingleNeuron('20190529E')
 
-# %% experiment: RubiGlu uncaging
+# %% experiment: RubiGlu uncaging (experiment days 20200306, 20200308, 20200310 and 20200312)
 #
 # singleneuron_data = SingleNeuron('20200306C')
 #
@@ -38,25 +40,30 @@ singleneuron_data = SingleNeuron('20190527A')
 # %% setting parameters for get_depolarizingevents for each neuron
 # neuron20190527A: used block no.12 to find good parameter settings
 # neuron20190527B: used block no.2 to find good parameter settings
+# neuron20190529A1: used block no.2  to find good parameter settings
 # neuron20190529B: used block no.14 to find good parameter settings
+# neuron20190529C: used block no.3 to find good parameter settings
 # neuron20190529D: used block no.2 to find good parameter settings
 # neuron20190529E: used block no.2 to find good parameter settings
 
-# apsdict, depolsdict = singleneuron_data.plot_eventdetecttraces_forsegment(2, 3, return_dicts=True,
-#                                                                           # min_depolspeed=0.2,
-#                                                                           # min_depolamp=0.15,
-#                                                                           # peakwindow=4,
-#                                                                           # noisefilter_hpfreq=2000,
+# apsdict, depolsdict = singleneuron_data.plot_eventdetecttraces_forsegment(2, 8, return_dicts=True,
+#                                                                           min_depolspeed=0.2,
+#                                                                           min_depolamp=0.3,
+#                                                                           peakwindow=7,
+#                                                                           noisefilter_hpfreq=2000,
 #                                                                           oscfilter_lpfreq=10,
-#                                                                           ttleffect_windowinms=3)
+#                                                                           # ttleffect_windowinms=3
+#                                                                           )
 
-# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolspeed=0.15,
-#                                                      min_depolamp=0.15,
-#                                                      # peakwindow=4,
-#                                                      # noisefilter_hpfreq=2000,
-#                                                      oscfilter_lpfreq=10,
-#                                                      ttleffect_windowinms=3)
-# singleneuron_data.write_results()
+singleneuron_data.get_depolarizingevents_fromrawdata(
+                                                    min_depolspeed=0.2,
+                                                    min_depolamp=0.3,
+                                                    peakwindow=7,
+                                                    noisefilter_hpfreq=2000,
+                                                    oscfilter_lpfreq=10,
+                                                    ttleffect_windowinms=3
+                                                     )
+singleneuron_data.write_results()
 # %% seeing all detected APs
 evoked_aps = singleneuron_data.action_potentials.applied_ttlpulse
 spont_aps = ~singleneuron_data.action_potentials.applied_ttlpulse

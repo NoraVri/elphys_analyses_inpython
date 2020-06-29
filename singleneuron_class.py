@@ -400,7 +400,7 @@ class SingleNeuron:
         additional kwargs:
         events_to_mark='none',
         time_axis_unit='ms',
-        segments_overlayed=True
+        segments_overlayed=True  # works only for data recorded as abf at the moment
         """
         allblocknames_list = self.get_blocknames(printing='off')
         for identifier in block_identifiers:

@@ -552,6 +552,14 @@ def get_events_measures(peaks_idcs,
                                                            ed_baseline_v + 0.1 * ed_peakamp)
             ed_width = (peak_idx - ed_risestart_idx + ed_pastpeakwidth_inidcs) * sampling_period_inms
 
+        # label: if the event is on the last-identified AP's spikeshoulderpeaks list, update label accordingly
+            if not actionpotentials_dictionary['spikeshoulderpeaks_idcs']:
+                event_label = ''
+            elif peak_idx in actionpotentials_dictionary['spikeshoulderpeaks_idcs'][-1]:
+                event_label = 'spikeshoulderpeak'
+            else:
+                event_label = ''
+
             # adding all the measures into the dictionary
             depolarizingevents_dictionary['peakv'].append(peak_v)
             depolarizingevents_dictionary['baselinev'].append(baseline_v)
@@ -574,6 +582,7 @@ def get_events_measures(peaks_idcs,
             depolarizingevents_dictionary['edtrace_half_width'].append(ed_half_width)
             depolarizingevents_dictionary['edtrace_width_at10%amp'].append(ed_width)
 
+            depolarizingevents_dictionary['event_label'].append(event_label)
             depolarizingevents_dictionary['peakv_idx'].append(peak_idx)
             depolarizingevents_dictionary['baselinev_idx'].append(baseline_idx)
             depolarizingevents_dictionary['rt_start_idx'].append(risestart_idx)
@@ -645,6 +654,7 @@ def make_depolarizingevents_measures_dictionaries():
         'edtrace_half_width': [],
         'edtrace_width_at10%amp': [],
 
+        'event_label': [],
         'peakv_idx': [],
         'baselinev_idx': [],
         'rt_start_idx': [],

@@ -85,22 +85,10 @@ for neuron in singleneurons_list:
     axes[1].set_title(singleneuron_rawdata.name + 'evoked events')
 
 # %% notes on singleneuron data, and getting data individually per neuron
-# cell20190527A
-singleneuron_rawdata = SingleNeuron('20190527A')
-# This neuron definitely has fast-events in a few different amplitude as well as tons of APs.
-# The histogram of spontaneous events quite clearly delineates multiple groups, and the
-# rise-time/half-width/amplitude scatters clearly show a string of events with highly similar
-# rise-time and half-width but varying amplitudes.
-# The amplitude histogram suggests that there are evoked events in the same amplitude-range as spontaneous ones,
-# however the scatters indicate that the kinetics of evoked events differ from spontaneous ones.
-# Other noteworthy things:
-# - There appears to be another kind of relatively fast and large event, with slightly slower rise and different decay
-#   (as can be seen in the scatters).
-# - The neuron is transiently oscillating quite a lot of the time, and there's depolarizing events that seem to be
-#   followed by hyperpolarization/epochs of oscillation surprisingly often.
+# (neurons that aren't listed here have moved to their own individual analysis script)
 
 
-# singleneuron_rawdata = SingleNeuron('20190527C')
+singleneuron_rawdata = SingleNeuron('20190527C')
 # from the amplitude histogram and the rise-time scatters it looks like this neuron should have some fast-events,
 # but a clear boundary between groups of fast-events and other events is not evident by eye
 

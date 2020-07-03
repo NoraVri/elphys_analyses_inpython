@@ -279,13 +279,14 @@ class SingleNeuron:
         segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace)
         and the segment is adjusted to start and/or end at the new time(s).
         If a segment_idx is provided, this segment will be removed from the block.
+        !! if multiple segments are to be removed from a single block, the removing should start from the last segment.
         It returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
         """
         if not self.rawdata_readingnotes.get('nonrecordingtimeslices'):
             self.rawdata_readingnotes['nonrecordingtimeslices'] = {}
 
-        if not isinstance(segment_idx, int):
+        if segment_idx is None:
             if trace_start_t:
                 start_t = trace_start_t * pq.s
             if trace_end_t:
@@ -308,8 +309,15 @@ class SingleNeuron:
             self.blocks[block_idx].segments[0] = segmentslice_tokeep
             for i, _ in enumerate(self.blocks[block_idx].channel_indexes):
                 self.blocks[block_idx].channel_indexes[i].analogsignals[0] = segmentslice_tokeep.analogsignals[i]
+            # updating reading-notes dictionary
+            if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+                self.rawdata_readingnotes['nonrecordingtimeslices'].update({
+                    file_origin: {'t_start': trace_start_t,
+                                  't_end': trace_end_t,
+                                  'segment_idx': segment_idx}
+                })
 
-        else:
+        elif isinstance(segment_idx, int):
             for block in self.blocks:
                 if block.file_origin == file_origin:
                     block_idx = self.blocks.index(block)
@@ -321,13 +329,34 @@ class SingleNeuron:
                         del analogsignals[segment_idx]
                         chidx.analogsignals = analogsignals
                         self.blocks[block_idx].channel_indexes[i] = chidx
+            if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+                self.rawdata_readingnotes['nonrecordingtimeslices'].update({
+                    file_origin: {'t_start': trace_start_t,
+                                  't_end': trace_end_t,
+                                  'segment_idx': segment_idx}
+                })
+            else:
+                seg_idcs = self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx']
+                if isinstance(seg_idcs, int):
+                    seg_idcs = [seg_idcs, segment_idx]
+                elif isinstance(seg_idcs, list):
+                    seg_idcs.append(segment_idx)
+                self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx'] = seg_idcs
 
-        if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-            self.rawdata_readingnotes['nonrecordingtimeslices'].update({
-                file_origin: {'t_start': trace_start_t,
-                              't_end': trace_end_t,
-                              'segment_idx': segment_idx}
-            })
+        elif isinstance(segment_idx, list):
+            for block in self.blocks:
+                if block.file_origin == file_origin:
+                    block_idx = self.blocks.index(block)
+                    for idx in segment_idx:
+                        self.blocks[block_idx].segments.remove(
+                            self.blocks[block_idx].segments[idx]
+                        )
+                        chidxs = self.blocks[block_idx].channel_indexes
+                        for i, chidx in enumerate(chidxs):
+                            analogsignals = chidx.analogsignals
+                            del analogsignals[idx]
+                            chidx.analogsignals = analogsignals
+                            self.blocks[block_idx].channel_indexes[i] = chidx
 
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):

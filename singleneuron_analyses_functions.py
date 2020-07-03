@@ -410,7 +410,7 @@ def get_events_measures(peaks_idcs,
         risetrace_clipped50 = fullrisetrace[fullrisetrace >= baseline_v + 0.5 * peakamp]
         rise_midpoint_idx = int(peak_idx - len(risetrace_clipped50))
 
-        # half-width: AP width at 50% of amplitude
+        # half-width: event width at 50% of amplitude
         halfhalfwidth_inidcs = len(fullrisetrace[
                                        fullrisetrace >= baseline_v + 0.5 * peakamp])
         half_width_startidx = int(peak_idx - halfhalfwidth_inidcs)
@@ -458,7 +458,7 @@ def get_events_measures(peaks_idcs,
                                       if peak_idx < idx < peak_idx + returntothreshold_inidcs]
                 n_spikeshoulderpeaks = len(spikeshoulderpeaks)
 
-            # after-hyperpolarization measures
+    # after-hyperpolarization measures
                 ahptrace = voltage_denoised[
                            (threshold_idx + thresholdwidth_inidcs):(threshold_idx
                                                                     + thresholdwidth_inidcs

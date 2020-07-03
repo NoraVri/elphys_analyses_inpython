@@ -79,6 +79,20 @@ cell20190529E = SingleNeuron('20190529E')
 #                                                  trace_start_t=13)
 # cell20190529E.write_results()
 # %%
+cell20200630A = SingleNeuron('20200630A')
+# some spont.activity and light pulses, then cell dies
+# there's some real bad noise events in there, including periods with bad 50Hz noise
+# the evoked events look more like giant synapses, sometimes with a spike without shoulder riding them
+# cell20200630A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
+#                                                  trace_start_t=14)
+# cell20200630A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# for i in reversed(range(7, 11)):
+#     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
+# cell20200630A.write_results()
+# %%
+
+
+# %%
 # %% experiment: RubiGlu-uncaging
 # %% no light-evoked activity recorded
 cell20200306A = SingleNeuron('20200306A')

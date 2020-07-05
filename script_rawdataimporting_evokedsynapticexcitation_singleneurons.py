@@ -90,6 +90,46 @@ cell20200630A = SingleNeuron('20200630A')
 #     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
 # cell20200630A.write_results()
 # %%
+cell20200630B1 = SingleNeuron('20200630B1')
+# some spont.activity and light pulses; cell stops responding in light_0006 (probably pretty dead but still has a Vrest)
+# there's pretty bad 50Hz noise throughout (not very large amp (~1/4mV) but very visible) and
+# nothing much of spontaneously occurring events
+# light responses look like they're mostly synapses, though a couple of them may have (several) fast-events riding them.
+# fileslist = cell20200630B1.get_blocknames(printing='off')
+# for file in fileslist:
+#     cell20200630B1.rawdata_remove_nonrecordingchannel(file, 2, pairedrecording=True)
+# cell20200630B1.write_results()
+# %%
+cell20200630B2 = SingleNeuron('20200630B2')
+# some spont.activity and light pulses
+# nothing much of spontaneously occurring events going on, but cell responds to light very consistently;
+# it often fires an AP, but wherever it doesn't the fast-event(s) riding the synaptic potential look pretty clear
+# fileslist = cell20200630B2.get_blocknames(printing='off')
+# for file in fileslist:
+#     cell20200630B2.rawdata_remove_nonrecordingchannel(file, 1, pairedrecording=True)
+# cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
+# cell20200630B2.write_results()
+# %%
+cell20200630C = SingleNeuron('20200630C')
+# spont.activity and light pulses
+# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
+# light consistently with an AP or what looks like a whole bunch of fast-events together
+# !! for some reason there are two segments in gapFree_0000 - can only be plotted with segments_overlayed=False.
+# cell20200630C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
+# cell20200630C.write_results()
+# %%
+cell20200630D = SingleNeuron('20200630D')
+# spont.activity and light pulses
+# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
+# light consistently with an AP or with what looks like a fast-event at first but then turns out to rise too slow.
+# cell loses potential rather suddently during light_0010, but still has a nice light-response there
+cell20200630D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
+cell20200630D.write_results()
+# %%
+
+
+
+
 
 
 # %%

@@ -50,8 +50,7 @@ def plot_block(block, events_to_mark='none', time_axis_unit='ms', segments_overl
 
     # marking event baselines and peaks, if applicable
     if isinstance(events_to_mark, pd.DataFrame):
-        block_events = events_to_mark.loc[
-                            events_to_mark['file_origin'] == block.file_origin]
+        block_events = events_to_mark.loc[events_to_mark['file_origin'] == block.file_origin]
         for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
             time_axis = signal.times.rescale('ms')
             vtrace = np.squeeze(np.array(signal))

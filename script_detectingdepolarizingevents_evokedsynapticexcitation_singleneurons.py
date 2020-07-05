@@ -4,12 +4,12 @@ import quantities as pq
 import pandas as pd
 
 # %% list of neurons with light-evoked responses recordings
-# %% experiment: ChR activation in Thy1 mouse (experiment days 20190527 and 20190529)
+# %% experiment: ChR activation in Thy1 mouse (experiment days 20190527, 20190529, 20200630 and 20200701)
 # singleneuron_data = SingleNeuron('20190527A')
 #
 # singleneuron_data = SingleNeuron('20190527C')
 #
-singleneuron_data = SingleNeuron('20190529A1')
+# singleneuron_data = SingleNeuron('20190529A1')
 #
 # singleneuron_data = SingleNeuron('20190529B')
 #
@@ -18,6 +18,16 @@ singleneuron_data = SingleNeuron('20190529A1')
 # singleneuron_data = SingleNeuron('20190529D')
 #
 # singleneuron_data = SingleNeuron('20190529E')
+
+singleneuron_data = SingleNeuron('20200630A')
+
+# singleneuron_data = SingleNeuron('20200630B1')
+
+# singleneuron_data = SingleNeuron('20200630B2')
+
+# singleneuron_data = SingleNeuron('20200630C')
+
+# singleneuron_data = SingleNeuron('20200630D')
 
 # %% experiment: RubiGlu uncaging (experiment days 20200306, 20200308, 20200310 and 20200312)
 #

@@ -18,16 +18,23 @@ import pandas as pd
 # singleneuron_data = SingleNeuron('20190529D')
 #
 # singleneuron_data = SingleNeuron('20190529E')
-
-singleneuron_data = SingleNeuron('20200630A')
-
+#
+# singleneuron_data = SingleNeuron('20200630A')
+#
 # singleneuron_data = SingleNeuron('20200630B1')
-
+#
 # singleneuron_data = SingleNeuron('20200630B2')
-
+#
 # singleneuron_data = SingleNeuron('20200630C')
-
+#
 # singleneuron_data = SingleNeuron('20200630D')
+#
+
+
+
+singleneuron_data = SingleNeuron('20200708F')
+
+
 
 # %% experiment: RubiGlu uncaging (experiment days 20200306, 20200308, 20200310 and 20200312)
 #
@@ -56,22 +63,24 @@ singleneuron_data = SingleNeuron('20200630A')
 # neuron20190529D: used block no.2 to find good parameter settings
 # neuron20190529E: used block no.2 to find good parameter settings
 
-# apsdict, depolsdict = singleneuron_data.plot_eventdetecttraces_forsegment(2, 8, return_dicts=True,
-#                                                                           min_depolspeed=0.2,
+# neuron20200708G: used block no.3 to find good parameter settings
+
+# apsdict, depolsdict = singleneuron_data.plot_eventdetecttraces_forsegment(3, 0, return_dicts=True,
+#                                                                           min_depolspeed=0.3,
 #                                                                           min_depolamp=0.3,
-#                                                                           peakwindow=7,
-#                                                                           noisefilter_hpfreq=2000,
-#                                                                           oscfilter_lpfreq=10,
+#                                                                           # peakwindow=7,
+#                                                                           # noisefilter_hpfreq=2000,
+#                                                                           # oscfilter_lpfreq=10,
 #                                                                           # ttleffect_windowinms=3
 #                                                                           )
 
 singleneuron_data.get_depolarizingevents_fromrawdata(
-                                                    min_depolspeed=0.2,
+                                                    min_depolspeed=0.3,
                                                     min_depolamp=0.3,
-                                                    peakwindow=7,
-                                                    noisefilter_hpfreq=2000,
-                                                    oscfilter_lpfreq=10,
-                                                    ttleffect_windowinms=3
+                                                    # peakwindow=7,
+                                                    # noisefilter_hpfreq=2000,
+                                                    # oscfilter_lpfreq=10,
+                                                    ttleffect_windowinms=10
                                                      )
 singleneuron_data.write_results()
 # %% seeing all detected APs

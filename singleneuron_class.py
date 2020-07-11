@@ -27,7 +27,7 @@ class SingleNeuron:
     # initializing the class instance
     def __init__(self,
                  singleneuron_name,
-                 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\olive"):
+                 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"):
         """
         singleneuron_name should be a unique identifier for the recording, with a date (YYYYMMDD) and letter (uppercase)
             that also appear on the raw data folder/file belonging to singleneuron.
@@ -39,7 +39,7 @@ class SingleNeuron:
         All raw data belonging to singleneuron are returned as a list of neo block objects.
         If files with singleneuron_name are found in the 'myResults' folder,
         raw data adjustments are applied based on notes found in rawdata_readingnotes,
-        and objects containing analyses results are added to the class instance.
+        and the relevant empty objects are updated with ones containing analyses results.
 
         Manipulations to the class instance can be saved (to be recreated on the next instance call)
         by calling the write_results()-method.
@@ -52,8 +52,6 @@ class SingleNeuron:
 
         self.experiment_metadata = pd.Series()
         self.rawdata_readingnotes = {}
-        # Notes are updated with non-default kwargs needed to exactly recreate analyses results
-        # inside the class method.
 
         self.depolarizing_events = pd.DataFrame()
         self.action_potentials = pd.DataFrame()
@@ -65,7 +63,6 @@ class SingleNeuron:
 
     # save all results currently present on the singleneuron instance
     def write_results(self):
-
         """
         this function saves all analysis results belonging to the singleneuron instance
         to a folder on path labeled 'myResults'.
@@ -99,14 +96,16 @@ class SingleNeuron:
 
     # get all raw electrophysiology recordings associated with singleneuron
     def get_singleneuron_rawdata(self):
-
         """ This function uses singleneuron_name and path to find the
         raw data file(s) recorded from singleneuron.
         Once the right path is found, it calls on the relevant files_reader (defined further below)
         to import the raw data in my standardized format using the Python/Neo framework.
 
-        This function currently works for .abf-files (one folder per singleneuron)
-        and pxp-files (one file per singleneuron; each file has an internal folder-structure).
+        This function currently works for:
+        - abf-files (one folder per singleneuron)
+        - pxp-files (one file per singleneuron; each file has an internal folder-structure)
+        - ibw-files (one folder per singleneuron)
+        - txt-files (one folder per singleneuron)
         """
         neuronnamesplit = re.split("(\D)", self.name)
         experiment_date = int(neuronnamesplit[0])

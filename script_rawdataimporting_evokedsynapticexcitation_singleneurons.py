@@ -123,13 +123,76 @@ cell20200630D = SingleNeuron('20200630D')
 # there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
 # light consistently with an AP or with what looks like a fast-event at first but then turns out to rise too slow.
 # cell loses potential rather suddently during light_0010, but still has a nice light-response there
-cell20200630D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
-cell20200630D.write_results()
+# cell20200630D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
+# cell20200630D.write_results()
 # %%
+cell20200701A = SingleNeuron('20200701A')
 
+# %%
+cell20200701B = SingleNeuron('20200701B')
 
+# %%
+cell20200701C = SingleNeuron('20200701C')
 
+# %%
+cell20200701D = SingleNeuron('20200701D')
 
+# %%
+cell20200706A = SingleNeuron('20200706A')
+
+# %%
+cell20200706B = SingleNeuron('20200706B')
+
+# %%
+cell20200706C = SingleNeuron('20200706C')
+
+# %%
+cell20200706D = SingleNeuron('20200706D')
+
+# %%
+cell20200706E = SingleNeuron('20200706E')
+
+# %%
+cell20200707A = SingleNeuron('20200707A')
+
+# %%
+cell20200707B = SingleNeuron('20200707B')
+
+# %%
+cell20200707C = SingleNeuron('20200707C')
+
+# %%
+cell20200707D = SingleNeuron('20200707D')
+
+# %%
+cell20200707E = SingleNeuron('20200707E')
+
+# %%
+cell20200708A = SingleNeuron('20200708A')
+
+# %%
+cell20200708B = SingleNeuron('20200708B')
+
+# %%
+cell20200708C = SingleNeuron('20200708C')
+
+# %%
+cell20200708D = SingleNeuron('20200708D')
+
+# %%
+cell20200708E = SingleNeuron('20200708E')
+
+# %%
+cell20200708F = SingleNeuron('20200708F')
+# the neuron that's got everything: spont. activity and light pulses, both without and with NMDA blocker.
+# it's also going in and out of all kinds of different oscillating modes, and definitely has
+# some fast-events (though no big-amplitude ones that I saw in files before blocker application).
+# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
+# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0006.abf', trace_end_t=565)
+# cell20200708F.write_results()
+
+# %%
+cell20200708G = SingleNeuron('20200708G')
 
 
 # %%

@@ -120,7 +120,7 @@ singleneuron_data.plot_depoleventsgroups_overlayed(evoked_aps, spont_aps,
 #                                                       cmeasure='baselinev')
 evoked_events = singleneuron_data.depolarizing_events.applied_ttlpulse
 spont_events = ~singleneuron_data.depolarizing_events.applied_ttlpulse
-singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
+singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20_80',
                                                       cmeasure='baselinev',
                                                       evokedevents=evoked_events,
                                                       spontevents=spont_events)
@@ -132,7 +132,7 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
 # neuron20190529E: amplitude > 0.4, rise_time < 0.5
 
 fastevents_largerthan_params = {
-                                'amplitude':1.5,
+                                'amplitude':3,
                                 # 'baselinev':-80,
                                 }
 fastevents_smallerthan_params = {

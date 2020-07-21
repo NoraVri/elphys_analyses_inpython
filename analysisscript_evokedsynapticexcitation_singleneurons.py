@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import OPTICS
 
+## getting lists of relevant subsets of neurons
 # list of all neurons recorded on those experiment days:
 allneurons_list = [
     '20190527A',
@@ -53,52 +54,65 @@ allneurons_list = [
     '20200708F',
     '20200708G'
 ]
-print('total number of neurons patched: ' + str(len(allneurons_list)))
-# the list of neurons in the dataset with light-evoked synaptic activations
-lightactivated_list = [
-    '20190527A',
-    '20190527C',
-    '20190529A1',
-    '20190529B',
-    '20190529C',
-    '20190529D',
-    '20190529E',
-    '20200630A',
-    '20200630B1',
-    '20200630B2',
-    '20200630C',
-    '20200630D',
-    '20200701A',
-    '20200701B',
-    '20200701D',
-    '20200706B',
-    '20200706D',
-    '20200706E',
-    '20200707E',
-    '20200708B',
-    '20200708C',
-    '20200708D',
-    '20200708F',
-    '20200708G'
-]
-print('number of neurons with light-evoked synaptic excitations in the dataset: ' + str(len(lightactivated_list)))
-# %% for neurons on the lightactivated-list,
-#   1.] see if they have events of amp > 3 mV;
-#   2.] if so, see if they could correspond to the fast-events we're looking for
-#   2a] they come in multiple amplitude, but with the same waveform
-#   2b] there are no amplitude-groups, but the rise-time parameters of the event fit the description
-#   2c] there are light-evoked events that fit the description
+# !Note: not all neurons have had depolarizing events extracted with individually-set parameter settings;
+# the batch-wise parameter settings were min_depolspeed=0.2, min_depolamp=2, ttleffect_windowinms=10.
 
-#   0.] if they don't have APs and fast-events extracted already, run get_depolarizingevents
-#   with standard settings since we're (for now) only looking for neurons with very obvious fast-events
-# for neuron in allneurons_list:
-#     neuron_data = SingleNeuron(neuron)
-#     if 'getdepolarizingevents_settings' in neuron_data.rawdata_readingnotes.keys():
-#         continue
-#     else:
-#         neuron_data.get_depolarizingevents_fromrawdata(min_depolspeed=0.2,
-#                                                        min_depolamp=2,
-#                                                        ttleffect_windowinms=10)
-#         neuron_data.write_results()
+# getting the subsets of neurons in the dataset with light-activations applied and with events > 3mV
+lightactivatedneurons_list = []
+largesponteventsneurons_list = []
+largeevokedeventsneurons_list = []
+for neuron in allneurons_list:
+    neuron_data = SingleNeuron(neuron)
+# skip neurons for which no depolarizing events were extracted
+    if neuron_data.depolarizing_events.empty:
+        continue
+        # in all these things, we'll want to exclude any events that are spikeshoulderpeaks
+    spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+        # and things that were recorded in vclamp mode
+    vclampblocks = list(set(
+        [blockname for blockname in neuron_data.depolarizing_events.file_origin if 'Vclamp' in blockname]))
+    vclampevents = neuron_data.depolarizing_events.file_origin.isin(vclampblocks)
+    excludedevents = vclampevents | spikeshoulderpeaks
+    # check if neuron has events occurring in the ttl-applied window
+    evokedevents = neuron_data.depolarizing_events.applied_ttlpulse & (~excludedevents)
+    if sum(evokedevents) > 0:
+        lightactivatedneurons_list.append(neuron)
+    # check if neuron has large-amplitude (>3mV) events
+    largeampevents = (neuron_data.depolarizing_events.amplitude > 3) & (~excludedevents)
+    if sum(largeampevents) > 0:
+    # check if neuron has spontaneously occurring large-amplitude events
+        largespontevents = (~neuron_data.depolarizing_events.applied_ttlpulse) & largeampevents & (~excludedevents)
+        if sum(largespontevents) > 0:
+            largesponteventsneurons_list.append(neuron)
+    # check if neuron has evoked large-amplitude events
+        largeevokedevents = evokedevents & largeampevents & (~excludedevents)
+        if sum(largeevokedevents) > 0:
+            largeevokedeventsneurons_list.append(neuron)
 
-# 1.] for neurons that have events of amp > 2mV, plot those
+largeampspontandevokedneurons_list = list(set(largeevokedeventsneurons_list) & set(largesponteventsneurons_list))
+
+print('total number of patched neurons in the dataset: ' + str(len(allneurons_list)))
+print('number of neurons with light-evoked depolarizations: ' + str(len(lightactivatedneurons_list)))
+print('number of neurons with spont. depolarizations > 3mV: ' + str(len(largesponteventsneurons_list)))
+print('number of neurons with light-evoked depolarizations > 3mV: ' + str(len(largeevokedeventsneurons_list)))
+print('number of neurons with both spont. '
+      'and light-evoked depolarizations > 3mV: ' + str(len(largeampspontandevokedneurons_list)))
+
+# %%
+for neuron in largeampspontandevokedneurons_list:
+    print(neuron)
+    neuron_data = SingleNeuron(neuron)
+    spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+    largeampevents = (neuron_data.depolarizing_events.amplitude > 3) & (~spikeshoulderpeaks)
+    evokedevents = neuron_data.depolarizing_events.applied_ttlpulse & largeampevents
+    spontevents = (~neuron_data.depolarizing_events.applied_ttlpulse) & largeampevents
+    neuron_data.plot_depoleventsgroups_overlayed(evokedevents, spontevents,
+                                                 group_labels=['evoked events', 'spont. events'],
+                                                 plt_title=neuron,
+                                                 do_baselining=True
+                                                 )
+
+
+
+
+

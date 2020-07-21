@@ -561,9 +561,9 @@ class SingleNeuron:
             time-based event-measures are acceptable.
         - prealignpoint_window_inms = 5 - startpoint of the displayed trace, in ms before the alignment-point.
         - total_plotwindow_inms = 50 - the total length of traces to display.
-        - axis_object = None - by default, all events will be plotted in a new plot for this block; if
-            and axis object is passed, traces are plotted onto it and no new figure is created.
-        - get_measures_type - unless 'raw', the event-detect traces will be displayed instead of raw v.
+        - axis_object = None - by default, all events will be plotted in a single new plot; if
+            an axis object is passed, traces are plotted onto it and no new figure is created.
+        - get_measures_type = 'raw' - otherwise, the event-detect traces will be displayed instead of raw v.
         - do_baselining and do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
             depending on get_measures_type) values to do baselining and/or normalizing, respectively.
         """

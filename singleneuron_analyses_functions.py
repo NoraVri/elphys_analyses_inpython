@@ -382,7 +382,7 @@ def get_events_measures(peaks_idcs,
             elif auxttl_recording[peak_idx] > 1:
                 ttlpulse_applied = True
             elif ttleffectwindow_insamples is not None:
-                auxttlsnippet = auxttl_recording[baseline_idx-ttleffectwindow_insamples:baseline_idx]
+                auxttlsnippet = auxttl_recording[baseline_idx-ttleffectwindow_insamples:peak_idx]
                 if (len(auxttlsnippet) > 0) and (np.amax(auxttlsnippet) > 1):
                     ttlpulse_applied = True
                 else:

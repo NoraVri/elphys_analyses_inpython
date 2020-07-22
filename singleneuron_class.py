@@ -415,7 +415,9 @@ class SingleNeuron:
         """plots all blocks of raw traces imported for singleneuron;
         one figure per block, separate subplots for each channel_index (voltage/current/aux).
         optional kwargs:
-        events_to_mark='none', time_axis_unit='ms', segments_overlayed=True
+        events_to_mark='none' - if a df of events-meausres is passed through, baseline and peak points for these events will be marked
+        time_axis_unit='ms',
+        segments_overlayed=True
         """
         for block in self.blocks:
             plots.plot_block(block, **kwargs)

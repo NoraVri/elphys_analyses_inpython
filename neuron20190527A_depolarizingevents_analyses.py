@@ -11,7 +11,7 @@ singleneuron_rawdata = SingleNeuron('20190527A')
 singleneuron_evoked_events = singleneuron_rawdata.depolarizing_events.applied_ttlpulse
 singleneuron_spont_events = ~singleneuron_rawdata.depolarizing_events.applied_ttlpulse
 
-# general notes single neuron data & analyses:
+# general notes on single neuron data & analyses:
 # This neuron definitely has fast-events in a few different amplitude, and tons of APs.
 
 # The histogram of spontaneous events quite clearly delineates multiple groups, and the

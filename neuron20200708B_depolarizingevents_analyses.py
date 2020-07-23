@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import OPTICS
 
-# getting neuron20190527A data (including APs and depolarizing events)
+# getting  data (including APs and depolarizing events)
 neuron_data = SingleNeuron('20200708B')
 
 # general notes on single neuron data & analyses:
@@ -43,8 +43,21 @@ neuron_data.plot_depoleventsgroups_overlayed(largeevokedevents, largespontevents
                                              group_labels=['evoked events', 'spont. events'],
                                              plt_title=neuron_data.name,
                                              do_baselining=True,
-                                             # do_normalizing=True
+                                             do_normalizing=True
                                              )
+
+# figure1, axes = plt.subplots(1, 2, sharey='row', sharex='row')
+neuron_data.plot_depolevents_overlayed(largespontevents,
+                                       colorby_measure='baselinev',
+                                       do_baselining=True,
+                                       # axis_object=axes[0]
+                                       )
+neuron_data.plot_depolevents_overlayed(largeevokedevents,
+                                       colorby_measure='baselinev',
+                                       do_baselining=True,
+                                       # axis_object=axes[1]
+                                       )
+
 
 # %% overview-plots of spontaneous depolarizing events parameters
 # %% histograms:

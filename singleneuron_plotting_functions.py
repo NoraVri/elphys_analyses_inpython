@@ -45,7 +45,7 @@ def plot_block(block, events_to_mark='none', time_axis_unit='ms', segments_overl
             time_axis = time_axis.rescale(time_axis_unit)
             trace_forplotting = np.squeeze(np.array(analogsignal))
             axes[i].plot(time_axis, trace_forplotting)
-        axes[i].set_xlabel('time  in '+time_axis_unit)
+        axes[i].set_xlabel('time  in ' + time_axis_unit)
         axes[i].set_ylabel(str(trace_unit))
 
     # marking event baselines and peaks, if applicable

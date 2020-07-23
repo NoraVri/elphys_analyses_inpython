@@ -64,12 +64,13 @@ allneurons_list = [
 #     neuron_data.write_results()
 
 
-# %%
 ## getting lists of relevant subsets of neurons
 # getting the subsets of neurons in the dataset with light-activations applied and with events > 3mV
-lightactivatedneurons_list = []
-largesponteventsneurons_list = []
-largeevokedeventsneurons_list = []
+neuronslist_lightactivated = []
+neuronslist_largespontevents = []
+neuronslist_largeevokedevent = []
+neuronslist_dvrest20 = []
+
 for neuron in allneurons_list:
     neuron_data = SingleNeuron(neuron)
 # skip neurons for which no depolarizing events were extracted
@@ -82,34 +83,46 @@ for neuron in allneurons_list:
         [blockname for blockname in neuron_data.depolarizing_events.file_origin if 'Vclamp' in blockname]))
     vclampevents = neuron_data.depolarizing_events.file_origin.isin(vclampblocks)
     excludedevents = vclampevents | spikeshoulderpeaks
+    # check if neuron has events recorded at different vrest levels
+    allevents_df = neuron_data.depolarizing_events[~excludedevents]
+    vrestrange = allevents_df.baselinev.max() - allevents_df.baselinev.min()
+    if vrestrange > 20:
+        neuronslist_dvrest20.append(neuron)
     # check if neuron has events occurring in the ttl-applied window
     evokedevents = neuron_data.depolarizing_events.applied_ttlpulse & (~excludedevents)
     if sum(evokedevents) > 0:
-        lightactivatedneurons_list.append(neuron)
+        neuronslist_lightactivated.append(neuron)
     # check if neuron has large-amplitude (>3mV) events
     largeampevents = (neuron_data.depolarizing_events.amplitude > 3) & (~excludedevents)
     if sum(largeampevents) > 0:
     # check if neuron has spontaneously occurring large-amplitude events
         largespontevents = (~neuron_data.depolarizing_events.applied_ttlpulse) & largeampevents & (~excludedevents)
         if sum(largespontevents) > 0:
-            largesponteventsneurons_list.append(neuron)
+            neuronslist_largespontevents.append(neuron)
     # check if neuron has evoked large-amplitude events
         largeevokedevents = evokedevents & largeampevents & (~excludedevents)
         if sum(largeevokedevents) > 0:
-            largeevokedeventsneurons_list.append(neuron)
+            neuronslist_largeevokedevent.append(neuron)
 
-largeampspontandevokedneurons_list = list(set(largeevokedeventsneurons_list) & set(largesponteventsneurons_list))
-largeampspontandevokedneurons_list.sort()
+neuronslist_largeampspontandevoked = list(set(neuronslist_largeevokedevent) & set(neuronslist_largespontevents))
+neuronslist_largeampspontandevoked.sort()
+
+neuronslist_largeampspontanddvrest20 = list(set(neuronslist_largespontevents) & set(neuronslist_dvrest20))
+neuronslist_largeampspontanddvrest20.sort()
 
 print('total number of patched neurons in the dataset: ' + str(len(allneurons_list)))
-print('number of neurons with spont. depolarizations > 3mV: ' + str(len(largesponteventsneurons_list)))
-print('number of neurons with light-evoked depolarizations: ' + str(len(lightactivatedneurons_list)))
-print('number of neurons with light-evoked depolarizations > 3mV: ' + str(len(largeevokedeventsneurons_list)))
+print('number of neurons with depolarizations occurring at varying Vrest levels: '
+      + str(len(neuronslist_dvrest20)))
+print('number of neurons with spont. depolarizations > 3mV: ' + str(len(neuronslist_largespontevents)))
+print('number of neurons with light-evoked depolarizations: ' + str(len(neuronslist_lightactivated)))
+print('number of neurons with light-evoked depolarizations > 3mV: ' + str(len(neuronslist_largeevokedevent)))
 print('number of neurons with both spont. '
-      'and light-evoked depolarizations > 3mV: ' + str(len(largeampspontandevokedneurons_list)))
+      'and light-evoked depolarizations > 3mV: ' + str(len(neuronslist_largeampspontandevoked)))
+print('number of neurons with spont. depolarizations > 3mV and held at varying Vrest levels: '
+      + str(len(neuronslist_largeampspontanddvrest20)))
 
 # %% plotting spont. and evoked events overlayed, one plot per neuron
-for neuron in largeampspontandevokedneurons_list:
+for neuron in neuronslist_largeampspontandevoked:
     print(neuron)
     neuron_data = SingleNeuron(neuron)
     spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
@@ -145,15 +158,16 @@ for neuron in largeampspontandevokedneurons_list:
 #190529D: looks like it has spont.events of a few different amplitudes (4, 5, and 6mV, as well as one of 15 mV);
 # possibly they are also there in the evoked responses, but these are always much larger amplitude (6 - 30 mV)
 
-#190529E: the single spont.event looks quite fast but it's also definitely a doublet;
-# evoked responses are in the range of 3 - 5 mV and also look like they're often doublets
+## 190529E: looks like it has only evoked large responses;
+## evoked responses are in the range of 3 - 5 mV and also look like they're often doublets
 
 #200630A: there are some pretty fast things both in the spont. and evoked events,
 # but it's not clear that any of these would be the fast-events we're looking for.
 
-#200630B2: this may just be the golden example neuron: both spont. and evoked events seem to come in
-# similar amplitude-groups, and I see a few examples where rise and decay look damn-well identical for spont. and evoked
-# (though this is also aided by the fact that spont. events often seem to ride a slower depolarization).
+##200630B2: this may just be the golden example neuron: both spont. and evoked events seem to come in
+## similar amplitude-groups, and I see a few examples where rise and decay look damn-well identical for spont. and evoked
+## (though this is also aided by the fact that spont. events often seem to ride a slower depolarization)
+## correction: seems this was also one of those neurons where evoked events were picked up as spont.
 
 #200630C: clearly has spont. fast-events (5 different amplitude groups, 2 - 10 mV);
 # evoked responses look like they might have fast-events in them but it'll be hard to tease them apart from other things.
@@ -193,17 +207,14 @@ for neuron in largeampspontandevokedneurons_list:
 #200708F: this neuron's data should definitely get thoroughly analyzed: it's the one that had NMDA-blocker applied,
 # and it has SO many fast and large events recorded (both spont. and evoked) I don't even know what to write here.
 
-#200708G: events look somewhat slow and rather small for fast events (rise-time ~2ms, amp 3 - 6 mV) yet they look very
-# consistent in decay, may come in amplitude groups and evoked events look exactly the same.
-# TODO: run depolarizingevents extraction again after fixing code for marking TTL_applied
-# none of the 'spontaneous' events found for this neuron are in fact spontaneous, their rise is just so slow
-# that the baseline-point ends up preceding TTL on.
-# !No use spending any time looking at this neuron's data right now.
+##200708G: events look somewhat slow and rather small for fast events (rise-time ~2ms, amp 3 - 6 mV) yet they look very
+## consistent in decay and may come in amplitude groups... no spont. events to compare to though.
+## !No use spending any time looking at this neuron's data right now.
 # %%
-# %% selected example neurons
+# %% selected example neurons (from the largeampspontandevokedneurons_list):
 # candidate neurons that obviously have fast-events (and not too much of other large-amp fast things mucking them up),
 # and are likely to have fast-events included in their response to excitation:
-# 20190529D, 20200630B2, 20200630C,
+# 20190529D, 20200630B2, 20200630C, 20200701A,
 #
 # 20200707E:
 #
@@ -211,7 +222,13 @@ for neuron in largeampspontandevokedneurons_list:
 # Evoked events have very similar amplitudes and exactly the same decay waveform, though rise is always slower.
 # There is another event of amp ~1.5mV that occurs both spontaneously and in evoked responses, that could/should be
 # included in future analyses to make a stronger case that spont. and evoked are the same type of event.
+#
+# 20200708D:
+#
+# 20200708F:
 
+# neurons that are definitely not worth looking at right now:
+# 200706D, 200708C
 # %%
 # other neurons that very possibly have fast-events but also other large-amp fast things,
 # and are likely to have fast-events included in their response to excitation:

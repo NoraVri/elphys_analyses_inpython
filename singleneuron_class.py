@@ -442,10 +442,9 @@ class SingleNeuron:
                 plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
-    def plot_depolevents_overlayed(self, condition_series=pd.Series(),
-                                   get_subthreshold_events=True,
-                                   newplot_per_block=False, blocknames_list=None,
-                                   colorby_measure='', color_lims=[],
+    def plot_depolevents_overlayed(self, events_to_plot=pd.Series(),
+                                   blocknames_list=None, newplot_per_block=False,
+                                   colorby_measure='', color_lims=None,
                                    plt_title='',
                                    **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
@@ -458,9 +457,10 @@ class SingleNeuron:
             marking a subset of events for plotting.
         newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
         [blocknames_list]: a list of block names (== block.file_origin) marking a subset of blocks for event-plotting.
-        'colorby_measure': key of a depolarizingevents_measure to color-code the lines by.
+        'colorby_measure': key of a depolarizingevents-measure to color-code the lines by.
         [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
         'plt_title': default='', string giving the title of the plot(s).
+        Other kwargs (passed through to plots.plot_single_event):
         'timealignto_measure': default='peakv_idx', but can be changed to any key representing a time measurement.
         prealignpoint_window_inms: default=5, length of the timewindow for plotting before the align-point.
         total_plotwindow_inms: default=50, total length of the window for plotting the events.
@@ -469,14 +469,15 @@ class SingleNeuron:
         do_normalizing: if True, the event-trace is divided by amplitude.
         """
         # selecting the (subset of) events for plotting:
-        if get_subthreshold_events and not condition_series.empty:
-            events_for_plotting = self.depolarizing_events.loc[condition_series]
-        elif not condition_series.empty:
-            events_for_plotting = self.action_potentials.loc[condition_series]
-        elif get_subthreshold_events:
-            events_for_plotting = self.depolarizing_events
+        if not events_to_plot.empty:
+            events_for_plotting = self.depolarizing_events.loc[events_to_plot]
         else:
-            events_for_plotting = self.action_potentials
+            events_for_plotting = self.depolarizing_events
+
+        blocks_for_plotting = set(events_for_plotting['file_origin'])
+        if blocknames_list is not None:
+            blocks_for_plotting = list(blocks_for_plotting.intersection(set(blocknames_list)))
+
         # if required, set colorbar limits
         # (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
         if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
@@ -487,17 +488,12 @@ class SingleNeuron:
         if colorby_measure and len(color_lims) == 2 and not newplot_per_block:
             colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
                                                                     color_lims)
-        # get the (subset of) blocks for which events are to be plotted:
-        unique_blocks_forplotting = set(events_for_plotting['file_origin'])
-        if blocknames_list:
-            unique_blocks_forplotting = unique_blocks_forplotting.intersection(set(blocknames_list))
-        unique_blocks_forplotting = list(unique_blocks_forplotting)
-        allblocks_nameslist = self.get_blocknames(printing='off')
 
+        allblocks_nameslist = self.get_blocknames(printing='off')
         # plotting events:
         if newplot_per_block:
             # making a new plot for each block
-            for block_name in unique_blocks_forplotting:
+            for block_name in blocks_for_plotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
                 # making a new plot for each block, getting the figure and axis handles out
@@ -523,7 +519,7 @@ class SingleNeuron:
             # making a single figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + plt_title)
-            for block_name in unique_blocks_forplotting:
+            for block_name in blocks_for_plotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
 

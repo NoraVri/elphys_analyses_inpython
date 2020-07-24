@@ -164,13 +164,13 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     - total_plotwindow_inms = 50 - the total length of traces to display.
     - axis_object = None - by default, all events will be plotted in a new plot for this block; if
         and axis object is passed, traces are plotted onto it and no new figure is created.
-    other possible kwargs:
+    other kwargs (passed through to plot_single_event):
     - get_measures_type - unless 'raw', the event-detect traces will be displayed instead of raw v.
     - display_measures - if True, event measures are displayed in the plot as well (for each event!).
-    - do_baselining and do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
+    - do_baselining, do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
         depending on get_measures_type) values to do baselining and/or normalizing, respectively.
-    - line color and line label are passed through to mpl.plot; color and colorby_measure are
-        mutually exclusive arguments.
+    - linecolor - can be passed through as a color string; will be overriden if colorby_measure is passed.
+    - label - string passed through to mpl.plot.
     """
     # do not proceed unless event-measures data is provided
     if block_eventsmeasures.empty:

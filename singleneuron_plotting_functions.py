@@ -20,19 +20,37 @@ import singleneuron_analyses_functions as snafs
 
 
 # plotting all traces of a block, in individual subplots per channel
-def plot_block(block, events_to_mark='none', time_axis_unit='ms', segments_overlayed=True):
-    """ takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
+def plot_block(block, depolarizingevents_df, events_to_mark=pd.Series(), time_axis_unit='ms', segments_overlayed=True):
+    """ Takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     Optional arguments:
-    - events_to_mark: should be a DataFrame of subthreshold events or action potentials;
-        baselinev and peakv points will be marked accordingly.
-    - time_axis_unit: 'ms' by default, can be changed to 's'.
+    - events_to_mark: should be a subthreshold_events DataFrame; baselinev and peakv points will be marked accordingly.
+    - time_axis_unit: 'ms' by default, can be changed to 's' (or any other time unit understood by quantities).
     - segments_overlayed: True by default, so that consecutive segments of the same block are
         plotted overlayed. If False, consecutive segments are plotted consecutively in the same plot.
+    Note: if events_to_mark are passed through, segments_overlayed is set to False and time_axis_unit to ms.
     """
     # making one subplot per active recording channel
     nsubplots = len(block.channel_indexes)
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
+    # marking event baselines and peaks, if applicable
+    if not events_to_mark.empty:
+        blockevents_to_mark = (events_to_mark & (depolarizingevents_df.file_origin == block.file_origin))
+        block_events_df = depolarizingevents_df[blockevents_to_mark]
+        for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
+            time_axis = signal.times.rescale('ms')
+            vtrace = np.squeeze(np.array(signal))
+            trace_events = block_events_df.loc[block_events_df['segment_idx'] == idx]
+            axes[0].scatter(time_axis[list(trace_events['baselinev_idx'])],
+                            vtrace[list(trace_events['baselinev_idx'])],
+                            color='green')
+            axes[0].scatter(time_axis[list(trace_events['peakv_idx'])],
+                            vtrace[list(trace_events['peakv_idx'])],
+                            color='red')
+        # setting plot settings so that points will be in the right place
+        time_axis_unit = 'ms'
+        segments_overlayed=False
+
     # plotting all the traces of the block
     for i in range(nsubplots):
         analogsignals = block.channel_indexes[i].analogsignals
@@ -48,19 +66,6 @@ def plot_block(block, events_to_mark='none', time_axis_unit='ms', segments_overl
         axes[i].set_xlabel('time  in ' + time_axis_unit)
         axes[i].set_ylabel(str(trace_unit))
 
-    # marking event baselines and peaks, if applicable
-    if isinstance(events_to_mark, pd.DataFrame):
-        block_events = events_to_mark.loc[events_to_mark['file_origin'] == block.file_origin]
-        for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
-            time_axis = signal.times.rescale('ms')
-            vtrace = np.squeeze(np.array(signal))
-            trace_events = block_events.loc[block_events['segment_idx'] == idx]
-            axes[0].scatter(time_axis[list(trace_events['baselinev_idx'])],
-                            vtrace[list(trace_events['baselinev_idx'])],
-                            color='green')
-            axes[0].scatter(time_axis[list(trace_events['peakv_idx'])],
-                            vtrace[list(trace_events['peakv_idx'])],
-                            color='red')
 
 
 # %% depolarizing events and action potentials - line plots of raw data
@@ -149,24 +154,26 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                             axis_object=None, newplot_per_event=False,
                             **kwargs):
     """ This function as inputs:
-    required arguments:
+    Required arguments:
     - a raw-data block
     - the corresponding event-measures dataframe
     - the parameter settings dictionary used for finding depolarizing events
-    optional arguments:
+    Optional arguments:
     - timealignto_measure = 'peakv_idx' - by default, traces are aligned to event peaks; any
         time-based event-measures are acceptable.
     - colorby_measure = '' - by default, all lines are plotted in blue; if the name of one of the
         event-measures columns is passed, lines will be color-coded by this measure.
-    - color_lims = [] - by default, color-scale limits are inferred from extrema in the data; if
+    - color_lims = None - by default, color-scale limits are inferred from extrema in the data; if
         a two-element list is passed ([a b] where a < b) these will be set as the colorbar limits.
     - prealignpoint_window_inms = 5 - startpoint of the displayed trace, in ms before the alignment-point.
-    - total_plotwindow_inms = 50 - the total length of traces to display.
-    - axis_object = None - by default, all events will be plotted in a new plot for this block; if
-        and axis object is passed, traces are plotted onto it and no new figure is created.
-    other kwargs (passed through to plot_single_event):
-    - get_measures_type - unless 'raw', the event-detect traces will be displayed instead of raw v.
-    - display_measures - if True, event measures are displayed in the plot as well (for each event!).
+    - axis_object = None - by default, a new plot is created for each event;
+        if an axis object is passed, traces are plotted onto it and no new figure is created (unless newplot_per_event).
+    - newplot_per_event = False - by default, traces are overlayed onto a provided axis_object; if set to True,
+        each event will be plotted individually (as well).
+    Other kwargs (passed through to plot_single_event):
+    - plotwindow_inms = 40 - the total width of the plotted window
+    - get_measures_type - unless 'raw', the event-detect traces will be displayed instead of raw V.
+    - display_measures - if True, event measures are displayed in the plot as well, for each event in the plot(s).
     - do_baselining, do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
         depending on get_measures_type) values to do baselining and/or normalizing, respectively.
     - linecolor - can be passed through as a color string; will be overriden if colorby_measure is passed.
@@ -213,7 +220,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
         for _, eventmeasures in segment_eventsmeasures.iterrows():
             plot_startidx = (eventmeasures[timealignto_measure]
                              - int(prealignpoint_window_inms / sampling_period_inms))
-            if newplot_per_event:
+            if newplot_per_event or (axis is None):
                 figure, axis = plt.subplots(1, 1, squeeze=True)
 
             if colorby_measure:

@@ -410,36 +410,29 @@ class SingleNeuron:
             print(blocks_list)
         return blocks_list
 
-    # plotting all raw data, as recorded
-    def plot_allrawdata(self, **kwargs):
-        """plots all blocks of raw traces imported for singleneuron;
-        one figure per block, separate subplots for each channel_index (voltage/current/aux).
-        optional kwargs:
-        events_to_mark='none' - if a df of events-meausres is passed through, baseline and peak points for these events will be marked
-        time_axis_unit='ms',
-        segments_overlayed=True
-        """
-        for block in self.blocks:
-            plots.plot_block(block, **kwargs)
-            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
-
-    # plotting specific blocks, optionally with action potentials or depolarizing events marked
-    def plot_blocks_byname(self, *block_identifiers, **kwargs):
-        """takes (a part of) the name(s) of the file from which the rawdata_block was created
-        and plots only that/those block(s) (separate subplots for each channel_index).
+    # plotting raw data blocks, optionally with (a subset of) depolarizing events marked
+    def plot_rawdatablocks(self, *block_identifiers, **kwargs):
+        """Plots raw data by block, separate subplots for each channel_index.
+        If block_identifiers are passed, only blocks with those strings in block.file_origin will be plotted.
         additional kwargs:
-        events_to_mark='none',
+        events_to_mark='none', can be changed to a pd.Series of booleans marking the locations of events to be marked
         time_axis_unit='ms',
         segments_overlayed=True  # works only for data recorded as abf at the moment
         """
         allblocknames_list = self.get_blocknames(printing='off')
-        for identifier in block_identifiers:
-            blocknames_list = [blockname for blockname in allblocknames_list
-                               if identifier in blockname]
-            for blockname in blocknames_list:
-                block = self.blocks[allblocknames_list.index(blockname)]
-                plots.plot_block(block, **kwargs)
-                plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+        if not block_identifiers:
+            blocknames_list = self.get_blocknames(printing='off')
+        else:
+            blocknames_list = []
+            for identifier in block_identifiers:
+                blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
+                for block in blocks:
+                    blocknames_list.append(block)
+
+        for blockname in blocknames_list:
+            block = self.blocks[allblocknames_list.index(blockname)]
+            plots.plot_block(block, self.depolarizing_events, **kwargs)
+            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents(self, events_to_plot=pd.Series(), blocknames_list=None,

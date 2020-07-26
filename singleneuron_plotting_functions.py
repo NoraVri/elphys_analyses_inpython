@@ -144,9 +144,9 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
 # plotting all events of a rawdata_block, overlayed, using measures information
 def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizingevents_settings,
                             timealignto_measure='peakv_idx',
-                            colorby_measure='', color_lims=[],
-                            prealignpoint_window_inms=5, total_plotwindow_inms=50,
-                            axis_object=None,
+                            colorby_measure='', color_lims=None,
+                            prealignpoint_window_inms=5,
+                            axis_object=None, newplot_per_event=False,
                             **kwargs):
     """ This function as inputs:
     required arguments:
@@ -178,7 +178,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
         return
 
     # optional: setting the color mapping
-    if colorby_measure and len(color_lims) == 2:
+    if colorby_measure and (color_lims is not None) and (len(color_lims) == 2):
         color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, color_lims)
     elif colorby_measure:
         color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures)
@@ -186,15 +186,8 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     else:
         color_map = []
         cm_normalizer = []
-
-    # optional: create figure axes to plot onto
-    if not axis_object:
-        figure, axis = plt.subplots(1, 1, squeeze=True)
-        if colorby_measure:
-            figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer,cmap=color_map),
-                            label=colorby_measure)
-    else:
-        axis = axis_object
+    #
+    axis = axis_object
 
     # getting the individual segments from the block
     segments_for_plotting_idcs = list(set(block_eventsmeasures['segment_idx']))
@@ -217,95 +210,24 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                                                  plot='off')
 
         # plotting the events of the segment
-        for event_idx, eventmeasures in segment_eventsmeasures.iterrows():
+        for _, eventmeasures in segment_eventsmeasures.iterrows():
             plot_startidx = (eventmeasures[timealignto_measure]
                              - int(prealignpoint_window_inms / sampling_period_inms))
+            if newplot_per_event:
+                figure, axis = plt.subplots(1, 1, squeeze=True)
+
             if colorby_measure:
                 linecolor = color_map(cm_normalizer(eventmeasures[colorby_measure]))
                 plot_single_event(vtrace, sampling_period_inms, axis,
-                                  plot_startidx, total_plotwindow_inms,
+                                  plot_startidx,
                                   eventmeasures_series=eventmeasures,
                                   linecolor=linecolor,
                                   **kwargs)
             else:
                 plot_single_event(vtrace, sampling_period_inms, axis,
-                                  plot_startidx, total_plotwindow_inms,
+                                  plot_startidx,
                                   eventmeasures_series=eventmeasures,
                                   **kwargs)
-            # print('event no.' + str(event_idx) + ' plotted')
-
-    if not axis_object:
-        return figure, axis
-
-
-# plotting all events of a single voltage trace individually, displaying measures
-def plot_singlesegment_events_individually_withmeasures(get_subthreshold_events,
-                                                        block, block_events,
-                                                        trace_idx, reading_notes,
-                                                        plotwindow_inms=40,
-                                                        prebaselinewindow_inms=5):
-    """ This function does the grunt work for the SingleNeuron.plot_individualdepolevents_withmeasures method.
-    """
-    # extracting the relevant vtrace, event-measures etc. and (re)creating event-detect trace
-    block_name = block.file_origin
-    vtrace = block.segments[trace_idx].analogsignals[0]
-    time_axis = vtrace.times
-    trace_events = block_events.loc[block_events['segment_idx'] == trace_idx]
-    sampling_frequency = float(vtrace.sampling_rate)
-    sampling_period_inms = float(vtrace.sampling_period) * 1000
-    vtrace = np.squeeze(np.array(vtrace))
-
-    if get_subthreshold_events:
-        # unless action potentials are called for, both the raw and the event-detect traces are plotted
-        edtrace, _, _ = snafs.apply_rawvtrace_manipulations(
-                                          vtrace,
-                                          oscfilter_lpfreq=reading_notes['oscfilter_lpfreq'],
-                                          noisefilter_hpfreq=reading_notes['noisefilter_hpfreq'],
-                                          sampling_frequency=sampling_frequency,
-                                          time_axis=time_axis,
-                                          plot='off')
-        # looping over each event for this vtrace
-        for event_idx, event_measures in trace_events.iterrows():
-            plot_startidx = event_measures['baselinev_idx'] - int(prebaselinewindow_inms
-                                                                  / sampling_period_inms)
-            # creating a figure, number matching the idx of the event as listed in the dataframe
-            figure, axes = plt.subplots(1, 2, sharex='all', num=event_idx)
-            plt.suptitle(block_name + ' segment' + str(trace_idx))
-
-            plot_single_event(vtrace, sampling_period_inms, axes[0],
-                              plot_startidx, plotwindow_inms=plotwindow_inms,
-                              linecolor='blue',
-                              eventmeasures_series=event_measures,
-                              get_measures_type='raw',
-                              display_measures=True)
-            axes[0].set_ylabel('voltage (mV)')
-            axes[0].set_title('raw voltage')
-
-            plot_single_event(edtrace, sampling_period_inms, axes[1],
-                              plot_startidx, plotwindow_inms=plotwindow_inms,
-                              linecolor='black',
-                              eventmeasures_series=event_measures,
-                              get_measures_type='edtrace',
-                              display_measures=True)
-            axes[1].set_title('event-detect trace')
-
-    else:  # plotting action potentials
-        for event_idx, event_measures in trace_events.iterrows():
-            plot_startidx = event_measures['baselinev_idx'] - int(prebaselinewindow_inms
-                                                                  / sampling_period_inms)
-            # creating a figure, number matching the idx of the event as listed in the dataframe
-            figure, axis = plt.subplots(1, 1, squeeze=True, num=event_idx)
-            plt.suptitle(block_name + ' segment' + str(trace_idx))
-
-            plot_single_event(vtrace, sampling_period_inms, axis,
-                              plot_startidx, plotwindow_inms=plotwindow_inms,
-                              linecolor='blue',
-                              eventmeasures_series=event_measures,
-                              get_measures_type='raw',
-                              display_measures=True)
-            axis.set_ylabel('voltage (mV)')
-            axis.set_title('raw voltage')
-
 
 # %% helper functions:
 # getting colormap information

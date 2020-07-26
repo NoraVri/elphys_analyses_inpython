@@ -442,106 +442,106 @@ class SingleNeuron:
                 plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
-    def plot_depolevents_overlayed(self, events_to_plot=pd.Series(),
-                                   blocknames_list=None, newplot_per_block=False,
-                                   colorby_measure='', color_lims=None,
-                                   plt_title='',
-                                   **kwargs):
+    def plot_depolevents(self, events_to_plot=pd.Series(), blocknames_list=None,
+                         newplot_per_block=False, newplot_per_event=False,
+                         colorby_measure='', color_lims=None,
+                         plt_title='',
+                         **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
         By default, all detected events are plotted in a single plot; all blue lines
         representing the original raw recorded events.
 
         Optional inputs:
-        condition_series: a Pandas True/False series (same length as depolarizingevents)
+        events_to_plot: a Pandas True/False series (same length as depolarizingevents)
             marking a subset of events for plotting.
-        newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
         [blocknames_list]: a list of block names (== block.file_origin) marking a subset of blocks for event-plotting.
+        newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
+        newplot_per_event: if True, a new figure will be drawn for each individual event (as well).
         'colorby_measure': key of a depolarizingevents-measure to color-code the lines by.
         [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
         'plt_title': default='', string giving the title of the plot(s).
         Other kwargs (passed through to plots.plot_single_event):
         'timealignto_measure': default='peakv_idx', but can be changed to any key representing a time measurement.
         prealignpoint_window_inms: default=5, length of the timewindow for plotting before the align-point.
-        total_plotwindow_inms: default=50, total length of the window for plotting the events.
+        plotwindow_inms: default=50, total length of the window for plotting the events.
         get_measures_type: default='raw', if it's something else the event-detect trace will be recreated and used.
         do_baselining: if True, baselinev is subtracted from the event-trace.
         do_normalizing: if True, the event-trace is divided by amplitude.
+        display_measures: if True, onset and duration of measures for each event will be displayed in the plot(s).
         """
-        # selecting the (subset of) events for plotting:
+        # getting the (subset of) events for plotting:
         if not events_to_plot.empty:
             events_for_plotting = self.depolarizing_events.loc[events_to_plot]
         else:
             events_for_plotting = self.depolarizing_events
-
+        # getting the (subset of) blocks for plotting:
+        allblocks_nameslist = self.get_blocknames(printing='off')
         blocks_for_plotting = set(events_for_plotting['file_origin'])
         if blocknames_list is not None:
             blocks_for_plotting = list(blocks_for_plotting.intersection(set(blocknames_list)))
 
-        # if required, set colorbar limits
-        # (if newplot_per_block, figure colorbar is handled inside plot_singleblock_events function)
-        if colorby_measure and len(color_lims) == 0 and not newplot_per_block:
-            colorlims = [events_for_plotting[colorby_measure].min(),
-                          events_for_plotting[colorby_measure].max()]
-            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
-                                                                    colorlims)
-        if colorby_measure and len(color_lims) == 2 and not newplot_per_block:
-            colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
-                                                                    color_lims)
+        # setting the figure title:
+        axis_title = 'voltage'
+        if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
+            axis_title += ' event-detect trace, '
+        if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
+            axis_title += ' baselined'
+        if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
+            axis_title += ' normalized'
 
-        allblocks_nameslist = self.get_blocknames(printing='off')
-        # plotting events:
-        if newplot_per_block:
-            # making a new plot for each block
+        if newplot_per_event:
             for block_name in blocks_for_plotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
-                # making a new plot for each block, getting the figure and axis handles out
-                figure, axis = plots.plot_singleblock_events(
+                plots.plot_singleblock_events(rawdata_block, block_events,
+                                              self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                              newplot_per_event=newplot_per_event,
+                                              **kwargs)
+                if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
+                    kwargs['display_measures'] = False
+
+        if newplot_per_block:
+            for block_name in blocks_for_plotting:
+                figure, axis = plt.subplots(1, 1, squeeze=True)
+                figure.suptitle(self.name + block_name + plt_title)
+                rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
+                block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
+                plots.plot_singleblock_events(
                     rawdata_block,
                     block_events,
                     self.rawdata_readingnotes['getdepolarizingevents_settings'],
                     colorby_measure=colorby_measure,
                     color_lims=color_lims,
+                    axis_object=axis,
                     **kwargs)
-                # setting axis properties and figure title
-                axis_title = 'voltage'
-                if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-                    axis_title += ' event-detect trace, '
-                if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
-                    axis_title += ' baselined'
-                if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
-                    axis_title += ' normalized'
                 axis.set_title(axis_title)
-                figure.suptitle(self.name + block_name + plt_title)
-
         else:
-            # making a single figure:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             plt.suptitle(self.name + plt_title)
+            # (optional) setting color limits for the figure
+            if colorby_measure:
+                if color_lims is None:
+                    color_lims = [events_for_plotting[colorby_measure].min(),
+                                  events_for_plotting[colorby_measure].max()]
+                elif not len(color_lims) == 2:
+                    print('please input valid colorbar limits')
+                    return
+                colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
+                                                                            color_lims)
+                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                label=colorby_measure)
+            # plotting
             for block_name in blocks_for_plotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
-
                 plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               axis_object=axis,
                                               colorby_measure=colorby_measure,
                                               color_lims=color_lims,
                                               **kwargs)
-            # setting axis properties and figure title
-            axis_title = 'voltage'
-            if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-                axis_title += ' event-detect trace '
-            if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
-                axis_title += ' baselined'
-            if 'do_normalizing' in kwargs.keys() and kwargs['do_normalizing']:
-                axis_title += ' normalized'
             axis.set_title(axis_title)
-            # setting colorbar
-            if colorby_measure:
-                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
-                                label=colorby_measure)
 
     def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=[],
                                          get_subthreshold_events=True,
@@ -598,50 +598,6 @@ class SingleNeuron:
         if len(group_labels) == len(events_groups):
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
-
-    # plotting (subsets of) action potentials or depolarizing events, individually with measures marked
-    def plot_individualdepolevents_withmeasures(self, condition_series=pd.Series(),
-                                                get_subthreshold_events=True,
-                                                plotwindow_inms=40,
-                                                prebaselinewindow_inms=5):
-        """ This function plots the subset of events for which the condition is True,
-        each a separate figure. By default, subthreshold events are plotted,
-        with one subplot showing the raw voltage trace and one showing the
-        event-detect trace (with oscillations and noise substracted).
-        If get_subthreshold_events is False, action potentials are plotted.
-        In each subplot, the relevant measures taken from that event are marked.
-
-        Optional inputs:
-        condition_series: a Pandas True/False series (same length as depolarizingevents)
-                          marking a subset of events for plotting.
-        plotwindow_inms: default=40, the total length of the plot window.
-        baselinewindow_inms: default=5, the length of the plot window before baselinev_idx.
-        """
-        if get_subthreshold_events and not condition_series.empty:
-            events_forplotting = self.depolarizing_events.loc[condition_series]
-        elif not condition_series.empty:
-            events_forplotting = self.action_potentials.loc[condition_series]
-        elif get_subthreshold_events:
-            events_forplotting = self.depolarizing_events
-        else:
-            events_forplotting = self.action_potentials
-        uniqueblocks_nameslist = list(set(events_forplotting['file_origin']))
-        allblocks_nameslist = self.get_blocknames(printing='off')
-
-        for block_name in uniqueblocks_nameslist:
-            rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
-            block_events = events_forplotting.loc[
-                events_forplotting['file_origin'] == block_name]
-            unique_vtraces = list(set(block_events['segment_idx']))
-
-            for vtrace_idx in unique_vtraces:
-                plots.plot_singlesegment_events_individually_withmeasures(
-                        get_subthreshold_events,
-                        rawdata_block,
-                        block_events,
-                        vtrace_idx,
-                        self.rawdata_readingnotes['getdepolarizingevents_settings'],
-                        plotwindow_inms, prebaselinewindow_inms)
 
     def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,
                                           return_dicts=False,

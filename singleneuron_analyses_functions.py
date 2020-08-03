@@ -248,7 +248,7 @@ def apply_rawvtrace_manipulations(voltage_recording,
            voltage_approxinstfreq
 
 
-# differentiating: getting the mV/ms change in voltage for each index on the recording trace
+# differentiating: getting the mV/ms change in voltage for each point on the recorded trace
 def make_derivative_per_ms(recording_trace, ms_insamples):
     permsderivative = []
     for idx in range(0, len(recording_trace) - ms_insamples):
@@ -339,334 +339,384 @@ def get_events_measures(peaks_idcs,
                         ms_insamples, spikewindow_insamples, spikeahpwindow_insamples,
                         sampling_period_inms,
                         auxttl_recording, ttleffectwindow_insamples):
-    """ This function loops over all peaks/baselines indices and measures parameters for each event.
-    Events are sorted into action potentials and subthreshold events
-    depending on event amplitude/peakv.
+    """ This function loops over all peaks/baselines indices and collects all data and measures contained
+    in the depolarizingevents_df into a dictionary.
+    Events are labeled as:
+    -actionpotential by event amplitude/peakv;
+    -spikeshoulderpeak by occurrence directly after an actionpotential but before return to thresholdv
+    -subthresholdevent otherwise.
     """
-    (actionpotentials_dictionary,
-     depolarizingevents_dictionary) = make_depolarizingevents_measures_dictionaries()
+    eventsmeasures_dictionary = make_eventsmeasures_dictionary()
 
     voltage_denoised = voltage_recording - voltage_noisetrace
 
     for baseline_idx, peak_idx in zip(depolswithpeaks_idcs, peaks_idcs):
+        # adding into dictionary: baseline and peak idcs
+        eventsmeasures_dictionary['peakv_idx'].append(peak_idx)
+        eventsmeasures_dictionary['baselinev_idx'].append(baseline_idx)
 
-        # baseline v: mean v in the ms before the event's baseline_idx
-        baseline_v = np.mean(voltage_denoised[
-                             baseline_idx - ms_insamples:baseline_idx])
-        ed_baseline_v = np.mean(voltage_eventdetecttrace[
-                                baseline_idx - ms_insamples:baseline_idx])
-
-        # peak v: v at peak_idx as found by find_depols_with_peaks function
-        peak_v = voltage_recording[peak_idx]
-        ed_peakv = voltage_eventdetecttrace[peak_idx]
-
-        # amplitude: peakv - baselinev
-        peakamp = peak_v - baseline_v
-        ed_peakamp = ed_peakv - ed_baseline_v
-
-        # vslope: slope in voltage in the ms before the event's baseline_idx
-        prebaseline_vslope = (voltage_oscillationstrace[baseline_idx] -
-                              voltage_oscillationstrace[baseline_idx - ms_insamples])  # in mV/ms
-
-        # current applied
+        # current_applied
         current_applied = np.mean(current_recording[baseline_idx:peak_idx])
         if abs(current_applied) <= 7:
             current_applied = 0
+        eventsmeasures_dictionary['applied_current'].append(current_applied)
 
-        # ttl applied (light or puff or whatever)
+        # ttl applied
         if auxttl_recording is None:
-            ttlpulse_applied = False
+            auxttlsnippet = None
+        elif ttleffectwindow_insamples is not None:
+            auxttlsnippet = auxttl_recording[baseline_idx-ttleffectwindow_insamples:peak_idx]
         else:
-            if auxttl_recording[baseline_idx] > 1:
-                ttlpulse_applied = True
-            elif auxttl_recording[peak_idx] > 1:
-                ttlpulse_applied = True
-            elif ttleffectwindow_insamples is not None:
-                auxttlsnippet = auxttl_recording[baseline_idx-ttleffectwindow_insamples:peak_idx]
-                if (len(auxttlsnippet) > 0) and (np.amax(auxttlsnippet) > 1):
-                    ttlpulse_applied = True
-                else:
-                    ttlpulse_applied = False
-            else:
-                ttlpulse_applied = False
+            auxttlsnippet = auxttl_recording[baseline_idx:peak_idx]
+
+        if (auxttlsnippet is not None) and (len(auxttlsnippet) > 0) and (np.amax(auxttlsnippet) > 1):
+            ttlpulse_applied = True
+        else:
+            ttlpulse_applied = False
+        eventsmeasures_dictionary['applied_ttlpulse'].append(ttlpulse_applied)
+
+        # baseline v: mean v in the ms before the event's baseline_idx
+        baseline_v = np.mean(voltage_denoised[baseline_idx - ms_insamples:baseline_idx])
+        eventsmeasures_dictionary['baselinev'].append(baseline_v)
+
+        ed_baseline_v = np.mean(voltage_eventdetecttrace[baseline_idx - ms_insamples:baseline_idx])
+        eventsmeasures_dictionary['edtrace_baselinev'].append(ed_baseline_v)
+
+        # peak v: v at peak_idx as found by find_depols_with_peaks function
+        peak_v = voltage_recording[peak_idx]
+        eventsmeasures_dictionary['peakv'].append(peak_v)
+
+        ed_peakv = voltage_eventdetecttrace[peak_idx]
+        eventsmeasures_dictionary['edtrace_peakv'].append(ed_peakv)
+
+        # amplitude: peakv - baselinev
+        peakamp = peak_v - baseline_v
+        eventsmeasures_dictionary['amplitude'].append(peakamp)
+
+        ed_peakamp = ed_peakv - ed_baseline_v
+        eventsmeasures_dictionary['edtrace_amplitude'].append(ed_peakamp)
+
+        # approx.osc slope: slope in voltage in the ms before the event's baseline_idx
+        prebaseline_vslope = (voltage_oscillationstrace[baseline_idx] -
+                              voltage_oscillationstrace[baseline_idx - ms_insamples])  # in mV/ms
+        eventsmeasures_dictionary['approx_oscslope'].append(prebaseline_vslope)
+
+        edtrace_prebaseline_vslope = (voltage_eventdetecttrace[baseline_idx] -
+                                      voltage_eventdetecttrace[baseline_idx - ms_insamples])
+        eventsmeasures_dictionary['edtrace_approx_oscslope'].append(edtrace_prebaseline_vslope)
 
         # approximate oscillation phase and instantaneous frequency
         approx_oscphase = voltage_approxphase[baseline_idx]
-        approx_instfreq = voltage_approxinstfreq[baseline_idx]
+        eventsmeasures_dictionary['approx_oscinstphase'].append(approx_oscphase)
 
-        # rise-time: time from 10% - 90% of peak amp
+        # approximate instantaneous frequency (at baselinev)
+        approx_instfreq = voltage_approxinstfreq[baseline_idx]
+        eventsmeasures_dictionary['approx_oscinstfreq'].append(approx_instfreq)
+
+        # rise-time: time from 10% - 90% of peak amp; value and start_idx
         fullrisetrace = voltage_denoised[baseline_idx:peak_idx + 1]  # this way the snippet includes peak_idx
         risetrace_clipped1 = fullrisetrace[fullrisetrace >= baseline_v + 0.1 * peakamp]
         risestart_idx = int(peak_idx - len(risetrace_clipped1))
-        risetrace_clipped2 = risetrace_clipped1[
-            risetrace_clipped1 <= baseline_v + 0.9 * peakamp]
+        risetrace_clipped2 = risetrace_clipped1[risetrace_clipped1 <= baseline_v + 0.9 * peakamp]
         rise_time = len(risetrace_clipped2) * sampling_period_inms
-        # rise-time from 20% - 80% of peak amp
+        eventsmeasures_dictionary['rise_time'].append(rise_time)
+        eventsmeasures_dictionary['rt_start_idx'].append(risestart_idx)
+
+        ed_fullrisetrace = voltage_eventdetecttrace[baseline_idx:peak_idx + 1]
+        ed_risetrace_clipped1 = ed_fullrisetrace[ed_fullrisetrace > ed_baseline_v + 0.1 * ed_peakamp]
+        ed_risestart_idx = int(peak_idx - len(ed_risetrace_clipped1))
+        ed_risetrace_clipped2 = ed_risetrace_clipped1[ed_risetrace_clipped1 <= ed_baseline_v + 0.9 * ed_peakamp]
+        ed_rise_time = len(ed_risetrace_clipped2) * sampling_period_inms
+        eventsmeasures_dictionary['ed_rise_time'].append(ed_rise_time)
+        eventsmeasures_dictionary['ed_rt_start_idx'].append(ed_risestart_idx)
+
+        # rise-time from 20% - 80% of peak amp; value and start_idx
         rise20clipped_1 = fullrisetrace[fullrisetrace >= baseline_v + 0.2 * peakamp]
         rise20start_idx = int(peak_idx - len(rise20clipped_1))
         rise20_clipped2 = rise20clipped_1[rise20clipped_1 <= baseline_v + 0.8 * peakamp]
         rise_time_20_80 = len(rise20_clipped2) * sampling_period_inms
-        # rise-time midpoint idx: point where event is at 50% of its amplitude
-        risetrace_clipped50 = fullrisetrace[fullrisetrace >= baseline_v + 0.5 * peakamp]
-        rise_midpoint_idx = int(peak_idx - len(risetrace_clipped50))
+        eventsmeasures_dictionary['rise_time_20_80'] = rise_time_20_80
+        eventsmeasures_dictionary['rt20_start_idx'] = rise20start_idx
 
-        # half-width: event width at 50% of amplitude
-        halfhalfwidth_inidcs = len(fullrisetrace[
-                                       fullrisetrace >= baseline_v + 0.5 * peakamp])
+        ed_rise20clipped_1 = ed_fullrisetrace[ed_fullrisetrace >= ed_baseline_v + 0.2 * ed_peakamp]
+        ed_rise20start_idx = int(peak_idx - len(ed_rise20clipped_1))
+        ed_rise20_clipped2 = ed_rise20clipped_1[ed_rise20clipped_1 <= ed_baseline_v + 0.8 * ed_peakamp]
+        ed_rise_time_20_80 = len(ed_rise20_clipped2) * sampling_period_inms
+        eventsmeasures_dictionary['ed_rise_time_20_80'] = ed_rise_time_20_80
+        eventsmeasures_dictionary['ed_rt20_start_idx'] = ed_rise20start_idx
+
+        # half-width: event width at 50% of amplitude; value and start_idx
+        halfhalfwidth_inidcs = len(fullrisetrace[fullrisetrace >= baseline_v + 0.5 * peakamp])
         half_width_startidx = int(peak_idx - halfhalfwidth_inidcs)
         descendtrace = voltage_denoised[peak_idx:peak_idx + spikewindow_insamples]
-        secondhalfhalfwidth_inidcs = descend_vtrace_until(descendtrace,
-                                                          baseline_v + 0.5 * peakamp)
+        secondhalfhalfwidth_inidcs = descend_vtrace_until(descendtrace, baseline_v + 0.5 * peakamp)
         halfwidth_inidcs = halfhalfwidth_inidcs + secondhalfhalfwidth_inidcs
         half_width = halfwidth_inidcs * sampling_period_inms
+        eventsmeasures_dictionary['half_width'] = half_width
+        eventsmeasures_dictionary['hw_start_idx'] = half_width_startidx
 
+        ed_halfhalfwidth_inidcs = len(ed_fullrisetrace[ed_fullrisetrace >= ed_baseline_v + 0.5 * ed_peakamp])
+        ed_half_width_startidx = int(peak_idx - ed_halfhalfwidth_inidcs)
+        ed_descendtrace = voltage_eventdetecttrace[peak_idx:peak_idx + spikewindow_insamples]
+        ed_secondhalfhalfwidth_inidcs = descend_vtrace_until(ed_descendtrace, ed_baseline_v + 0.5 * ed_peakamp)
+        ed_halfwidth_inidcs = ed_halfhalfwidth_inidcs + ed_secondhalfhalfwidth_inidcs
+        ed_half_width = ed_halfwidth_inidcs * sampling_period_inms
+        eventsmeasures_dictionary['ed_half_width'] = ed_half_width
+        eventsmeasures_dictionary['ed_hw_start_idx'] = ed_half_width_startidx
 
-# measures specific to action potentials:
-        if (((peak_v > 10) and (baseline_v < -20)) or ed_peakamp > 50):
-        # threshold: 10% of max. dV/dt
-            fullspikev = voltage_denoised[
-                         baseline_idx:peak_idx + spikewindow_insamples]
-            fullspikev_diff = np.diff(fullspikev)
-            maxdvdt = np.amax(fullspikev_diff)
-            maxdvdt_idx = np.argmax(fullspikev_diff)
-            thrshd_idx = maxdvdt_idx
-            while fullspikev_diff[thrshd_idx] > 0.1 * maxdvdt:
-                thrshd_idx += -1
-            threshold_idx = baseline_idx + thrshd_idx
+        # max dV/dt between baseline and peak
+        upstrokev = voltage_denoised[baseline_idx:peak_idx + 1]
+        upstrokev_diff = np.diff(upstrokev)
+        maxdvdt = np.amax(upstrokev_diff)
+        maxdvdt_idx = int(baseline_idx + np.argmax(upstrokev_diff))
+        eventsmeasures_dictionary['maxdvdt'] = maxdvdt
+        eventsmeasures_dictionary['maxdvdt_idx'] = maxdvdt_idx
+
+        ed_upstrokev = voltage_eventdetecttrace[baseline_idx:peak_idx + 1]
+        ed_upstrokev_diff = np.diff(ed_upstrokev)
+        ed_maxdvdt = np.amax(ed_upstrokev_diff)
+        ed_maxdvdt_idx = int(baseline_idx + np.argmax(ed_upstrokev_diff))
+        eventsmeasures_dictionary['ed_maxdvdt'] = ed_maxdvdt
+        eventsmeasures_dictionary['ed_maxdvdt_idx'] = ed_maxdvdt_idx
+
+        # calculation of thresholds (only for those events that are likely to have one)
+        if maxdvdt >= 10:
+            idx = maxdvdt_idx - baseline_idx
+            idx2 = idx
+            ed_idx = ed_maxdvdt_idx - baseline_idx
+            ed_idx2 = ed_idx
+
+        # point where dV/dt = 10mV/ms; V value and idx
+            while upstrokev_diff[idx] >= 10:
+                idx += -1
+            dvdt10_idx = int(baseline_idx + idx)
+            dvdt10_v = voltage_denoised[dvdt10_idx]
+
+            while ed_upstrokev_diff[ed_idx] >= 10:
+                ed_idx += -1
+            ed_dvdt10_idx = int(baseline_idx + ed_idx)
+            ed_dvdt10_v = voltage_denoised[ed_dvdt10_idx]
+
+        # threshold: V at 10% of max.dV/dt (if max dV/dt > 10); value and idx
+            while upstrokev_diff[idx2] >= (0.1 * maxdvdt):
+                idx2 += -1
+            threshold_idx = int(baseline_idx + idx2)
             threshold_v = voltage_denoised[threshold_idx]
 
-        # threshold-width: AP width at threshold v
+            while ed_upstrokev_diff[ed_idx2] >= (0.1 * ed_maxdvdt):
+                ed_idx2 += -1
+            ed_threshold_idx = int(baseline_idx + ed_idx2)
+            ed_threshold_v = voltage_eventdetecttrace[ed_threshold_idx]
+
+        else:  # filling in 'nan' for events where these measures cannot be taken
+            dvdt10_idx = float('nan')
+            ed_dvdt10_idx = float('nan')
+            dvdt10_v = float('nan')
+            ed_dvdt10_v = float('nan')
+            threshold_idx = float('nan')
+            ed_threshold_idx = float('nan')
+            threshold_v = float('nan')
+            ed_threshold_v = float('nan')
+
+        eventsmeasures_dictionary['dvdt10v'] = dvdt10_v
+        eventsmeasures_dictionary['dvdt10_idx'] = dvdt10_idx
+        eventsmeasures_dictionary['thresholdv'] = threshold_v
+        eventsmeasures_dictionary['threshold_idx'] = threshold_idx
+
+        eventsmeasures_dictionary['ed_dvdt10v'] = ed_dvdt10_v
+        eventsmeasures_dictionary['ed_dvdt10_idx'] = ed_dvdt10_idx
+        eventsmeasures_dictionary['ed_thresholdv'] = ed_threshold_v
+        eventsmeasures_dictionary['ed_threshold_idx'] = ed_threshold_idx
+
+        # threshold-width: time from threshold reached until return to threshold V
+        if threshold_v is not np.nan:
             returntothreshold_inidcs = descend_vtrace_until(descendtrace, threshold_v)
-            thresholdwidth_inidcs = peak_idx + returntothreshold_inidcs - threshold_idx
+            thresholdwidth_inidcs = peak_idx - threshold_idx + returntothreshold_inidcs
             threshold_width = thresholdwidth_inidcs * sampling_period_inms
-
-        # count spikelets on spike shoulder:
-                # if voltage did not decay back down to threshold value, any peaks occurring
-                # within 5 ms from the spike peak are taken to be spike-shoulder peaks
-            if np.isnan(threshold_width):
-                spikeshoulderpeaks = [idx for idx in peaks_idcs
-                                      if peak_idx < idx < (peak_idx + 5 * ms_insamples)]
-                n_spikeshoulderpeaks = len(spikeshoulderpeaks)
-                # ahp parameters cannot be calculated
-                ahpmin_idx = float('nan')
-                ahpamplitude = float('nan')
-                ahpend_idx = float('nan')
-                ahp_width = float('nan')
-            else:
-                # any peaks occurring before v decays back down to threshold are taken to be spike-shoulder peaks
-                spikeshoulderpeaks = [idx for idx in peaks_idcs
-                                      if peak_idx < idx < peak_idx + returntothreshold_inidcs]
-                n_spikeshoulderpeaks = len(spikeshoulderpeaks)
-
-    # after-hyperpolarization measures
-                ahptrace = voltage_denoised[
-                           (threshold_idx + thresholdwidth_inidcs):(threshold_idx
-                                                                    + thresholdwidth_inidcs
-                                                                    + spikeahpwindow_insamples)]
-
-                if len(ahptrace) > spikeahpwindow_insamples - 2 and np.amin(ahptrace) < baseline_v:
-        # ahp min and amplitude
-                    ahpmin_idx_inahptrace = np.argmin(ahptrace)
-                    ahpmin_idx = int(ahpmin_idx_inahptrace + threshold_idx + thresholdwidth_inidcs)
-                    ahpamplitude = baseline_v - np.amin(ahptrace)
-
-        # ahp width
-                    ahpwidth_inidcs = ahpmin_idx_inahptrace
-                    while ahptrace[ahpwidth_inidcs] < baseline_v and ahpwidth_inidcs < len(ahptrace) - 1:
-                        ahpwidth_inidcs += 1
-                    ahpend_idx = int(threshold_idx + thresholdwidth_inidcs + ahpwidth_inidcs + 1)
-                    if voltage_denoised[ahpend_idx] < baseline_v:
-                        ahpend_idx = float('nan')
-                    ahp_totalwidth_inidcs = ahpend_idx - threshold_idx + thresholdwidth_inidcs
-                    ahp_width = ahp_totalwidth_inidcs * sampling_period_inms
-
-                elif len(ahptrace) > spikewindow_insamples and np.amin(ahptrace) <= threshold_v:
-                    ahp_width = 0  # set to 0 if v decayed back to below threshold value
-                    ahpmin_idx = float('nan')
-                    ahpamplitude = float('nan')
-                    ahpend_idx = float('nan')
-
-                else:  # set measures to nan if they cannot be taken
-                    ahpmin_idx = float('nan')
-                    ahpamplitude = float('nan')
-                    ahpend_idx = float('nan')
-                    ahp_width = float('nan')
-
-            # adding all the measures into the dictionary
-            actionpotentials_dictionary['peakv'].append(peak_v)
-            actionpotentials_dictionary['baselinev'].append(baseline_v)
-            actionpotentials_dictionary['amplitude'].append(peakamp)
-            actionpotentials_dictionary['rise_time'].append(rise_time)
-            actionpotentials_dictionary['rise_time_20_80'].append(rise_time_20_80)
-            actionpotentials_dictionary['half_width'].append(half_width)
-            actionpotentials_dictionary['thresholdv'].append(threshold_v)
-            actionpotentials_dictionary['threshold_width'].append(threshold_width)
-            actionpotentials_dictionary['spikeshoulderpeaks_idcs'].append(spikeshoulderpeaks)
-            actionpotentials_dictionary['n_spikeshoulderpeaks'].append(n_spikeshoulderpeaks)
-            actionpotentials_dictionary['ahp_amplitude'].append(ahpamplitude)
-            actionpotentials_dictionary['ahp_width'].append(ahp_width)
-
-            actionpotentials_dictionary['applied_current'].append(current_applied)
-            actionpotentials_dictionary['applied_ttlpulse'].append(ttlpulse_applied)
-
-            actionpotentials_dictionary['approx_oscslope'].append(prebaseline_vslope)
-            actionpotentials_dictionary['approx_oscinstphase'].append(approx_oscphase)
-            actionpotentials_dictionary['approx_oscinstfreq'].append(approx_instfreq)
-
-            actionpotentials_dictionary['peakv_idx'].append(peak_idx)
-            actionpotentials_dictionary['baselinev_idx'].append(baseline_idx)
-            actionpotentials_dictionary['rt_start_idx'].append(risestart_idx)
-            actionpotentials_dictionary['rt_midpoint_idx'].append(rise_midpoint_idx)
-            actionpotentials_dictionary['rise20start_idx'].append(rise20start_idx)
-            actionpotentials_dictionary['hw_start_idx'].append(half_width_startidx)
-            actionpotentials_dictionary['threshold_idx'].append(threshold_idx)
-            actionpotentials_dictionary['ahp_min_idx'].append(ahpmin_idx)
-            actionpotentials_dictionary['ahp_end_idx'].append(ahpend_idx)
-
-# measures specific to depolarizing events:
         else:
-        # rise-time in the event-detect trace
-            ed_fullrisetrace = voltage_eventdetecttrace[baseline_idx:peak_idx]
-            ed_risetrace_clipped1 = ed_fullrisetrace[
-                                    ed_fullrisetrace >= ed_baseline_v + 0.1 * ed_peakamp]
-            ed_risestart_idx = peak_idx - len(ed_risetrace_clipped1)
-            ed_risetrace_clipped2 = ed_risetrace_clipped1[
-                            ed_risetrace_clipped1 <= ed_baseline_v + 0.9 * ed_peakamp]
-            ed_rise_time = len(ed_risetrace_clipped2) * sampling_period_inms
+            threshold_width = float('nan')
+        eventsmeasures_dictionary['threshold_width'] = threshold_width
 
-        # half-width in the event-detect trace
-            ed_descendtrace = voltage_eventdetecttrace[
-                              peak_idx:peak_idx + spikewindow_insamples]
-            ed_halfhalfwidth_inidcs = len(ed_fullrisetrace[
-                                              ed_fullrisetrace >= ed_baseline_v + 0.5 * ed_peakamp])
-            ed_halfwidth_startidx = peak_idx - ed_halfhalfwidth_inidcs
-            ed_secondhalfhalfwidth_inidcs = descend_vtrace_until(ed_descendtrace,
-                                                                 ed_baseline_v + 0.5 * ed_peakamp)
-            ed_half_width = (ed_halfhalfwidth_inidcs + ed_secondhalfhalfwidth_inidcs) * sampling_period_inms
+        if ed_threshold_v is not np.nan:
+            ed_returntothreshold_inidcs = descend_vtrace_until(ed_descendtrace, ed_threshold_v)
+            ed_thresholdwidth_inidcs = peak_idx - ed_threshold_idx + ed_returntothreshold_inidcs
+            ed_threshold_width = ed_thresholdwidth_inidcs * sampling_period_inms
+        else:
+            ed_threshold_width = float('nan')
+        eventsmeasures_dictionary['ed_threshold_width'] = ed_threshold_width
 
-        # width: time from rise-start (@10% of amp) until rise-start_v re-reached
-            pastpeakwidth_inidcs = descend_vtrace_until(descendtrace,
-                                                        baseline_v + 0.1 * peakamp)
-            width = (peak_idx - risestart_idx + pastpeakwidth_inidcs) * sampling_period_inms
-            ed_pastpeakwidth_inidcs = descend_vtrace_until(ed_descendtrace,
-                                                           ed_baseline_v + 0.1 * ed_peakamp)
-            ed_width = (peak_idx - ed_risestart_idx + ed_pastpeakwidth_inidcs) * sampling_period_inms
+        # baseline-width: time from baseline_idx until baselinev re-reached after event peak
+        returntobaseline_inidcs = descend_vtrace_until(descendtrace, baseline_v)
+        baselinewidth_inidcs = peak_idx - baseline_idx + returntobaseline_inidcs
+        baseline_width = baselinewidth_inidcs * sampling_period_inms
+        eventsmeasures_dictionary['baseline_width'] = baseline_width
 
-        # label: if the event is on the last-identified AP's spikeshoulderpeaks list, update label accordingly
-            if not actionpotentials_dictionary['spikeshoulderpeaks_idcs']:
-                event_label = ''
-            elif peak_idx in actionpotentials_dictionary['spikeshoulderpeaks_idcs'][-1]:
-                event_label = 'spikeshoulderpeak'
+        ed_returntobaseline_inidcs = descend_vtrace_until(ed_descendtrace, ed_baseline_v)
+        ed_baselinewidth_inidcs = peak_idx - baseline_idx + ed_returntobaseline_inidcs
+        ed_baseline_width = ed_baselinewidth_inidcs * sampling_period_inms
+        eventsmeasures_dictionary['ed_baseline_width'] = ed_baseline_width
+
+        # calculation of AHP measures
+        if baseline_width is np.nan:
+            ahpmin_idx = float('nan')
+            ahpamplitude = float('nan')
+            ahpend_idx = float('nan')
+            ahp_width = float('nan')
+        else:
+            ahptrace = voltage_denoised[(baseline_idx + baselinewidth_inidcs):(baseline_idx
+                                                                               + baselinewidth_inidcs
+                                                                               + spikeahpwindow_insamples)]
+            # AHP min., value and idx
+            ahpmin_v = np.amin(ahptrace)
+            if (ahpmin_v < baseline_v) and (len(ahptrace) > spikeahpwindow_insamples - 2):
+                ahpamplitude = baseline_v - ahpmin_v
+                ahpmin_idx_inahptrace = np.argmin(ahptrace)
+                ahpmin_idx = int(baseline_idx + baselinewidth_inidcs + ahpmin_idx_inahptrace)
+                # AHP width, value and end idx
+                ahpwidth_inidcs = ahpmin_idx_inahptrace
+                while (ahptrace[ahpwidth_inidcs] < baseline_v) and (ahpwidth_inidcs < len(ahptrace) - 1):
+                    ahpwidth_inidcs += 1
+                ahpend_idx = int(baseline_idx + baselinewidth_inidcs + ahpwidth_inidcs)
+                if voltage_denoised[ahpend_idx] < baseline_v:
+                    ahpend_idx = float('nan')
+                ahp_totalwidth_inidcs = baseline_idx + baselinewidth_inidcs - ahpend_idx
+                ahp_width = ahp_totalwidth_inidcs * sampling_period_inms
             else:
-                event_label = ''
+                ahpamplitude = float('nan')
+                ahpmin_idx = float('nan')
+                ahp_width = float('nan')
+                ahpend_idx = float('nan')
 
-            # adding all the measures into the dictionary
-            depolarizingevents_dictionary['peakv'].append(peak_v)
-            depolarizingevents_dictionary['baselinev'].append(baseline_v)
-            depolarizingevents_dictionary['amplitude'].append(peakamp)
-            depolarizingevents_dictionary['rise_time'].append(rise_time)
-            depolarizingevents_dictionary['rise_time_20_80'].append(rise_time_20_80)
-            depolarizingevents_dictionary['half_width'].append(half_width)
-            depolarizingevents_dictionary['width_at10%amp'].append(width)
+        eventsmeasures_dictionary['ahp_amplitude'] = ahpamplitude
+        eventsmeasures_dictionary['ahp_width'] = ahp_width
+        eventsmeasures_dictionary['ahp_min_idx'] = ahpmin_idx
+        eventsmeasures_dictionary['ahp_end_idx'] = ahpend_idx
 
-            depolarizingevents_dictionary['applied_current'].append(current_applied)
-            depolarizingevents_dictionary['applied_ttlpulse'].append(ttlpulse_applied)
+        if ed_baseline_width is np.nan:
+            ed_ahpmin_idx = float('nan')
+            ed_ahpamplitude = float('nan')
+            ed_ahpend_idx = float('nan')
+            ed_ahp_width = float('nan')
+        else:
+            ed_ahptrace = voltage_eventdetecttrace[(baseline_idx + ed_baselinewidth_inidcs):(baseline_idx
+                                                                               + ed_baselinewidth_inidcs
+                                                                               + spikeahpwindow_insamples)]
+        # AHP min., value and idx
+            ed_ahpmin_v = np.amin(ed_ahptrace)
+            if (ed_ahpmin_v < ed_baseline_v) and (len(ed_ahptrace) > spikeahpwindow_insamples - 2):
+                ed_ahpamplitude = baseline_v - ed_ahpmin_v
+                ed_ahpmin_idx_inahptrace = np.argmin(ed_ahptrace)
+                ed_ahpmin_idx = int(baseline_idx + ed_baselinewidth_inidcs + ed_ahpmin_idx_inahptrace)
+        # AHP width, value and end idx
+                ed_ahpwidth_inidcs = ed_ahpmin_idx_inahptrace
+                while (ed_ahptrace[ed_ahpwidth_inidcs] < ed_baseline_v) and (ed_ahpwidth_inidcs < len(ed_ahptrace) - 1):
+                    ed_ahpwidth_inidcs += 1
+                ed_ahpend_idx = int(baseline_idx + ed_baselinewidth_inidcs + ed_ahpwidth_inidcs)
+                if voltage_eventdetecttrace[ed_ahpend_idx] < ed_baseline_v:
+                    ed_ahpend_idx = float('nan')
+                ed_ahp_totalwidth_inidcs = baseline_idx + ed_baselinewidth_inidcs - ed_ahpend_idx
+                ed_ahp_width = ed_ahp_totalwidth_inidcs * sampling_period_inms
+            else:
+                ed_ahpamplitude = float('nan')
+                ed_ahpmin_idx = float('nan')
+                ed_ahp_width = float('nan')
+                ed_ahpend_idx = float('nan')
 
-            depolarizingevents_dictionary['approx_oscslope'].append(prebaseline_vslope)
-            depolarizingevents_dictionary['approx_oscinstphase'].append(approx_oscphase)
-            depolarizingevents_dictionary['approx_oscinstfreq'].append(approx_instfreq)
+        eventsmeasures_dictionary['ed_ahp_amplitude'] = ed_ahpamplitude
+        eventsmeasures_dictionary['ed_ahp_width'] = ed_ahp_width
+        eventsmeasures_dictionary['ed_ahp_min_idx'] = ed_ahpmin_idx
+        eventsmeasures_dictionary['ed_ahp_end_idx'] = ed_ahpend_idx
 
-            depolarizingevents_dictionary['edtrace_baselinev'].append(ed_baseline_v)
-            depolarizingevents_dictionary['edtrace_amplitude'].append(ed_peakamp)
-            depolarizingevents_dictionary['edtrace_rise_time'].append(ed_rise_time)
-            depolarizingevents_dictionary['edtrace_half_width'].append(ed_half_width)
-            depolarizingevents_dictionary['edtrace_width_at10%amp'].append(ed_width)
+        # labeling clearly identifiable events: action potentials and AP shoulder peaks
+        event_label = 'none'
+        spikeshoulderpeaks = []
+        n_spikeshoulderpeaks = float('nan')
+        if (peakamp > 30) and (peak_v > 0):
+            event_label = 'actionpotential'
+        # for APs, get the number of spikeshoulderpeaks and their idcs
+        if event_label == 'actionpotential' and np.isnan(threshold_width):
+            spikeshoulderpeaks = [idx for idx in peaks_idcs if peak_idx < idx < (peak_idx + 5 * ms_insamples)]
+            n_spikeshoulderpeaks = len(spikeshoulderpeaks)
+        elif event_label == 'actionpotential':
+            spikeshoulderpeaks = [idx for idx in peaks_idcs if peak_idx < idx < (peak_idx + returntobaseline_inidcs)]
+            n_spikeshoulderpeaks = len(spikeshoulderpeaks)
+        elif peak_idx in eventsmeasures_dictionary['spikeshoulderpeaks_idcs'][-1]:
+            event_label = 'spikeshoulderpeak'
 
-            depolarizingevents_dictionary['event_label'].append(event_label)
-            depolarizingevents_dictionary['peakv_idx'].append(peak_idx)
-            depolarizingevents_dictionary['baselinev_idx'].append(baseline_idx)
-            depolarizingevents_dictionary['rt_start_idx'].append(risestart_idx)
-            depolarizingevents_dictionary['rt_midpoint_idx'].append(rise_midpoint_idx)
-            depolarizingevents_dictionary['rise20start_idx'].append(rise20start_idx)
-            depolarizingevents_dictionary['edtrace_rt_start_idx'].append(ed_risestart_idx)
-            depolarizingevents_dictionary['hw_start_idx'].append(half_width_startidx)
-            depolarizingevents_dictionary['edtrace_hw_start_idx'].append(ed_halfwidth_startidx)
+        eventsmeasures_dictionary['event_label'].append(event_label)
+        eventsmeasures_dictionary['spikeshoulderpeaks'].append(spikeshoulderpeaks)
+        eventsmeasures_dictionary['n_spikeshoulderpeaks'].append(n_spikeshoulderpeaks)
 
-    return actionpotentials_dictionary, depolarizingevents_dictionary
+    return eventsmeasures_dictionary
 
 
 # helper-functions:
 # making empty dictionaries with keys for all events measures
-def make_depolarizingevents_measures_dictionaries():
+def make_eventsmeasures_dictionary():
     """This function creates 'empty' dictionaries with
     a key for each measure that will be taken for each event. """
-    actionpotentials_measures = {
+    events_measures = {
+        'event_label': [],
+        'file_origin': [],
+        'segment_idx': [],
+        'applied_current': [],
+        'applied_ttlpulse': [],
+        'approx_oscslope': [],
+        'approx_oscinstphase': [],
+        'approx_oscinstfreq': [],
+        'edtrace_approx_oscslope': [],
+
         'peakv': [],
         'baselinev': [],
         'amplitude': [],
         'rise_time': [],
         'rise_time_20_80': [],
-        'half_width': [],
+        'maxdvdt': [],
+        'dvdt10v': [],
         'thresholdv': [],
+        'half_width': [],
         'threshold_width': [],
-        'n_spikeshoulderpeaks': [],
-        'spikeshoulderpeaks_idcs': [],
+        'baseline_width': [],
         'ahp_amplitude': [],
         'ahp_width': [],
-        'applied_current': [],
-        'applied_ttlpulse': [],
-
-        'approx_oscslope': [],
-        'approx_oscinstphase': [],
-        'approx_oscinstfreq': [],
+        'n_spikeshoulderpeaks': [],
+        'spikeshoulderpeaks_idcs': [],
 
         'peakv_idx': [],
         'baselinev_idx': [],
         'rt_start_idx': [],
-        'rt_midpoint_idx': [],
-        'rise20start_idx': [],
-        'hw_start_idx': [],
+        'rt20_start_idx': [],
+        'maxdvdt_idx': [],
+        'dvdt10_idx': [],
         'threshold_idx': [],
+        'hw_start_idx': [],
+        'ahp_start_idx': [],
         'ahp_min_idx': [],
-        'ahp_end_idx': [],
-        'file_origin': [],
-        'segment_idx': [],
-    }
 
-    depolarizingevents_measures = {
-        'peakv': [],
-        'baselinev': [],
-        'amplitude': [],
-        'rise_time': [],
-        'rise_time_20_80': [],
-        'half_width': [],
-        'width_at10%amp': [],
-        'applied_current': [],
-        'applied_ttlpulse': [],
-
-        'approx_oscslope': [],
-        'approx_oscinstphase': [],
-        'approx_oscinstfreq': [],
-
+        'edtrace_peakv': [],
         'edtrace_baselinev': [],
         'edtrace_amplitude': [],
         'edtrace_rise_time': [],
+        'edtrace_rise_time_20_80': [],
+        'edtrace_maxdvdt': [],
+        'edtrace_dvdt10v': [],
+        'edtrace_thresholdv': [],
         'edtrace_half_width': [],
-        'edtrace_width_at10%amp': [],
+        'edtrace_threshold_width': [],
+        'edtrace_baseline_width': [],
+        'edtrace_ahp_amplitude': [],
+        'edtrace_ahp_width': [],
 
-        'event_label': [],
-        'peakv_idx': [],
-        'baselinev_idx': [],
-        'rt_start_idx': [],
-        'rt_midpoint_idx': [],
-        'rise20start_idx': [],
         'edtrace_rt_start_idx': [],
-        'hw_start_idx': [],
+        'edtrace_rt20_start_idx': [],
+        'edtrace_maxdvdt_idx': [],
+        'edtrace_dvdt10_idx': [],
+        'edtrace_threshold_idx': [],
         'edtrace_hw_start_idx': [],
-        'file_origin': [],
-        'segment_idx': [],
+        'edtrace_ahp_start_idx': [],
+        'edtrace_ahp_min_idx': [],
     }
-    return actionpotentials_measures, depolarizingevents_measures
+    return events_measures
 
 
 # descending along a v-trace snippet until a value is reached

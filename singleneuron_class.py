@@ -735,6 +735,9 @@ class SingleNeuron:
         all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
         # getting all events: looping over each block, and each trace within each block
         for block in self.blocks:
+            if 'Vclamp' in block.file_origin:
+                continue  # skip blocks recorded in Vclamp mode
+
             for i, segment in enumerate(block.segments):
                 (segment_actionpotentials,
                  segment_subthresholddepolarizations) = snafs.get_depolarizingevents(

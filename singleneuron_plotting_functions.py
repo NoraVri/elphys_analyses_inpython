@@ -19,8 +19,9 @@ import singleneuron_analyses_functions as snafs
 # %% general raw-data plotting
 
 
-# plotting all traces of a block, in individual subplots per channel
-def plot_block(block, depolarizingevents_df, events_to_mark=pd.Series(), time_axis_unit='ms', segments_overlayed=True):
+# plotting all traces of a block, in individual subplots per channel, optionally with events marked
+def plot_block(block, depolarizingevents_df,
+               events_to_mark=pd.Series(), time_axis_unit='ms', segments_overlayed=True):
     """ Takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     Optional arguments:
@@ -146,7 +147,7 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
         axis_object.legend()
 
 
-# plotting all events of a rawdata_block, overlayed, using measures information
+# plotting all/selected events of a rawdata_block, overlayed or individually (through plot_single_event)
 def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizingevents_settings,
                             timealignto_measure='peakv_idx',
                             colorby_measure='', color_lims=None,

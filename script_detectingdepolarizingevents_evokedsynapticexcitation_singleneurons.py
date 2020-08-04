@@ -1,4 +1,5 @@
 from singleneuron_class import SingleNeuron
+import numpy as np
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
@@ -73,16 +74,21 @@ singleneuron_data = SingleNeuron('20200708F')
 #                                                                           # oscfilter_lpfreq=10,
 #                                                                           # ttleffect_windowinms=3
 #                                                                           )
+from singleneuron_analyses_functions import get_depolarizingevents
+eventmeasuresdict = get_depolarizingevents('something', 0, singleneuron_data.blocks[6].segments[0], min_depolspeed=0.1, min_depolamp=4,
+                            depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
+                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
+                            ttleffect_window=None,
+                            plot='on')
 
-singleneuron_data.get_depolarizingevents_fromrawdata(
-                                                    min_depolspeed=0.3,
-                                                    min_depolamp=0.3,
-                                                    # peakwindow=7,
-                                                    # noisefilter_hpfreq=2000,
-                                                    # oscfilter_lpfreq=10,
-                                                    ttleffect_windowinms=10
-                                                     )
-singleneuron_data.write_results()
+# singleneuron_data.get_depolarizingevents_fromrawdata(
+#                                                     min_depolspeed=0.3,
+#                                                     min_depolamp=3,
+#     depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
+#     noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
+#                                                     ttleffect_windowinms=10
+#                                                      )
+# singleneuron_data.write_results()
 # %% seeing all detected APs
 evoked_aps = singleneuron_data.action_potentials.applied_ttlpulse
 spont_aps = ~singleneuron_data.action_potentials.applied_ttlpulse

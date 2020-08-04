@@ -732,25 +732,23 @@ class SingleNeuron:
                 self.rawdata_readingnotes['getdepolarizingevents_settings'][key] = value
 
         # initializing empty measures-dictionaries
-        all_actionpotentials, all_depolarizations = snafs.make_depolarizingevents_measures_dictionaries()
+        all_eventsmeasures_dictionary = snafs.make_eventsmeasures_dictionary()
         # getting all events: looping over each block, and each trace within each block
         for block in self.blocks:
             if 'Vclamp' in block.file_origin:
                 continue  # skip blocks recorded in Vclamp mode
 
             for i, segment in enumerate(block.segments):
-                (segment_actionpotentials,
-                 segment_subthresholddepolarizations) = snafs.get_depolarizingevents(
+                segment_eventmeasuresdict = snafs.get_depolarizingevents(
                     block.file_origin, i, segment,
                     **self.rawdata_readingnotes['getdepolarizingevents_settings'])
                 # updating the measures-dictionaries with the results from a single trace
-                for key in all_actionpotentials:
-                    all_actionpotentials[key] += segment_actionpotentials[key]
-                for key in all_depolarizations:
-                    all_depolarizations[key] += segment_subthresholddepolarizations[key]
+                for key in all_eventsmeasures_dictionary:
+                    all_eventsmeasures_dictionary[key] += segment_eventmeasuresdict[key]
+
         # converting the results to a DataFrame and attaching to the class instance
-        self.depolarizing_events = pd.DataFrame(all_depolarizations).round(decimals=2)
-        self.action_potentials = pd.DataFrame(all_actionpotentials).round(decimals=2)
+        self.depolarizing_events = pd.DataFrame(all_eventsmeasures_dictionary).round(decimals=2)
+
 
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):
         all_longpulsesmeasures = snafs.make_longpulsesmeasures_dictionary()

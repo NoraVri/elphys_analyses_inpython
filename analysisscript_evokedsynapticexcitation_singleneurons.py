@@ -63,7 +63,7 @@ allneurons_list = [
 #     neuron_data.get_depolarizingevents_fromrawdata()  # this runs it again with previously stored settings
 #     neuron_data.write_results()
 
-
+# %%
 ## getting lists of relevant subsets of neurons
 # getting the subsets of neurons in the dataset with light-activations applied and with events > 3mV
 neuronslist_lightactivated = []
@@ -76,13 +76,14 @@ for neuron in allneurons_list:
 # skip neurons for which no depolarizing events were extracted
     if neuron_data.depolarizing_events.empty:
         continue
-        # in all these things, we'll want to exclude any events that are spikeshoulderpeaks
+        # in all these things, we'll want to exclude any events that are definitely not the fast-events we want
     spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+    actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
         # and things that were recorded in vclamp mode
     vclampblocks = list(set(
         [blockname for blockname in neuron_data.depolarizing_events.file_origin if 'Vclamp' in blockname]))
     vclampevents = neuron_data.depolarizing_events.file_origin.isin(vclampblocks)
-    excludedevents = vclampevents | spikeshoulderpeaks
+    excludedevents = vclampevents | spikeshoulderpeaks | actionpotentials
     # check if neuron has events recorded at different vrest levels
     allevents_df = neuron_data.depolarizing_events[~excludedevents]
     vrestrange = allevents_df.baselinev.max() - allevents_df.baselinev.min()
@@ -126,10 +127,11 @@ for neuron in neuronslist_largeampspontandevoked:
     print(neuron)
     neuron_data = SingleNeuron(neuron)
     spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+    actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
     vclampblocks = list(set(
         [blockname for blockname in neuron_data.depolarizing_events.file_origin if 'Vclamp' in blockname]))
     vclampevents = neuron_data.depolarizing_events.file_origin.isin(vclampblocks)
-    excludedevents = vclampevents | spikeshoulderpeaks
+    excludedevents = vclampevents | spikeshoulderpeaks | actionpotentials
     largeampevents = (neuron_data.depolarizing_events.amplitude > 3) & (~excludedevents)
     largeevokedevents = neuron_data.depolarizing_events.applied_ttlpulse & largeampevents
     largespontevents = (~neuron_data.depolarizing_events.applied_ttlpulse) & largeampevents

@@ -1,10 +1,56 @@
 # imports
+import os
+import json
 from singleneuron_class import SingleNeuron
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import OPTICS
 
+
+# updating keys in the dictionary containing get_depolarizingevents-settings
+resultsfolderpath = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me\\myResults_synapticexcitations"
+storedparams_jsonfiles = [file for file in os.listdir(resultsfolderpath) if file.endswith('json')]
+
+findingdepolevents_newdefaultsettings = {
+    'min_depolspeed': 0.1,
+    'min_depolamp': 0.2,
+    'depol_to_peak_window': 5,
+    'event_width_window': 40,
+    'ahp_width_window': 150,
+    'noisefilter_hpfreq': 3000,
+    'oscfilter_lpfreq': 20,
+    'ttleffect_window': None,
+    'plot': 'off'
+}
+
+for storedparamsfile in storedparams_jsonfiles:
+    newsettings = findingdepolevents_newdefaultsettings
+
+    resultsfilepath = resultsfolderpath + '\\' + storedparamsfile
+    with open(resultsfilepath, 'r') as file:
+        storedresultsfile = json.loads(file.read())
+
+    if 'getdepolarizingevents_settings' in storedresultsfile.keys():
+
+        oldsettings = storedresultsfile['getdepolarizingevents_settings']
+
+        for key, value in oldsettings.items():
+            if key in newsettings.keys():
+                newsettings[key] = value
+            if key == 'peakwindow':
+                newsettings['depol_to_peak_window'] = value
+            if key == 'spikewindow':
+                newsettings['event_width_window'] = value
+            if key == 'spikeahpwindow':
+                newsettings['ahp_width_window'] = value
+            if key == 'ttleffect_windowinms':
+                newsettings['ttleffect_window'] = value
+
+        storedresultsfile['getdepolarizingevents_settings'] = newsettings
+
+        with open(resultsfilepath, 'w') as file:
+            file.write(json.dumps(storedresultsfile))
 
 
 

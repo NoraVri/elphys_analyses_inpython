@@ -746,6 +746,7 @@ def descend_vtrace_until(vtracesnippet, v_stop_value):
     else:
         return float('nan')
 
+
 # %% long-pulse response properties
 
 # the main function:

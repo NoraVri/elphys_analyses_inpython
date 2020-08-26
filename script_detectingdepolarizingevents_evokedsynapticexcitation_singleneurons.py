@@ -79,7 +79,7 @@ eventmeasuresdict = get_depolarizingevents('something', 0, singleneuron_data.blo
                             depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
                             noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
                             ttleffect_window=None,
-                            plot='on')
+                            plot='off')
 
 # singleneuron_data.get_depolarizingevents_fromrawdata(
 #                                                     min_depolspeed=0.3,

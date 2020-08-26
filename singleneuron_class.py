@@ -86,9 +86,6 @@ class SingleNeuron:
             if len(self.depolarizing_events) > 0:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
 
-            if len(self.action_potentials) > 0:
-                self.action_potentials.to_csv(self.name + '_action_potentials.csv')
-
             print('results have been saved.')
 
         else:
@@ -181,9 +178,6 @@ class SingleNeuron:
 
                 if 'depolarizing_events' in path:
                     self.depolarizing_events = pd.read_csv(path, index_col=0)
-
-                if 'action_potentials' in path:
-                    self.action_potentials = pd.read_csv(path, index_col=0)
 
                 if 'subthreshold_oscillations' in path:
                     self.subthreshold_oscillations = {}
@@ -491,6 +485,7 @@ class SingleNeuron:
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               newplot_per_event=newplot_per_event,
                                               **kwargs)
+                #
                 if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
                     kwargs['display_measures'] = False
 
@@ -700,13 +695,14 @@ class SingleNeuron:
         Inputs (all optional):
         'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
         'min_depolamp': minimal amplitude from baseline to a possible event peak.
-        'peakwindow': maximal time between a detected depolarization and an event peak (in ms),
-          and time after peak within which voltage should not get higher, and decay again to <80% of its amplitude.
-        'spikewindow': time after peak within which half-width, threshold and whole-width are expected to occur.
-        'spikeahpwindow': time after threshold-width end within which AHP end is expected to occur.
+        'depol_to_peak_window': maximal time between a detected depolarization and an event peak (in ms),
+          and time after peak within which voltage should decay again to <80% of its amplitude.
+        'event_width_window': time after peak within which half-width, threshold and whole-width are measured
+            (if a measurement cannot be taken within the window, a NaN value is filled in instead).
+        'ahp_width_window': time after baseline-re-reached within which AHP end is measured.
         'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
-        'ttleffect_windowinms': time after TTL pulse turns off but still has effects working through.
+        'ttleffect_window': time after TTL pulse turns off but still has effects working through.
         ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
         ! Any time this function runs, reading-notes are updated with any kwargs that are passed through.
 
@@ -719,12 +715,12 @@ class SingleNeuron:
             self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
                                                             'min_depolspeed': 0.1,
                                                             'min_depolamp': 0.2,
-                                                            'peakwindow': 5,
-                                                            'spikewindow': 40,
-                                                            'spikeahpwindow': 150,
+                                                            'depol_to_peak_window': 5,
+                                                            'event_width_window': 40,
+                                                            'ahp_width_window': 150,
                                                             'noisefilter_hpfreq': 3000,
                                                             'oscfilter_lpfreq': 20,
-                                                            'ttleffect_windowinms': None,
+                                                            'ttleffect_window': None,
                                                             'plot': 'off'}
         # updating reading-notes with new parameter settings if relevant kwargs are passed
         for key, value in kwargs.items():

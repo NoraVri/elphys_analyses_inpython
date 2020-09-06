@@ -107,7 +107,7 @@ class SingleNeuron:
         neuronnamesplit = re.split("(\D)", self.name)
         experiment_date = int(neuronnamesplit[0])
         search_name = neuronnamesplit[0] + neuronnamesplit[1]
-        experiments_metadata = pd.read_csv(self.path + '\\myData_experiments_metadata.csv')
+        experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
         self.experiment_metadata = experiments_metadata.loc[
                                     experiments_metadata.date == experiment_date]
 
@@ -415,7 +415,7 @@ class SingleNeuron:
         """
         allblocknames_list = self.get_blocknames(printing='off')
         if not block_identifiers:
-            blocknames_list = self.get_blocknames(printing='off')
+            blocknames_list = allblocknames_list
         else:
             blocknames_list = []
             for identifier in block_identifiers:

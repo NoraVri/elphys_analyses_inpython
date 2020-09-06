@@ -289,11 +289,11 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
             }
 
         # measures that are specific to subthreshold depolarizing events
-        if 'width_at10%amp' in eventmeasures_series.keys():
-            if float(eventmeasures_series['width_at10%amp']) > 0:
+        if 'baseline_width' in eventmeasures_series.keys():
+            if float(eventmeasures_series['baseline_width']) > 0:
                 measuresdict['width'] = {
-                    'idx': eventmeasures_series['rt_start_idx'] - 1,
-                    'duration': float(eventmeasures_series['width_at10%amp']),
+                    'idx': eventmeasures_series['baselinev_idx'] + 1,
+                    'duration': float(eventmeasures_series['baseline_width']),
                     'color': 'black'
                 }
 
@@ -318,7 +318,7 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                     'color': 'red'
                 }
 
-            if not np.isnan(eventmeasures_series['ahp_end_idx']):
+            if eventmeasures_series['ahp_end_idx'] is not None:
                 measuresdict['ahp_end'] = {
                     'idx': int(eventmeasures_series['ahp_end_idx']),
                     'color': 'green'
@@ -341,24 +341,24 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
 
     # getting parameters as measured from the event-detect trace
     else:
-        if float(eventmeasures_series['edtrace_rise_time']) > 0:
+        if float(eventmeasures_series['ed_rise_time']) > 0:
             measuresdict['rise_time'] = {
-                'idx': eventmeasures_series['edtrace_rt_start_idx'],
-                'duration': float(eventmeasures_series['edtrace_rise_time']),
+                'idx': eventmeasures_series['ed_rt_start_idx'],
+                'duration': float(eventmeasures_series['ed_rise_time']),
                 'color': 'red'
             }
 
-        if float(eventmeasures_series['edtrace_half_width']) > 0:
+        if float(eventmeasures_series['ed_half_width']) > 0:
             measuresdict['half_width'] = {
-                'idx': eventmeasures_series['edtrace_hw_start_idx'],
-                'duration': float(eventmeasures_series['edtrace_half_width']),
+                'idx': eventmeasures_series['ed_hw_start_idx'],
+                'duration': float(eventmeasures_series['ed_half_width']),
                 'color': 'green'
             }
 
-        if float(eventmeasures_series['edtrace_width_at10%amp']) > 0:
+        if float(eventmeasures_series['ed_baseline_width']) > 0:
             measuresdict['width'] = {
-                'idx': eventmeasures_series['edtrace_rt_start_idx'] - 1,
-                'duration': float(eventmeasures_series['edtrace_width_at10%amp']),
+                'idx': eventmeasures_series['baselinev_idx'] + 1,
+                'duration': float(eventmeasures_series['ed_baseline_width']),
                 'color': 'black'
             }
 

@@ -410,7 +410,7 @@ class SingleNeuron:
         If block_identifiers are passed, only blocks with those strings in block.file_origin will be plotted.
         additional kwargs:
         events_to_mark='none', can be changed to a pd.Series of booleans marking the locations of events to be marked
-        time_axis_unit='ms',
+        time_axis_unit='ms',     # has to be ms if events_to_mark are passed down (or they'll end up in the wrong place)
         segments_overlayed=True  # works only for data recorded as abf at the moment
         """
         allblocknames_list = self.get_blocknames(printing='off')
@@ -630,7 +630,6 @@ class SingleNeuron:
 
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,
-                                            get_subthresholdevents_measures=True,
                                             **events_groups):
         """
         This function creates an overview of scatterplots:
@@ -639,19 +638,14 @@ class SingleNeuron:
         events_groups should be a named pd.Series() of booleans marking the location
             of events to be included in the scatter.
         """
-        if get_subthresholdevents_measures:
-            events = self.depolarizing_events
-        else:
-            events = self.action_potentials
-
         if len(events_groups) > 1:
             figure, axes = plt.subplots(nrows=len(events_groups), ncols=1,
-                                        # sharex='col',
+                                        # sharex='all', # it's buggy, have to find a work-around
                                         sharey='all')
             for axis, eventgroupname, eventgroup in zip(axes,
                                                         events_groups.keys(),
                                                         events_groups.values()):
-                eventsgroup_measures = events[eventgroup]
+                eventsgroup_measures = self.depolarizing_events[eventgroup]
                 eventsgroup_measures.plot.scatter(x=xmeasure,
                                                   y=ymeasure,
                                                   c=cmeasure,
@@ -663,7 +657,7 @@ class SingleNeuron:
             figure, axis = plt.subplots(1, 1)
             eventgroupname = list(events_groups.keys())[0]
             eventgroup = list(events_groups.values())[0]
-            eventsgroup_measures = events[eventgroup]
+            eventsgroup_measures = self.depolarizing_events[eventgroup]
             eventsgroup_measures.plot.scatter(x=xmeasure,
                                               y=ymeasure,
                                               c=cmeasure,
@@ -673,11 +667,11 @@ class SingleNeuron:
 
         else:
             figure, axis = plt.subplots(1, 1)
-            events.plot.scatter(x=xmeasure,
-                                y=ymeasure,
-                                c=cmeasure,
-                                colormap='cividis',
-                                ax=axis)
+            self.depolarizing_events.plot.scatter(x=xmeasure,
+                                                    y=ymeasure,
+                                                    c=cmeasure,
+                                                    colormap='cividis',
+                                                    ax=axis)
             axis.set_title('all events')
 
 # %% functions for analyzing raw data

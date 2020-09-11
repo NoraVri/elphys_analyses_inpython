@@ -198,6 +198,8 @@ for neuron in neuronslist_largeampspontandevoked:
 
 #200708B: has spont. events in multiple amplitude-groups (3 - 12 mV), as well as some evoked things that may have
 # very similar decay (though their rise always much slower).
+# may just be a prime case for trying to subtract the synaptic potential from the fast-event
+# (not all light traces evoke a fast-event, some have synaptic potential only)
 
 #200708C: single spont. 'event' is in fact an AP; single evoked event is nothing interesting.
 # !No use spending any time looking at this neuron's data right now.

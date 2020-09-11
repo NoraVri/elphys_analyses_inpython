@@ -26,38 +26,102 @@ neuronnames_list = [filename.split('_')[0] for filename in depoleventsfiles_list
 
 # %% 1. prevalence of 'regular' fast-events and the other kind of fast-events
 
-# For starters, let's see all spont. events >3mV plotted twice: baselined and baselined+normalized;
-# if there are clear groups of events it will be clear from there.
-# The first main thing that we expect to cause distortions in the events shapes is baseline voltage, so
-# let's also plot a histogram of baselinev for all included events (and then narrow down plotted events
-# accordingly if necessary).
+# For starters, I looked at spont. events >3mV all plotted twice: baselined and baselined+normalized,
+# to submit them to the YY-test of having the fast-events we're looking for
+# and seeing whether there are (also) other kinds of fast depolarizing events (see code&notes at the bottom).
 
-for neuron_name in neuronnames_list:
-    neuron_data = SingleNeuron(neuron_name)
-    if neuron_data.depolarizing_events.empty:
-        continue
-    else:
-        spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
-        actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
-        probablynogoodevents = (neuron_data.depolarizing_events.baselinev > -30) \
-                               | (neuron_data.depolarizing_events.baselinev < -90)
-        smallevents = (neuron_data.depolarizing_events.amplitude < 3)
-        evokedevents = neuron_data.depolarizing_events.applied_ttlpulse
-        excludedevents = spikeshoulderpeaks | actionpotentials | probablynogoodevents | smallevents | evokedevents
-        relevantevents = neuron_data.depolarizing_events[~excludedevents]
-        neuron_data.plot_depolevents(~excludedevents,
-                                     colorby_measure='baselinev',
-                                     do_baselining=True,
-                                     plotwindow_inms=25)
-        neuron_data.plot_depolevents(~excludedevents,
-                                     colorby_measure='baselinev',
-                                     do_baselining=True,
-                                     do_normalizing=True,
-                                     plotwindow_inms=25)
-        plt.figure()
-        relevantevents.baselinev.plot.hist(bins=40)
-        plt.title(neuron_name+' histogram of putative fast-events baselinev')
+# SUMMARY: out of the 32 recordings looked at,
+# 13 have fast-events (only):
+# 20190527B (probably - amplitude-grouping not very clear but normalized decays really pretty much the same)
+# 20190527C (though should check that it's indeed oscillating: some of the decays are distorted)
+# 20190529C (classic example, even if two out of three amplitude groups have only one instance in them)
+# 20190529D (and other relatively fast events of ~4mV that look like spikelets)
+# 20200630A (probably, just one event with amp >3mV)
+# 20200630C (though check out only a single amplitude-group having an AHP, regardless of same baselinev)
+# 20200630D (though not entirely exemplary for decay shape being exactly identical)
+# 20200701A (though only two amplitude groups and just one instance in one of those groups)
+# 20200701C (probably, just one event with amp >3mV)
+# 20200706B (only two events with amp. no more than 1mV apart, but normalized decay entirely identical)
+# 20200707A (probably, just one event with amp >3mV)
+# 20200708B (classic example, even if relatively few events recorded altogether)
+# 20200708E (probably - either just one amplitude-group or three very close-by groups)
 
+# and another 7 have fast-events and other events with similar parameters:
+# 20190527A (although generally rather ambiguous because of numerous compound events)
+# 20190529A1 (however, the other events in this case are HUGE, and clearly separable from fast-events by amplitude)
+# 20190529A2 (probably - it kind of looks like some events with rounder shapes are the reason amp-grouping is unclear)
+# 20200706E (relatively few events in many amplitude groups, and some rounder events in a much smaller amp. range)
+# 20200708A (though the round-events in this case don't quite look like the ones I've been noticing regularly)
+# 20200708D (perhaps THE example: fast-events and rounder-events in the same amplitude range)
+# 20200708F (although generally rather ambiguous because of numerous compound events)
+
+# %% in-depth analysis of 'representative examples'
+# 20200708B - classic example of fast-events (only)
+neuron_data = SingleNeuron('20200708B')
+# in this neuron, any event with rise-time < 1ms (that isn't an AP or spikeshoulderpeak) is a fast-event
+spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
+fast_events = neuron_data.depolarizing_events.rise_time < 1 \
+                     & ~spikeshoulderpeaks \
+                     & ~actionpotentials
+neuron_data.plot_rawdatablocks(events_to_mark=fast_events)
+neuron_data.plot_depolevents(fast_events, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(fast_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+neuron_data.scatter_depolarizingevents_measures(xmeasure='amplitude',
+                                                ymeasure='rise_time',
+                                                cmeasure='half_width',
+                                                not_fastevents=~fast_events,
+                                                fast_events=fast_events)
+
+
+# %%
+spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
+probablynogoodevents = (neuron_data.depolarizing_events.baselinev > -30) \
+                       | (neuron_data.depolarizing_events.baselinev < -90)
+smallevents = (neuron_data.depolarizing_events.amplitude < 3)
+evokedevents = neuron_data.depolarizing_events.applied_ttlpulse
+excludedevents = spikeshoulderpeaks | actionpotentials | probablynogoodevents | smallevents | evokedevents
+
+neuron_data.plot_rawdatablocks(events_to_mark=~excludedevents)
+neuron_data.scatter_depolarizingevents_measures(xmeasure='amplitude',
+                                                ymeasure='rise_time',
+                                                cmeasure='half_width',
+                                                excluded_events=(excludedevents&~actionpotentials),
+                                                relevant_events=~excludedevents)
+# there's another event of amp ~2mV that's very clear but doesn't make the standard cut,
+# and from the measures scatter it seems that any event with rise-time < 1ms could be a fast-event
+probablyfastevents = neuron_data.depolarizing_events.rise_time < 1 \
+                     & ~spikeshoulderpeaks \
+                     & ~actionpotentials
+neuron_data.plot_depolevents(probablyfastevents, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(probablyfastevents, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+
+# %% plotting spont. depolarizations baselined and baselined+normalized
+# for neuron_name in neuronnames_list:
+#     neuron_data = SingleNeuron(neuron_name)
+#     spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+#     actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
+#     probablynogoodevents = (neuron_data.depolarizing_events.baselinev > -30) \
+#                            | (neuron_data.depolarizing_events.baselinev < -90)
+#     smallevents = (neuron_data.depolarizing_events.amplitude < 3)
+#     evokedevents = neuron_data.depolarizing_events.applied_ttlpulse
+#     excludedevents = spikeshoulderpeaks | actionpotentials | probablynogoodevents | smallevents | evokedevents
+#     relevantevents = neuron_data.depolarizing_events[~excludedevents]
+#     neuron_data.plot_depolevents(~excludedevents,
+#                                  colorby_measure='baselinev',
+#                                  do_baselining=True,
+#                                  plotwindow_inms=25)
+#     neuron_data.plot_depolevents(~excludedevents,
+#                                  colorby_measure='baselinev',
+#                                  do_baselining=True,
+#                                  do_normalizing=True,
+#                                  plotwindow_inms=25)
+#     plt.figure()
+#     relevantevents.baselinev.plot.hist(bins=40)
+#     plt.title(neuron_name+' histogram of putative fast-events baselinev')
+
+## notes on each neuron recording
 # 20190527A: hundreds of events, at a wide range of baselinev (~-70 - -40).
 # Definitely passes the YY-test for fast-events, but also has the other kind of fast-events and
 # a number of events that are clearly 'compound' (two events arriving in close succession).
@@ -157,28 +221,4 @@ for neuron_name in neuronnames_list:
 
 # 20200708G: doesn't seem to have any events with parameters in the range we're looking for
 
-# SUMMARY: out of the 32 recordings looked at,
-# 13 have fast-events (only):
-# 20190527B (probably - amplitude-grouping not very clear but normalized decays really pretty much the same)
-# 20190527C (though should check that it's indeed oscillating: some of the decays are distorted)
-# 20190529C (classic example, even if two out of three amplitude groups have only one instance in them)
-# 20190529D (and other relatively fast events of ~4mV that look like spikelets)
-# 20200630A (probably, just one event with amp >3mV)
-# 20200630C (though check out only a single amplitude-group having an AHP, regardless of same baselinev)
-# 20200630D (though not entirely exemplary for decay shape being exactly identical)
-# 20200701A (though only two amplitude groups and just one instance in one of those groups)
-# 20200701C (probably, just one event with amp >3mV)
-# 20200706B (only two events with amp. no more than 1mV apart, but normalized decay entirely identical)
-# 20200707A (probably, just one event with amp >3mV)
-# 20200708B (classic example, even if relatively few events recorded altogether)
-# 20200708E (probably - either just one amplitude-group or three very close-by groups)
-
-# 7 have fast-events and other events with similar parameters:
-# 20190527A (although generally rather ambiguous because of numerous compound events)
-# 20190529A1 (however, the other events in this case are HUGE, and clearly separable from fast-events by amplitude)
-# 20190529A2 (probably - it kind of looks like some events with rounder shapes are the reason amp-grouping is unclear)
-# 20200706E (relatively few events in many amplitude groups, and some rounder events in a much smaller amp. range)
-# 20200708A (though the round-events in this case don't quite look like the ones I've been noticing regularly)
-# 20200708D (perhaps THE example: fast-events and rounder-events in the same amplitude range)
-# 20200708F (although generally rather ambiguous because of numerous compound events)
 

@@ -32,7 +32,7 @@ neuronnames_list = [filename.split('_')[0] for filename in depoleventsfiles_list
 
 # SUMMARY: out of the 32 recordings looked at,
 # 13 have fast-events (only):
-# 20190527B (probably - amplitude-grouping not very clear but normalized decays really pretty much the same)
+# 20190527B (probably - amplitude-grouping not very clear but normalized decays look pretty much exactly the same)
 # 20190527C (though should check that it's indeed oscillating: some of the decays are distorted)
 # 20190529C (classic example, even if two out of three amplitude groups have only one instance in them)
 # 20190529D (and other relatively fast events of ~4mV that look like spikelets)
@@ -55,47 +55,76 @@ neuronnames_list = [filename.split('_')[0] for filename in depoleventsfiles_list
 # 20200708D (perhaps THE example: fast-events and rounder-events in the same amplitude range)
 # 20200708F (although generally rather ambiguous because of numerous compound events)
 
-# %% in-depth analysis of 'representative examples'
-# 20200708B - classic example of fast-events (only)
+# %% taking a closer look at 'representative examples'
+# %% 20200708B - classic example of fast-events (only) (at least at first glance)
 neuron_data = SingleNeuron('20200708B')
-# in this neuron, any event with rise-time < 1ms (that isn't an AP or spikeshoulderpeak) is a fast-event
+# in this neuron, any event with rise-time < 1ms (that isn't an AP or spikeshoulderpeak) looks like a fast-event
 spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
 actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
+lightevoked_events = (neuron_data.depolarizing_events.applied_ttlpulse)
 fast_events = neuron_data.depolarizing_events.rise_time < 1 \
                      & ~spikeshoulderpeaks \
                      & ~actionpotentials
-neuron_data.plot_rawdatablocks(events_to_mark=fast_events)
+other_events = ~(spikeshoulderpeaks | actionpotentials | lightevoked_events | fast_events)
+
+# neuron_data.plot_rawdatablocks(events_to_mark=fast_events)
+# neuron_data.plot_rawdatablocks(events_to_mark=other_events)
 neuron_data.plot_depolevents(fast_events, do_baselining=True, colorby_measure='baselinev')
 neuron_data.plot_depolevents(fast_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+# on closer inspection, it looks to me like the events with smaller amp (< 2.5mV) may in fact have faster decay
+# (should run event-extraction again with parameter settings better tuned to this neuron's data).
 neuron_data.scatter_depolarizingevents_measures(xmeasure='amplitude',
                                                 ymeasure='rise_time',
                                                 cmeasure='half_width',
-                                                not_fastevents=~fast_events,
-                                                fast_events=fast_events)
+                                                fast_events=fast_events,
+                                                other_events=other_events)
 
+fast_events_df = neuron_data.depolarizing_events[fast_events]
+fast_events_df.hist(column=['rise_time', 'rise_time_20_80', 'half_width', 'amplitude'], bins=20)
+# rise-time and half-width look pretty much normally distributed, amplitudes fall into 4 or 5 different groups
 
-# %%
-spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak')
+amp4_8mV_events = (neuron_data.depolarizing_events.amplitude > 4) & (neuron_data.depolarizing_events.amplitude < 8)
+events_df = neuron_data.depolarizing_events[amp4_8mV_events]
+events_df.hist(column='rise_time')
+# %% 20200708D - example of a neuron that seems to have many different kinds of fast subthreshold depolarizations
+neuron_data = SingleNeuron('20200708D')
+spikeshoulderpeaks = (neuron_data.depolarizing_events.event_label == 'spikeshoulderpeak') \
+                     & (neuron_data.depolarizing_events.baselinev > -30)
 actionpotentials = (neuron_data.depolarizing_events.event_label == 'actionpotential')
-probablynogoodevents = (neuron_data.depolarizing_events.baselinev > -30) \
-                       | (neuron_data.depolarizing_events.baselinev < -90)
-smallevents = (neuron_data.depolarizing_events.amplitude < 3)
-evokedevents = neuron_data.depolarizing_events.applied_ttlpulse
-excludedevents = spikeshoulderpeaks | actionpotentials | probablynogoodevents | smallevents | evokedevents
+lightevoked_events = (neuron_data.depolarizing_events.applied_ttlpulse)
+slowrisetime_events = neuron_data.depolarizing_events.rise_time > 1.5
+othernogoodevents = (neuron_data.depolarizing_events.file_origin == 'light_0001.abf') \
+                    & (neuron_data.depolarizing_events.segment_idx == 13)
 
-neuron_data.plot_rawdatablocks(events_to_mark=~excludedevents)
-neuron_data.scatter_depolarizingevents_measures(xmeasure='amplitude',
-                                                ymeasure='rise_time',
-                                                cmeasure='half_width',
-                                                excluded_events=(excludedevents&~actionpotentials),
-                                                relevant_events=~excludedevents)
-# there's another event of amp ~2mV that's very clear but doesn't make the standard cut,
-# and from the measures scatter it seems that any event with rise-time < 1ms could be a fast-event
-probablyfastevents = neuron_data.depolarizing_events.rise_time < 1 \
-                     & ~spikeshoulderpeaks \
-                     & ~actionpotentials
-neuron_data.plot_depolevents(probablyfastevents, do_baselining=True, colorby_measure='baselinev')
-neuron_data.plot_depolevents(probablyfastevents, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+definitely_not_fastevents = (spikeshoulderpeaks | actionpotentials | lightevoked_events
+                             | slowrisetime_events | othernogoodevents)
+possiblyfastevents = ~definitely_not_fastevents
+
+neuron_data.plot_rawdatablocks(events_to_mark=possiblyfastevents)
+
+neuron_data.plot_depolevents(possiblyfastevents, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(possiblyfastevents, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+
+possiblyfastevents_df = neuron_data.depolarizing_events[possiblyfastevents]
+possiblyfastevents_df.hist(column=['rise_time', 'rise_time_20_80', 'half_width', 'amplitude'], bins=40)
+# %%
+# let's see if we can get a clearer selection of fast-events only
+halfwidth_cutoffvalue = 3.2
+smallhalfwidth_events = possiblyfastevents & (neuron_data.depolarizing_events.half_width < halfwidth_cutoffvalue)
+neuron_data.plot_depolevents(smallhalfwidth_events, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(smallhalfwidth_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+largehalfwidth_events = possiblyfastevents & (neuron_data.depolarizing_events.half_width > halfwidth_cutoffvalue)
+neuron_data.plot_depolevents(largehalfwidth_events, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(largehalfwidth_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+# %%
+risetime_cutoffvalue = 0.85
+smallrisetime_events = possiblyfastevents & (neuron_data.depolarizing_events.rise_time < risetime_cutoffvalue)
+neuron_data.plot_depolevents(smallrisetime_events, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(smallrisetime_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+largerisetime_events = possiblyfastevents & (neuron_data.depolarizing_events.rise_time > risetime_cutoffvalue)
+neuron_data.plot_depolevents(largerisetime_events, do_baselining=True, colorby_measure='baselinev')
+neuron_data.plot_depolevents(largerisetime_events, do_baselining=True, do_normalizing=True, colorby_measure='baselinev')
+
 
 # %% plotting spont. depolarizations baselined and baselined+normalized
 # for neuron_name in neuronnames_list:

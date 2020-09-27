@@ -2,7 +2,15 @@
 from singleneuron_class import SingleNeuron
 import matplotlib.pyplot as plt
 import quantities as pq
+import pandas as pd
 # %% experiment: ChR activation in Thy1 mouse
+# %% finding the relevant neuron recordings
+path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
+experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata')
+
+Thy1experiments = experimentdays_metadata[experimentdays_metadata.genetics == 'Thy1']
+
 # %%
 cell20190527A = SingleNeuron('20190527A')
 # spont.activity and light pulses

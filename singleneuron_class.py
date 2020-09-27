@@ -366,30 +366,32 @@ class SingleNeuron:
 
 
     # getting a list of all block names
-    def get_blocknames(self, get_subset=False, printing='on'):
+    def get_blocknames(self, printing='on'):
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them."""
-        if get_subset is not False \
-                and ('no' in get_subset or 'without' in get_subset):
-            allblocks_list = [block.file_origin for block in self.blocks]
-            if 'chemicalsapplied_blocks' in self.rawdata_readingnotes.keys():
-                blocks_list = [block for block in allblocks_list
-                               if block not in self.rawdata_readingnotes['chemicalsapplied_blocks']]
-            else:
-                blocks_list = allblocks_list
-                print('no notes on chemicals applied were found; returning a list of all block names.')
-        elif get_subset is not False \
-                and 'chemicals' in get_subset:
-            if 'chemicalsapplied_blocks' in self.rawdata_readingnotes.keys():
-                blocks_list = self.rawdata_readingnotes['chemicalsapplied_blocks']
-            else:
-                blocks_list = []
-                print('no notes on chemicals applied were found; returning an empty list.')
-        else:
-            blocks_list = [block.file_origin for block in self.blocks]
-
+        blocks_list = [block.file_origin for block in self.blocks]
         if printing == 'on':
             print(blocks_list)
         return blocks_list
+
+    # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
+    def get_timespentrecording(self, *block_identifiers):
+        blocknames_list = self.get_blocknames(printing='off')
+        time_count = 0 * pq.s
+        # getting the list of block names for which to count the time recorded
+        if not block_identifiers:
+            identified_blocks = blocknames_list
+        else:
+            identified_blocks = []
+            for identifier in block_identifiers:
+                blocknames = [block for block in blocknames_list if identifier in block]
+                identified_blocks = [*identified_blocks, *blocknames]
+        # counting time recorded
+        for blockname in identified_blocks:
+            block_idx = blocknames_list.index(blockname)
+            for segment in self.blocks[block_idx].segments:
+                time_count += (segment.t_stop - segment.t_start)
+
+        return time_count
 
     # plotting raw data blocks, optionally with (a subset of) depolarizing events marked
     def plot_rawdatablocks(self, *block_identifiers, **kwargs):

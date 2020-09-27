@@ -29,12 +29,14 @@ class SingleNeuron:
                  singleneuron_name,
                  path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"):
         """
-        singleneuron_name should be a unique identifier for the recording, with a date (YYYYMMDD) and letter (uppercase)
-            that also appear on the raw data folder/file belonging to singleneuron.
+        singleneuron_name should be a unique identifier for the recording: in my conventions each neuron is named
+            by the date (YYYYMMDD) and letter (uppercase), and occasionally also a number (reflecting the recording channel, in cases where a double patch was performed/attempted).
+        singleneuron_name should match the name of the raw data folder/file belonging to singleneuron.
         path should be to a folder containing:
-            1. folder(s) containing folder(s) and/or file(s) of raw data
+            1. folder(s) containing the actual raw data recorded for (pairs of) neurons
+                (one folder or file per neuron (pair))
             2. a 'myResults' folder where analyses notes/results are stored and read from
-            3. the 'myData_experiments_metadata' file.
+            3. the 'myData_experiments_metadata' and 'myData_recordings_metadata' file.
 
         All raw data belonging to singleneuron are returned as a list of neo block objects.
         If files with singleneuron_name are found in the 'myResults' folder,
@@ -51,10 +53,10 @@ class SingleNeuron:
         self.blocks = []
 
         self.experiment_metadata = pd.Series()
+        self.recording_metadata = pd.Series()
         self.rawdata_readingnotes = {}
 
         self.depolarizing_events = pd.DataFrame()
-        self.action_potentials = pd.DataFrame()
         self.subthreshold_oscillations = []
         self.longpulse_measures = []
         self.passive_decay = []
@@ -97,31 +99,26 @@ class SingleNeuron:
         raw data file(s) recorded from singleneuron.
         Once the right path is found, it calls on the relevant files_reader (defined further below)
         to import the raw data in my standardized format using the Python/Neo framework.
+        This function also imports any notes found for singleneuron and attaches these to the class instance.
 
         This function currently works for:
-        - abf-files (one folder per singleneuron)
+        - abf-files (one folder per singleneuron(/pair))
         - pxp-files (one file per singleneuron; each file has an internal folder-structure)
         - ibw-files (one folder per singleneuron)
         - txt-files (one folder per singleneuron)
         """
         neuronnamesplit = re.split("(\D)", self.name)
         experiment_date = int(neuronnamesplit[0])
-        search_name = neuronnamesplit[0] + neuronnamesplit[1]
-        experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
-        self.experiment_metadata = experiments_metadata.loc[
-                                    experiments_metadata.date == experiment_date]
+        search_name = neuronnamesplit[0] + neuronnamesplit[1]  # the recording date and the letter of the neuron(s)
 
-        for name in os.listdir(self.path):
-            if len(name.split('.')) > 1:  # it's a file name
-                continue
-
-            else:
+        for name in os.listdir(self.path):  # searching through the root folder's files/subdirectories
+            if len(name.split('.')) == 1:  # that means it's a folder name (not a file)
                 subdirectory_path = self.path + '\\' + name
                 searchitems_list = [item for item in os.listdir(subdirectory_path)
                                     if search_name in item]
-                if len(searchitems_list) > 0:
-                    for item in searchitems_list:
 
+                if len(searchitems_list) > 0:  # a file/folder with singleneuron_name has been found in the subdirectory
+                    for item in searchitems_list:  # find out what type of recording file it is
                         if len(item.split('.')) == 2 and item.split('.')[1] == 'pxp':
                             self.rawdata_recordingtype = 'pxp'
                             self.rawdata_path = subdirectory_path
@@ -137,18 +134,24 @@ class SingleNeuron:
                 else:
                     continue
 
-        if not self.rawdata_path:
-            print('no files matching neuron name were found')
+        # getting metadata for the singleneuron experiment day & recording:
+        experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
+        self.experiment_metadata = experiments_metadata.loc[
+                                    experiments_metadata.date == experiment_date]
+        if self.experiment_metadata.empty: print('no metadata for the experiment day were found.')
 
+        recordings_metadata = pd.read_csv(self.path + '\\myData_recordings_metadata.csv')
+        self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        if self.recording_metadata.empty: print('no metadata for the recording were found.')
+
+        # getting the raw data for the singleneuron:
+        if not self.rawdata_path: print('no files matching neuron name were found.')
         elif self.rawdata_recordingtype == 'abf':
             self.files_reader_abf()
-
         elif self.rawdata_recordingtype == 'pxp':
             self.files_reader_pxp()
-
         elif self.rawdata_recordingtype == 'ibw':
             self.files_reader_ibw()
-
         elif self.rawdata_recordingtype == 'txt':
             self.files_reader_txt()
 
@@ -169,9 +172,9 @@ class SingleNeuron:
                         resultsfilespaths_list.append(
                             resultsfolder_path + '\\' + path)
 
+        # adding the contents of results files to the singleneuron class instance
         if resultsfilespaths_list:
             for path in resultsfilespaths_list:
-
                 if 'rawdata_readingnotes' in path:
                     with open(path, 'r') as file:
                         self.rawdata_readingnotes = json.loads(file.read())
@@ -179,18 +182,9 @@ class SingleNeuron:
                 if 'depolarizing_events' in path:
                     self.depolarizing_events = pd.read_csv(path, index_col=0)
 
-                if 'subthreshold_oscillations' in path:
-                    self.subthreshold_oscillations = {}
-
-                if 'input_resistance' in path:
-                    self.input_resistance = {}
-
-                if 'passive_decay' in path:
-                    self.passive_decay = {}
-
+        # applying raw data cleanup
         if self.rawdata_readingnotes.get('nonrecordingchannels'):
-            for filename, dictionary in \
-                    self.rawdata_readingnotes['nonrecordingchannels'].items():
+            for filename, dictionary in self.rawdata_readingnotes['nonrecordingchannels'].items():
                 self.rawdata_remove_nonrecordingchannel(filename,
                                                         dictionary['nonrecordingchannel'],
                                                         dictionary['is_pairedrecording'])
@@ -200,12 +194,11 @@ class SingleNeuron:
                 self.rawdata_remove_nonrecordingblock(filename)
 
         if self.rawdata_readingnotes.get('nonrecordingtimeslices'):
-            for filename, dictionary in \
-                    self.rawdata_readingnotes['nonrecordingtimeslices'].items():
+            for filename, dictionary in self.rawdata_readingnotes['nonrecordingtimeslices'].items():
                 self.rawdata_remove_nonrecordingsection(filename,
                                                         trace_start_t=dictionary['t_start'],
                                                         trace_end_t=dictionary['t_end'],
-                                                        segment_idx=dictionary['segment_idx'])
+                                                        remove_segments=dictionary['segment_idx'])
 
     # remove a block that does not contain any actual data for singleneuron
     def rawdata_remove_nonrecordingblock(self, file_origin):
@@ -266,94 +259,88 @@ class SingleNeuron:
     def rawdata_remove_nonrecordingsection(self, file_origin,
                                            trace_start_t=None,
                                            trace_end_t=None,
-                                           segment_idx=None):
+                                           remove_segments=None):
         """ This function takes the name of the file/block from which a section is to be removed.
         If a start and/or end time (in s) are provided (one or the other has to be),
         segment_idx is assumed to be 0 (the single segment on blocks that have just one long trace)
         and the segment is adjusted to start and/or end at the new time(s).
-        If a segment_idx is provided, this segment will be removed from the block.
-        !! if multiple segments are to be removed from a single block, the removing should start from the last segment.
-        It returns self.rawdata_blocks with the superfluous data removed,
+        If a single int is passed for remove_segments, this segment will be removed from the block.
+        If a list list of ints is provided, each of these will be removed from the block.
+        !!Note: this function will fail if anything besides a (list of) int is passed through for remove_segments
+
+        The function returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
         """
         if not self.rawdata_readingnotes.get('nonrecordingtimeslices'):
             self.rawdata_readingnotes['nonrecordingtimeslices'] = {}
 
-        if segment_idx is None:
-            if trace_start_t:
-                start_t = trace_start_t * pq.s
-            if trace_end_t:
-                end_t = trace_end_t * pq.s
+        block_idx = self.get_blocknames(printing='off').index(file_origin)
 
-            block_idx = self.get_blocknames(printing='off').index(file_origin)
+        # removing a time-slice from segments[0] of a block
+        if (trace_start_t is not None) or (trace_end_t is not None):
             block = self.blocks[block_idx]
 
-            if trace_start_t and not trace_end_t:
-                segmentslice_tokeep = block.segments[0].time_slice(
-                                        t_start=start_t)
-            elif trace_end_t and not trace_start_t:
-                segmentslice_tokeep = block.segments[0].time_slice(
-                                        t_start=block.segments[0].t_start,
-                                        t_stop=end_t)
-            else:
-                segmentslice_tokeep = block.segments[0].time_slice(
-                                        t_start=start_t,
-                                        t_stop=end_t)
-            self.blocks[block_idx].segments[0] = segmentslice_tokeep
+            if trace_start_t:
+                start_t = trace_start_t * pq.s
+                block.segments[0] = block.segments[0].time_slice(t_start=start_t)
+            if trace_end_t:
+                end_t = trace_end_t * pq.s
+                block.segments[0] = block.segments[0].time_slice(t_start=block.segments[0].t_start,
+                                                                 t_stop=end_t)
+            # updating the block as attached to the class instance:
+            self.blocks[block_idx] = block
             for i, _ in enumerate(self.blocks[block_idx].channel_indexes):
-                self.blocks[block_idx].channel_indexes[i].analogsignals[0] = segmentslice_tokeep.analogsignals[i]
-            # updating reading-notes dictionary
-            if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-                self.rawdata_readingnotes['nonrecordingtimeslices'].update({
-                    file_origin: {'t_start': trace_start_t,
-                                  't_end': trace_end_t,
-                                  'segment_idx': segment_idx}
-                })
+                self.blocks[block_idx].channel_indexes[i].analogsignals[0] = block.segments[0].analogsignals[i]
 
-        elif isinstance(segment_idx, int):
-            for block in self.blocks:
-                if block.file_origin == file_origin:
-                    block_idx = self.blocks.index(block)
-                    self.blocks[block_idx].segments.remove(
-                        self.blocks[block_idx].segments[segment_idx])
-                    chidxs = self.blocks[block_idx].channel_indexes
-                    for i, chidx in enumerate(chidxs):
-                        analogsignals = chidx.analogsignals
-                        del analogsignals[segment_idx]
-                        chidx.analogsignals = analogsignals
-                        self.blocks[block_idx].channel_indexes[i] = chidx
-            if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-                self.rawdata_readingnotes['nonrecordingtimeslices'].update({
-                    file_origin: {'t_start': trace_start_t,
-                                  't_end': trace_end_t,
-                                  'segment_idx': segment_idx}
-                })
-            else:
-                seg_idcs = self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx']
-                if isinstance(seg_idcs, int):
-                    seg_idcs = [seg_idcs, segment_idx]
-                elif isinstance(seg_idcs, list):
-                    seg_idcs.append(segment_idx)
-                self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx'] = seg_idcs
+        # removing a single segment from a block
+        elif isinstance(remove_segments, int):
+            self.blocks[block_idx].segments.remove(self.blocks[block_idx].segments[remove_segments])
+            chidxs = self.blocks[block_idx].channel_indexes
+            for i, chidx in enumerate(chidxs):
+                analogsignals = chidx.analogsignals
+                del analogsignals[remove_segments]
+                chidx.analogsignals = analogsignals
+                self.blocks[block_idx].channel_indexes[i] = chidx
 
-        elif isinstance(segment_idx, list):
-            for block in self.blocks:
-                if block.file_origin == file_origin:
-                    block_idx = self.blocks.index(block)
-                    for idx in segment_idx:
-                        self.blocks[block_idx].segments.remove(
-                            self.blocks[block_idx].segments[idx]
-                        )
-                        chidxs = self.blocks[block_idx].channel_indexes
-                        for i, chidx in enumerate(chidxs):
-                            analogsignals = chidx.analogsignals
-                            del analogsignals[idx]
-                            chidx.analogsignals = analogsignals
-                            self.blocks[block_idx].channel_indexes[i] = chidx
+        # removing multiple segments from a block
+        elif isinstance(remove_segments, list):
+            remove_segments.sort(reverse=True)
+            for idx in remove_segments:
+                self.blocks[block_idx].segments.remove(self.blocks[block_idx].segments[idx])
+                chidxs = self.blocks[block_idx].channel_indexes
+                for i, chidx in enumerate(chidxs):
+                    analogsignals = chidx.analogsignals
+                    del analogsignals[idx]
+                    chidx.analogsignals = analogsignals
+                    self.blocks[block_idx].channel_indexes[i] = chidx
+
+        # updating reading-notes dictionary:
+        if file_origin not in self.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+            self.rawdata_readingnotes['nonrecordingtimeslices'].update({
+                file_origin: {'t_start': trace_start_t,
+                              't_end': trace_end_t,
+                              'segment_idx': remove_segments}
+            })
+        else:
+            removedsegs_idcs = self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx']
+            if isinstance(removedsegs_idcs, int):
+                if isinstance(remove_segments, int):
+                    removedsegs_idcs = [removedsegs_idcs, remove_segments]
+                elif isinstance(remove_segments, list):
+                    removedsegs_idcs = [removedsegs_idcs, *remove_segments]
+            elif isinstance(removedsegs_idcs, list):
+                if isinstance(remove_segments, int):
+                    removedsegs_idcs = [*removedsegs_idcs, remove_segments]
+                elif isinstance(remove_segments, list):
+                    removedsegs_idcs = [*removedsegs_idcs, *remove_segments]
+
+            self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx'] = removedsegs_idcs
 
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):
-        """
+        """ This function checks that information about applied chemicals is available,
+        and if so, adds any blocksnames corresponding to (any of the) block_identifiers
+        to the list of blocks with chemicals applied.
         """
         # checking that information on chemicals applied is present in the experimentday metadata
         if self.experiment_metadata.empty or self.experiment_metadata.specialchemicals_type.empty:
@@ -620,13 +607,13 @@ class SingleNeuron:
             if key in stored_kwargs.keys():
                 stored_kwargs[key] = value
         # plot event-detect results figures
-        apsdict, depolsdict = snafs.get_depolarizingevents(
+        eventmeasures_dictionary = snafs.get_depolarizingevents(
             self.blocks[block_idx].file_origin, segment_idx,
             segment,
             **stored_kwargs)
 
         if return_dicts:
-            return apsdict, depolsdict
+            return eventmeasures_dictionary
 
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,

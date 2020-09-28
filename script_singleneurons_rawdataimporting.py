@@ -4,13 +4,6 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 # %% experiment: ChR activation in Thy1 mouse
-# %% finding the relevant neuron recordings
-path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
-recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
-experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata')
-
-Thy1experiments = experimentdays_metadata[experimentdays_metadata.genetics == 'Thy1']
-
 # %%
 cell20190527A = SingleNeuron('20190527A')
 # spont.activity and light pulses
@@ -87,188 +80,12 @@ cell20190529E = SingleNeuron('20190529E')
 # cell20190529E.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
 #                                                  trace_start_t=13)
 # cell20190529E.write_results()
-# %%
-cell20200630A = SingleNeuron('20200630A')
-# some spont.activity and light pulses, then cell dies
-# there's some real bad noise events in there, including periods with bad 50Hz noise
-# the evoked events look more like giant synapses, sometimes with a spike without shoulder riding them
-# cell20200630A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
-#                                                  trace_start_t=14)
-# cell20200630A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
-# for i in reversed(range(7, 11)):
-#     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
-# cell20200630A.write_results()
-# %%
-cell20200630B1 = SingleNeuron('20200630B1')
-# some spont.activity and light pulses; cell stops responding in light_0006 (probably pretty dead but still has a Vrest)
-# there's pretty bad 50Hz noise throughout (not very large amp (~1/4mV) but very visible) and
-# nothing much of spontaneously occurring events
-# light responses look like they're mostly synapses, though a couple of them may have (several) fast-events riding them.
-# fileslist = cell20200630B1.get_blocknames(printing='off')
-# for file in fileslist:
-#     cell20200630B1.rawdata_remove_nonrecordingchannel(file, 2, pairedrecording=True)
-# cell20200630B1.write_results()
-# %%
-cell20200630B2 = SingleNeuron('20200630B2')
-# some spont.activity and light pulses
-# nothing much of spontaneously occurring events going on, but cell responds to light very consistently;
-# it often fires an AP, but wherever it doesn't the fast-event(s) riding the synaptic potential look pretty clear
-# fileslist = cell20200630B2.get_blocknames(printing='off')
-# for file in fileslist:
-#     cell20200630B2.rawdata_remove_nonrecordingchannel(file, 1, pairedrecording=True)
-# cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
-# cell20200630B2.write_results()
-# %%
-cell20200630C = SingleNeuron('20200630C')
-# spont.activity and light pulses
-# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
-# light consistently with an AP or what looks like a whole bunch of fast-events together
-# !! for some reason there are two segments in gapFree_0000 - can only be plotted with segments_overlayed=False.
-# cell20200630C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
-# cell20200630C.write_results()
-# %%
-cell20200630D = SingleNeuron('20200630D')
-# spont.activity and light pulses
-# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
-# light consistently with an AP or with what looks like a fast-event at first but then turns out to rise too slow.
-# cell loses potential rather suddently during light_0010, but still has a nice light-response there
-# cell20200630D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
-# cell20200630D.write_results()
-# %%
-cell20200701A = SingleNeuron('20200701A')
-# some spont.activity and light pulses; not oscillating
-# has spontaneous fast-events of ~12mV, and possibly these are the ones that are evoked at hyperpolarized potentials
-# removing blocks that are (partially) in voltage-clamp-mode (there's nothing actually in there),
-# and light file where there's no recorded data
-# cell20200701A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
-# cell20200701A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
-# cell20200701A.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
-# cell20200701A.rawdata_remove_nonrecordingblock('light_0003.abf')
-# cell20200701A.write_results()
-# %%
-cell20200701B = SingleNeuron('20200701B')
-# spont.activity and light pulses; light pulses also in voltage clamp mode (different potentials, until cell dies).
-# intermittently oscillating a little with very small amplitude,
-# has some spont. fast-events of barely up to 3mV, no APs;
-# responses to light look like they're usually just synapses, but occasionally there may be an actual fast-event there.
-# patch sealing not recorded.
-# %%
-cell20200701C = SingleNeuron('20200701C')
-# single trace of spont.activity at different Vrest levels (through huge amounts of holding current);
-# non-oscillating cell that seems not entirely unhappy with a Vrest of ~-10mV
-# - it's firing off things that look like fast-events (amp. up to ~4mV) even at this voltage.
-# patch sealing not recorded.
-# %%
-cell20200701D = SingleNeuron('20200701D')
-# spont.activity and light pulses, also in vclamp-mode (until the cell dies);
-# non-oscillating cell that seems to have basically nothing going on spontaneously,
-# but evoked events look kinda nice nonetheless.
-# cell20200701D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=5)
-# cell20200701D.rawdata_remove_nonrecordingblock('light_Vclamp_0002.abf')
-# cell20200701D.rawdata_remove_nonrecordingblock('light_Vclamp_0003.abf')
-# cell20200701D.write_results()
-# %%
-cell20200706A = SingleNeuron('20200706A')
-# just a single trace of spont. activity; has APs and oscillations, but no clear fast-events.
-# cell20200706A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=26)
-# cell20200706A.write_results()
-# %%
-cell20200706B = SingleNeuron('20200706B')
-# spont.activity and light pulses;
-# oscillating pretty much throughout recordings (until it's basically dead) with amp 2 - 5 mV;
-# has APs but they seem to lose their Na-component after about 5 minutes of recordings,
-# there may be a couple of spont. fast-events of ~4mV, but evoked things all look like dendritic Ca-spikes.
-# cell20200706B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21)
-# cell20200706B.write_results()
-# %%
-cell20200706C = SingleNeuron('20200706C')
-# just a single trace of spont.activity in a half-dead (Vrest ~-25mV) neuron; nothing much of interesting activity.
-# %%
-cell20200706D = SingleNeuron('20200706D')
-# some spont.activity and light pulses;
-# not oscillating, does not seem to have anything of interesting spont.activity going on at all
-# either cell or patch or both are badly deteriorated towards the end of recordings (but not so bad as to exclude)
-# cell20200706D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=25)
-# cell20200706D.write_results()
-# %%
-cell20200706E = SingleNeuron('20200706E')
-# spont.activity and light pulses;
-# neuron is oscillating throughout (until it dies), and has APs and what seem like fast-events -
-# though upon closer inspection though these often have a very broad, round peak.
-# Events that have this shape are also occasionally evoked.
-# cell20200706E.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=26)
-# cell20200706E.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
-# cell20200706E.write_results()
-# %%
-cell20200707A = SingleNeuron('20200707A')
-# just a single trace of some spont. activity at pretty bad Vrest;
-# oscillating, and clearly has some fast-events (amp up to 8mV or so)
-# cell20200707A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=137, trace_end_t=290)
-# cell20200707A.write_results()
-# %%
-# cell20200707B = SingleNeuron('20200707B')
-# !! not an olive neuron. spont.activity and light pulses;
-# possibly, the neuron is somewhat quieter after pulses applied, but it'll be hard to really make that case.
-# %%
-cell20200707C = SingleNeuron('20200707C')
-# literally just 10s of recording after break-in; a single AP and some (tiny) oscillations.
-# cell20200707C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=49, trace_end_t=59)
-# cell20200707C.write_results()
-# %%
-# cell20200707D = SingleNeuron('20200707D')
-# partial break-in into a dead cell; no real data recorded
-# %%
-cell20200707E = SingleNeuron('20200707E')
-# spont.activity and light pulses; not the greatest recording and nothing really going on spontaneously,
-# but some of the evoked responses look like they could be fast-events
-# patch sealing not recorded.
-# %%
-cell20200708A = SingleNeuron('20200708A')
-# spont.activity with some APs and things that look like fast-events;
-# most of the fast-event-like things have those strangely broad, round peaks though.
-# cell20200708A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=18)
-# cell20200708A.write_results()
-# %%
-cell20200708B = SingleNeuron('20200708B')
-# spont.activity and light pulses; has APs and fast-events (at least 3 different amps) spontaneously,
-# and looks like they may also be evoked by light. Too bad neuron dies after just a few repetitions
-# cell20200708B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=24)
-# cell20200708B.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
-# cell20200708B.write_results()
-# %%
-cell20200708C = SingleNeuron('20200708C')
-# spont.activity and light pulses; not the greatest recording though, with basically nothing going on spontaneously,
-# light-evoked activity is very small amp and looks like just a regular synapse
-# cell20200708C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=46)
-# cell20200708C.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
-# cell20200708C.write_results()
-# %%
-cell20200708D = SingleNeuron('20200708D')
-# spont.activity and light pulses; oscillating vigorously and has tons of spont. fast-events and APs.
-# light-evoked activity is usually an AP but there may be some fast-events in there
-# cell20200708D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=28)
-# cell20200708D.write_results()
-# %%
-cell20200708E = SingleNeuron('20200708E')
-# just a single trace of spont.activity with one AP and a few fast-events
-# cell20200708E.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=40, trace_end_t=170)
-# cell20200708E.write_results()
-# %%
-cell20200708F = SingleNeuron('20200708F')
-# the neuron that's got everything: spont. activity and light pulses, both without and with NMDA blocker.
-# it's also going in and out of all kinds of different oscillating modes, and definitely has
-# some fast-events (though no big-amplitude ones that I saw in files before blocker application).
-# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
-# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0006.abf', trace_end_t=565)
-# cell20200708F.write_results()
 
-# %%
-cell20200708G = SingleNeuron('20200708G')
-# spont.activity and light pulses; cell has pretty bad Vrest and not much of any spont.activity going on,
-# and light-evoked activity looks like a regular synapse that appears only after forcing V down with current.
-# cell20200708G.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0000.abf', trace_start_t=16)
-# cell20200708G.write_results()
-# %%
+
+
+
+
+
 
 
 
@@ -445,3 +262,196 @@ cell20200312G = SingleNeuron('20200312G')
 # its missing for some reason even though it IS there when I open the file in SutterPatch
 # cell20200312G.rawdata_note_chemicalinbath('lighttriggered', 'R3_')
 # cell20200312G.write_results()
+
+
+
+
+
+
+
+
+
+# %% experiment: ChR activation in Thy1 mouse
+# %%
+cell20200630A = SingleNeuron('20200630A')
+# some spont.activity and light pulses, then cell dies
+# there's some real bad noise events in there, including periods with bad 50Hz noise
+# the evoked events look more like giant synapses, sometimes with a spike without shoulder riding them
+# cell20200630A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
+#                                                  trace_start_t=14)
+# cell20200630A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# for i in reversed(range(7, 11)):
+#     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
+# cell20200630A.write_results()
+# %%
+cell20200630B1 = SingleNeuron('20200630B1')
+# some spont.activity and light pulses; cell stops responding in light_0006 (probably pretty dead but still has a Vrest)
+# there's pretty bad 50Hz noise throughout (not very large amp (~1/4mV) but very visible) and
+# nothing much of spontaneously occurring events
+# light responses look like they're mostly synapses, though a couple of them may have (several) fast-events riding them.
+# fileslist = cell20200630B1.get_blocknames(printing='off')
+# for file in fileslist:
+#     cell20200630B1.rawdata_remove_nonrecordingchannel(file, 2, pairedrecording=True)
+# cell20200630B1.write_results()
+# %%
+cell20200630B2 = SingleNeuron('20200630B2')
+# some spont.activity and light pulses
+# nothing much of spontaneously occurring events going on, but cell responds to light very consistently;
+# it often fires an AP, but wherever it doesn't the fast-event(s) riding the synaptic potential look pretty clear
+# fileslist = cell20200630B2.get_blocknames(printing='off')
+# for file in fileslist:
+#     cell20200630B2.rawdata_remove_nonrecordingchannel(file, 1, pairedrecording=True)
+# cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
+# cell20200630B2.write_results()
+# %%
+cell20200630C = SingleNeuron('20200630C')
+# spont.activity and light pulses
+# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
+# light consistently with an AP or what looks like a whole bunch of fast-events together
+# !! for some reason there are two segments in gapFree_0000 - can only be plotted with segments_overlayed=False.
+# cell20200630C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
+# cell20200630C.write_results()
+# %%
+cell20200630D = SingleNeuron('20200630D')
+# spont.activity and light pulses
+# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
+# light consistently with an AP or with what looks like a fast-event at first but then turns out to rise too slow.
+# cell loses potential rather suddently during light_0010, but still has a nice light-response there
+# cell20200630D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
+# cell20200630D.write_results()
+# %%
+cell20200701A = SingleNeuron('20200701A')
+# some spont.activity and light pulses; not oscillating
+# has spontaneous fast-events of ~12mV, and possibly these are the ones that are evoked at hyperpolarized potentials
+# removing blocks that are (partially) in voltage-clamp-mode (there's nothing actually in there),
+# and light file where there's no recorded data
+# cell20200701A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
+# cell20200701A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# cell20200701A.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
+# cell20200701A.rawdata_remove_nonrecordingblock('light_0003.abf')
+# cell20200701A.write_results()
+# %%
+cell20200701B = SingleNeuron('20200701B')
+# spont.activity and light pulses; light pulses also in voltage clamp mode (different potentials, until cell dies).
+# intermittently oscillating a little with very small amplitude,
+# has some spont. fast-events of barely up to 3mV, no APs;
+# responses to light look like they're usually just synapses, but occasionally there may be an actual fast-event there.
+# patch sealing not recorded.
+# %%
+cell20200701C = SingleNeuron('20200701C')
+# single trace of spont.activity at different Vrest levels (through huge amounts of holding current);
+# non-oscillating cell that seems not entirely unhappy with a Vrest of ~-10mV
+# - it's firing off things that look like fast-events (amp. up to ~4mV) even at this voltage.
+# patch sealing not recorded.
+# %%
+cell20200701D = SingleNeuron('20200701D')
+# spont.activity and light pulses, also in vclamp-mode (until the cell dies);
+# non-oscillating cell that seems to have basically nothing going on spontaneously,
+# but evoked events look kinda nice nonetheless.
+# cell20200701D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=5)
+# cell20200701D.rawdata_remove_nonrecordingblock('light_Vclamp_0002.abf')
+# cell20200701D.rawdata_remove_nonrecordingblock('light_Vclamp_0003.abf')
+# cell20200701D.write_results()
+# %%
+cell20200706A = SingleNeuron('20200706A')
+# just a single trace of spont. activity; has APs and oscillations, but no clear fast-events.
+# cell20200706A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=26)
+# cell20200706A.write_results()
+# %%
+cell20200706B = SingleNeuron('20200706B')
+# spont.activity and light pulses;
+# oscillating pretty much throughout recordings (until it's basically dead) with amp 2 - 5 mV;
+# has APs but they seem to lose their Na-component after about 5 minutes of recordings,
+# there may be a couple of spont. fast-events of ~4mV, but evoked things all look like dendritic Ca-spikes.
+# cell20200706B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21)
+# cell20200706B.write_results()
+# %%
+cell20200706C = SingleNeuron('20200706C')
+# just a single trace of spont.activity in a half-dead (Vrest ~-25mV) neuron; nothing much of interesting activity.
+# %%
+cell20200706D = SingleNeuron('20200706D')
+# some spont.activity and light pulses;
+# not oscillating, does not seem to have anything of interesting spont.activity going on at all
+# either cell or patch or both are badly deteriorated towards the end of recordings (but not so bad as to exclude)
+# cell20200706D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=25)
+# cell20200706D.write_results()
+# %%
+cell20200706E = SingleNeuron('20200706E')
+# spont.activity and light pulses;
+# neuron is oscillating throughout (until it dies), and has APs and what seem like fast-events -
+# though upon closer inspection though these often have a very broad, round peak.
+# Events that have this shape are also occasionally evoked.
+# cell20200706E.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=26)
+# cell20200706E.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# cell20200706E.write_results()
+# %%
+cell20200707A = SingleNeuron('20200707A')
+# just a single trace of some spont. activity at pretty bad Vrest;
+# oscillating, and clearly has some fast-events (amp up to 8mV or so)
+# cell20200707A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=137, trace_end_t=290)
+# cell20200707A.write_results()
+# %%
+# cell20200707B = SingleNeuron('20200707B')
+# !! not an olive neuron. spont.activity and light pulses;
+# possibly, the neuron is somewhat quieter after pulses applied, but it'll be hard to really make that case.
+# %%
+cell20200707C = SingleNeuron('20200707C')
+# literally just 10s of recording after break-in; a single AP and some (tiny) oscillations.
+# cell20200707C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=49, trace_end_t=59)
+# cell20200707C.write_results()
+# %%
+# cell20200707D = SingleNeuron('20200707D')
+# partial break-in into a dead cell; no real data recorded
+# %%
+cell20200707E = SingleNeuron('20200707E')
+# spont.activity and light pulses; not the greatest recording and nothing really going on spontaneously,
+# but some of the evoked responses look like they could be fast-events
+# patch sealing not recorded.
+# %%
+cell20200708A = SingleNeuron('20200708A')
+# spont.activity with some APs and things that look like fast-events;
+# most of the fast-event-like things have those strangely broad, round peaks though.
+# cell20200708A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=18)
+# cell20200708A.write_results()
+# %%
+cell20200708B = SingleNeuron('20200708B')
+# spont.activity and light pulses; has APs and fast-events (at least 3 different amps) spontaneously,
+# and looks like they may also be evoked by light. Too bad neuron dies after just a few repetitions
+# cell20200708B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=24)
+# cell20200708B.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# cell20200708B.write_results()
+# %%
+cell20200708C = SingleNeuron('20200708C')
+# spont.activity and light pulses; not the greatest recording though, with basically nothing going on spontaneously,
+# light-evoked activity is very small amp and looks like just a regular synapse
+# cell20200708C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=46)
+# cell20200708C.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
+# cell20200708C.write_results()
+# %%
+cell20200708D = SingleNeuron('20200708D')
+# spont.activity and light pulses; oscillating vigorously and has tons of spont. fast-events and APs.
+# light-evoked activity is usually an AP but there may be some fast-events in there
+# cell20200708D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=28)
+# cell20200708D.write_results()
+# %%
+cell20200708E = SingleNeuron('20200708E')
+# just a single trace of spont.activity with one AP and a few fast-events
+# cell20200708E.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=40, trace_end_t=170)
+# cell20200708E.write_results()
+# %%
+cell20200708F = SingleNeuron('20200708F')
+# the neuron that's got everything: spont. activity and light pulses, both without and with NMDA blocker.
+# it's also going in and out of all kinds of different oscillating modes, and definitely has
+# some fast-events (though no big-amplitude ones that I saw in files before blocker application).
+# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
+# cell20200708F.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0006.abf', trace_end_t=565)
+cell20200708F.rawdata_note_chemicalinbath('withBlocker')
+# cell20200708F.write_results()
+# %%
+cell20200708G = SingleNeuron('20200708G')
+# spont.activity and light pulses; cell has pretty bad Vrest and not much of any spont.activity going on,
+# and light-evoked activity looks like a regular synapse that appears only after forcing V down with current.
+# cell20200708G.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0000.abf', trace_start_t=16)
+# cell20200708G.rawdata_note_chemicalinbath('withBlocker')
+# cell20200708G.write_results()
+# %%

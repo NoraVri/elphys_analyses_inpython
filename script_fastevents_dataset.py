@@ -32,7 +32,56 @@ manipulatedexcitations_experiments_recordings = \
     recordings_metadata[recordings_metadata.date.isin(manipulatedexcitations_experiments_dates)]
 
 manipulatedexcitations_singleneurons_names = manipulatedexcitations_experiments_recordings.name
-
+# %%
 # 2. selecting only neuron recordings where manipulations were actually applied, and were recorded for at least 10min
 #(in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
+
+evokedexcitations_singleneurons = []
+blockedexcitations_singleneurons = []
+atleast10minrecording_singleneurons = []
+pre_rawdatacleaning_singleneurons = []
+
+for neuron in manipulatedexcitations_singleneurons_names:
+    print('importing ' + neuron)
+    neuron_data = SingleNeuron(neuron)
+    # check time recorded
+    rec_time = float(neuron_data.get_timespentrecording()/60)
+    if rec_time >= 10:
+        atleast10minrecording_singleneurons.append(neuron)
+    # check whether neuron_data has been through raw-data cleaning
+    if (not neuron_data.rawdata_readingnotes) and neuron_data.depolarizing_events.empty:
+        pre_rawdatacleaning_singleneurons.append(neuron)
+    # check whether light pulses have been applied
+    blocknames_list = neuron_data.get_blocknames(printing='off')
+    lightactivated_list = [block for block in blocknames_list if 'light' in block]
+    if len(lightactivated_list) > 0:
+        evokedexcitations_singleneurons.append(neuron)
+    # check whether chemicals were actually applied in any of the singleneuron's recordings
+    # if neuron_data.rawdata_readingnotes \
+    #         and ('chemicalsapplied_blocks' in neuron_data.rawdata_readingnotes.keys()):
+    withblocker_list = [block for block in blocknames_list if 'ocker' in block]
+    if len(withblocker_list) > 0:
+        blockedexcitations_singleneurons.append(neuron)
+
+
+singleneurons_forcleanup = list(set(atleast10minrecording_singleneurons)
+                                & set(pre_rawdatacleaning_singleneurons)
+                                & (set(evokedexcitations_singleneurons) | set(blockedexcitations_singleneurons)))
+print('no. of neurons that definitely still need to go through raw data cleanup: '
+      + str(len(singleneurons_forcleanup)))
+print('no. of neurons that have light-evoked excitations and >10min. of recording: '
+      + str(len(list(set(evokedexcitations_singleneurons) & set(atleast10minrecording_singleneurons)))))
+print('no. of neurons that have blocked excitations and >10min. of recording: '
+      + str(len(list(set(blockedexcitations_singleneurons) & set(atleast10minrecording_singleneurons)))))
+
+# neurons recorded for > 10 min. and at RT
+
+# workflow from here:
+# - raw data cleanup on the neurons on the singleneurons_forcleanup list
+# - return to analysis_ and plotting_functions to do the final overhaul to working with a single evokedevents_df
+#   and adding any additional measurements on the (upstroke of) detected events (i.e. in Guigliano paper on APs)
+# - (re-)extracting depolarizing events with tailored settings for each neuron with >10min. recording
+# - annotating depolarizing events with appropriate labels (put.axonal fast-events, other fast-events, other events)
+#   manually for each neuron in the dataset
+# - getting the parameter distributions of all different groups of events, for each neuron and in the population,

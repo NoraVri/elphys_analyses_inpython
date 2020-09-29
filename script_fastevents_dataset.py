@@ -58,11 +58,12 @@ for neuron in manipulatedexcitations_singleneurons_names:
     if len(lightactivated_list) > 0:
         evokedexcitations_singleneurons.append(neuron)
     # check whether chemicals were actually applied in any of the singleneuron's recordings
-    # if neuron_data.rawdata_readingnotes \
-    #         and ('chemicalsapplied_blocks' in neuron_data.rawdata_readingnotes.keys()):
-    withblocker_list = [block for block in blocknames_list if 'ocker' in block]
-    if len(withblocker_list) > 0:
+    if neuron_data.rawdata_readingnotes \
+            and ('chemicalsapplied_blocks' in neuron_data.rawdata_readingnotes.keys()):
         blockedexcitations_singleneurons.append(neuron)
+    # withblocker_list = [block for block in blocknames_list if 'ocker' in block]
+    # if len(withblocker_list) > 0:
+    #     blockedexcitations_singleneurons.append(neuron)
 
 
 singleneurons_forcleanup = list(set(atleast10minrecording_singleneurons)

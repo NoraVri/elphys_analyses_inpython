@@ -3,154 +3,6 @@ from singleneuron_class import SingleNeuron
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
-# %%
-# intermittently oscillating at first, but stops doing that a little bit before blockers get applied.
-# NOTE: blocker solution contains higher K than the regular ACSF,
-# that's why neuron needs to be held with -DC to keep the same baselinev
-# cell20190729A = SingleNeuron('20190729A')
-# cell20190729A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190729A.rawdata_note_chemicalinbath('withBlocker')
-# cell20190729A.write_results()
-# %%
-# not oscillating but getting tons of depolarizing events at first,
-# then depolarizing a bit and starting to oscillate once blocker solution is applied.
-# cell20190804A = SingleNeuron('20190804A')
-# cell20190804A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190804A.rawdata_remove_nonrecordingchannel(file_origin='gapFree_0001.abf', non_recording_channel=2)
-# cell20190804A.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=14.8)
-# cell20190804A.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0003.abf', trace_end_t=12)
-# cell20190804A.rawdata_note_chemicalinbath('withBlocker')
-# cell20190804A.write_results()
-# %%
-# fairly boring neuron (not much of any inputs or anything, though I did see at least 1 that could be a fast-event)
-# and it starts to depolarize slowly but surely pretty soon after getting patched.
-# cell20190804B = SingleNeuron('20190804B')
-# cell20190804B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=13)
-# cell20190804B.rawdata_note_chemicalinbath('withBlocker')
-# cell20190804B.write_results()
-# %%
-# fairly boring neuron again, not sure there are any spontaneous excitations at all.
-# This neuron, too, depolarizes somewhat soon after blocker application
-# cell20190804C = SingleNeuron('20190804C')
-# cell20190804C.rawdata_remove_nonrecordingsection('IV_withBlocker_0003.abf', remove_segments=[0, 1, 2])
-# cell20190804C.write_results()
-# %%
-# it's spiking and getting tons of fast-events but slowly depolarizing, then leaves all of a sudden.
-# cell20190805A1 = SingleNeuron('20190805A1')
-# cell20190805A1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', non_recording_channel=2)
-# cell20190805A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=11, trace_end_t=386)
-# blocknames_list = cell20190805A1.get_blocknames()
-# blocknames_list = blocknames_list[1:]
-# for name in blocknames_list:
-#     cell20190805A1.rawdata_remove_nonrecordingblock(name)
-# cell20190805A1.write_results()
-# %%
-# nice recording, neuron is oscillating throughout mostly with sinusoids(ish);
-# not sure if it has both giant fast-events and small-ish spikes or just fast-events.
-# cell20190805A2 = SingleNeuron('20190805A2')
-# cell20190805A2.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190805A2.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=13)
-# cell20190805A2.rawdata_note_chemicalinbath('withBlocker')
-# cell20190805A2.write_results()
-# %%
-# oscillating, spiking here and there, and looking like it's still getting a lot of inputs
-# also after blocker application (though they're definitely only smaller ones now)
-# cell20190805B1 = SingleNeuron('20190805B1')
-# cell20190805B1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2, pairedrecording=True)
-# cell20190805B1.rawdata_remove_nonrecordingchannel('gapFree_withBlockers_0001.abf', 2, pairedrecording=True)
-# cell20190805B1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=445)
-# cell20190805B1.rawdata_note_chemicalinbath('withBlockers')
-# cell20190805B1.write_results()
-# %%
-# oscillating, spiking here and there, not much else of activity going on.
-# cell20190805B2 = SingleNeuron('20190805B2')
-# cell20190805B2.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 1, pairedrecording=True)
-# cell20190805B2.rawdata_remove_nonrecordingchannel('gapFree_withBlockers_0001.abf', 1, pairedrecording=True)
-# cell20190805B2.rawdata_remove_nonrecordingsection('gapFree_withBlockers_0001.abf', trace_end_t=222)
-# cell20190805B2.write_results()
-# %%
-# doing all the things we like IO neurons to do; beating oscillations get smaller
-# and then diappear slowly when blocker is applied.
-# cell20190812A = SingleNeuron('20190812A')
-# cell20190812A.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
-# cell20190812A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=98)
-# cell20190812A.write_results()
-# %%
-# pretty boring neuron, not much of fast-events except one that's very compound
-# cell20190812B = SingleNeuron('20190812B')
-# cell20190812B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=25)
-# cell20190812B.write_results()
-# %%
-# spikes and some fast-events here and there, no oscs except some tiny ripples after blocker application
-# cell20190814A = SingleNeuron('20190814A')
-# cell20190814A.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
-# cell20190814A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=15)
-# cell20190814A.write_results()
-# %%
-# oscillating quite a lot of the time (though it looks more like rhythmic Ca-spikes when there are no blockers)
-# cell20190815D1 = SingleNeuron('20190815D1')
-# allblocks_names = cell20190815D1.get_blocknames(printing='off')
-# for block in allblocks_names:
-#     cell20190815D1.rawdata_remove_nonrecordingchannel(block, 2)
-# cell20190815D1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=289)
-# cell20190815D1.rawdata_remove_nonrecordingsection('gapFree_withBlockers_0006.abf', trace_end_t=88)
-# cell20190815D1.write_results()
-# %%
-# not actually a good recording really, being held with lots of -DC throughout just to keep some semblance of baselineV
-# cell20190815D2 = SingleNeuron('20190815D2')
-#
-# %%
-#
-cell20191105A1 = SingleNeuron('20191105A1')
-
-# # %%
-# #
-# cell20191105A2 = SingleNeuron('20191105A2')
-#
-# # %%
-# #
-# cell20191105C = SingleNeuron('20191105C')
-#
-# # %%
-# #
-# cell20191106A1 = SingleNeuron('20191106A1')
-#
-# # %%
-# #
-# cell20191106A2 = SingleNeuron('20191106A2')
-# # %%
-# #
-# cell20191119A = SingleNeuron('20191119A')
-#
-# # %%
-# #
-# cell20191119B = SingleNeuron('20191119B')
-#
-# # %%
-# #
-# cell20191120A = SingleNeuron('20191120A')
-#
-# # %%
-# #
-# cell20191120B1 = SingleNeuron('20191120B1')
-#
-# # %%
-# #
-# cell20191120B2 = SingleNeuron('20191120B2')
-#
-# # %%
-# #
-# cell20200818B = SingleNeuron('20200818B')
-#
-# # %%
-# #
-# cell20200818C = SingleNeuron('20200818C')
-#
-# # %%
-# #
-# cell = SingleNeuron('')
-# cell.plot_rawdatablocks()
-
 
 # %% experiment: ChR activation in Thy1 mouse
 # %%
@@ -229,6 +81,209 @@ cell20191105A1 = SingleNeuron('20191105A1')
 # cell20190529E.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
 #                                                  trace_start_t=13)
 # cell20190529E.write_results()
+
+
+
+# %%
+# intermittently oscillating at first, but stops doing that a little bit before blockers get applied.
+# NOTE: blocker solution contains higher K than the regular ACSF,
+# that's why neuron needs to be held with -DC to keep the same baselinev
+# cell20190729A = SingleNeuron('20190729A')
+# cell20190729A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20190729A.rawdata_note_chemicalinbath('withBlocker')
+# cell20190729A.write_results()
+# %%
+# not oscillating but getting tons of depolarizing events at first,
+# then depolarizing a bit and starting to oscillate once blocker solution is applied.
+# cell20190804A = SingleNeuron('20190804A')
+# cell20190804A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20190804A.rawdata_remove_nonrecordingchannel(file_origin='gapFree_0001.abf', non_recording_channel=2)
+# cell20190804A.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=14.8)
+# cell20190804A.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0003.abf', trace_end_t=12)
+# cell20190804A.rawdata_note_chemicalinbath('withBlocker')
+# cell20190804A.write_results()
+# %%
+# fairly boring neuron (not much of any inputs or anything, though I did see at least 1 that could be a fast-event)
+# and it starts to depolarize slowly but surely pretty soon after getting patched.
+# cell20190804B = SingleNeuron('20190804B')
+# cell20190804B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=13)
+# cell20190804B.rawdata_note_chemicalinbath('withBlocker')
+# cell20190804B.write_results()
+# %%
+# fairly boring neuron again, not sure there are any spontaneous excitations at all.
+# This neuron, too, depolarizes somewhat soon after blocker application
+# cell20190804C = SingleNeuron('20190804C')
+# cell20190804C.rawdata_remove_nonrecordingsection('IV_withBlocker_0003.abf', remove_segments=[0, 1, 2])
+
+# cell20190804C.write_results()
+# %%
+# it's spiking and getting tons of fast-events but slowly depolarizing, then leaves all of a sudden.
+# cell20190805A1 = SingleNeuron('20190805A1')
+# cell20190805A1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', non_recording_channel=2)
+# cell20190805A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=11, trace_end_t=386)
+# blocknames_list = cell20190805A1.get_blocknames()
+# blocknames_list = blocknames_list[1:]
+# for name in blocknames_list:
+#     cell20190805A1.rawdata_remove_nonrecordingblock(name)
+# cell20190805A1.write_results()
+# %%
+# nice recording, neuron is oscillating throughout mostly with sinusoids(ish);
+# not sure if it has both giant fast-events and small-ish spikes or just fast-events.
+# cell20190805A2 = SingleNeuron('20190805A2')
+# cell20190805A2.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20190805A2.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=13)
+# cell20190805A2.rawdata_note_chemicalinbath('withBlocker')
+# cell20190805A2.write_results()
+# %%
+# oscillating, spiking here and there, and looking like it's still getting a lot of inputs
+# also after blocker application (though they're definitely only smaller ones now)
+# cell20190805B1 = SingleNeuron('20190805B1')
+# cell20190805B1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2, pairedrecording=True)
+# cell20190805B1.rawdata_remove_nonrecordingchannel('gapFree_withBlockers_0001.abf', 2, pairedrecording=True)
+# cell20190805B1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=445)
+# cell20190805B1.rawdata_note_chemicalinbath('withBlockers')
+# cell20190805B1.write_results()
+# %%
+# oscillating, spiking here and there, not much else of activity going on.
+# cell20190805B2 = SingleNeuron('20190805B2')
+# cell20190805B2.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 1, pairedrecording=True)
+# cell20190805B2.rawdata_remove_nonrecordingchannel('gapFree_withBlockers_0001.abf', 1, pairedrecording=True)
+# cell20190805B2.rawdata_remove_nonrecordingsection('gapFree_withBlockers_0001.abf', trace_end_t=222)
+# cell20190805B2.rawdata_note_chemicalinbath('withBlocker')
+# cell20190805B2.write_results()
+# %%
+# doing all the things we like IO neurons to do; beating oscillations get smaller
+# and then diappear slowly when blocker is applied.
+# cell20190812A = SingleNeuron('20190812A')
+# cell20190812A.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
+# cell20190812A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=98)
+# cell20190812A.rawdata_note_chemicalinbath('withBlocker')
+# cell20190812A.write_results()
+# %%
+# pretty boring neuron, not much of fast-events except one that's very compound
+# cell20190812B = SingleNeuron('20190812B')
+# cell20190812B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=25)
+# cell20190812B.rawdata_note_chemicalinbath('withBlocker')
+# cell20190812B.write_results()
+# %%
+# spikes and some fast-events here and there, no oscs except some tiny ripples after blocker application
+# cell20190814A = SingleNeuron('20190814A')
+# cell20190814A.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
+# cell20190814A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=15)
+# cell20190814A.rawdata_note_chemicalinbath('withBlocker')
+# cell20190814A.write_results()
+# %%
+# oscillating quite a lot of the time (though it looks more like rhythmic Ca-spikes when there are no blockers)
+# cell20190815D1 = SingleNeuron('20190815D1')
+# allblocks_names = cell20190815D1.get_blocknames(printing='off')
+# for block in allblocks_names:
+#     cell20190815D1.rawdata_remove_nonrecordingchannel(block, 2)
+# cell20190815D1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=289)
+# cell20190815D1.rawdata_remove_nonrecordingsection('gapFree_withBlockers_0006.abf', trace_end_t=88)
+# cell20190815D1.rawdata_note_chemicalinbath('withBlocker')
+# cell20190815D1.write_results()
+# %%
+# not actually a good recording really, being held with lots of -DC throughout just to keep some semblance of baselineV
+# cell20190815D2 = SingleNeuron('20190815D2')
+#
+# %%
+# Not too much exciting going on in the spontaneous activity (just a few spikes and possibly a few small-ish events)
+# but also one thing that looks rather like a fast-event in one of the files with blocker.
+# Not the greatest recording: mosst of the time neuron is being held with -200pA to keep baselineV ~-50mV,
+# and looks like either bridge is somewhat variable or neuron is slowly dying over recordings (or both).
+# cell20191105A1 = SingleNeuron('20191105A1')
+# blocknames_list = cell20191105A1.get_blocknames()
+# for blockname in blocknames_list:
+#     cell20191105A1.rawdata_remove_nonrecordingchannel(blockname, 2, pairedrecording=True)
+# cell20191105A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=73)
+# cell20191105A1.rawdata_remove_nonrecordingsection('gapFree_withBlockers_0002.abf', trace_end_t=443)
+# cell20191105A1.rawdata_note_chemicalinbath('withBlocker')
+# cell20191105A1.write_results()
+# %%
+# Break-in looks strange, spont. from <G seal; it's very hard to make it spike and APamp isn't great.
+# Neuron has good Vrest throughout and lots of events, though the fastest ones tend to look somehow strange... noise?
+# Also the slower events can get rather sizeable (3-4mV) while still looking like GJ spikelets.
+# cell20191105A2 = SingleNeuron('20191105A2')
+# blocknames_list = cell20191105A2.get_blocknames(printing='off')
+# for blockname in blocknames_list:
+#     cell20191105A2.rawdata_remove_nonrecordingchannel(blockname, 1, pairedrecording=True)
+# cell20191105A2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=53)
+# cell20191105A2.rawdata_note_chemicalinbath('withBlocker')
+# cell20191105A2.write_results()
+# %%
+# Neuron does not have all that much going on - literally just one or two events. (also lots of little negative noise).
+# Rin increases and spikes become much easier to evoke after blocker application, and lose their spikeshoulderpeaks.
+# cell20191105C = SingleNeuron('20191105C')
+# cell20191105C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', 14)
+# cell20191105C.rawdata_note_chemicalinbath('withBlocker')
+# cell20191105C.write_results()
+# %%
+# cell is basically dead by the time blocker gets applied (getting held with -1000pA).
+# cell20191106A1 = SingleNeuron('20191106A1')
+# blocknames_list = cell20191106A1.get_blocknames(printing='off')
+# for blockname in blocknames_list:
+#     cell20191106A1.rawdata_remove_nonrecordingchannel(blockname, 2, pairedrecording=True)
+# cell20191106A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=123)
+# cell20191106A1.rawdata_note_chemicalinbath('withBlocker')
+# cell20191106A1.write_results()
+# %%
+# not an olive neuron; interesting only because its depolarizing events look a lot like fast-events,
+# and here, too, blocker seems to make them stop
+# cell20191106A2 = SingleNeuron('20191106A2')
+# blocknames_list = cell20191106A2.get_blocknames(printing='off')
+# for blockname in blocknames_list:
+#     cell20191106A2.rawdata_remove_nonrecordingchannel(blockname, 1, pairedrecording=True)
+# cell20191106A2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=135)
+# cell20191106A2.rawdata_remove_nonrecordingblock('ggapFree_0000.abf')
+# cell20191106A2.rawdata_note_chemicalinbath('withBlocker')
+# cell20191106A2.write_results()
+# %%
+# neuron with not much at all going on, except for two sizeable depolarizing events in the blocker condition...
+# also interestingly, APs evoked with SpikePulse before blocker have no shoulder at all, but with blocker it's very wide
+# cell20191119A = SingleNeuron('20191119A')
+# cell20191119A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=13)
+# cell20191119A.rawdata_note_chemicalinbath('withBlocker')
+# cell20191119A.write_results()
+# %%
+# neuron died pretty much as blocker was getting to the bath; anyway it didn't have much of any activity going on.
+# cell20191119B = SingleNeuron('20191119B')
+# cell20191119B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', 11)
+# cell20191119B.rawdata_remove_nonrecordingsection('spikePulse_withBlocker_0000.abf', remove_segments=[81, 82, 83])
+# cell20191119B.rawdata_note_chemicalinbath('withBlocker')
+# cell20191119B.write_results()
+# %%
+# has very clear depolarizations of 1 - 2 mV that look more like spikelets to me;
+# there's depolarizations also in recordings with blockers, as well as some depolarizing noise-events.
+# cell20191120A = SingleNeuron('20191120A')
+# cell20191120A.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2)
+# cell20191120A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=15)
+# cell20191120A.rawdata_note_chemicalinbath('withBlocker')
+# cell20191120A.write_results()
+# %%
+# not much of any large depolarizations, but tons of spikelets that don't much come back after washing blocker
+# cell20191120B1 = SingleNeuron('20191120B1')
+# blocknames_list = cell20191120B1.get_blocknames(printing='off')
+# for blockname in blocknames_list:
+#     cell20191120B1.rawdata_remove_nonrecordingchannel(blockname, 2, pairedrecording=True)
+# cell20191120B1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=240)
+# cell20191120B1.rawdata_note_chemicalinbath('withBlocker_')
+# cell20191120B1.write_results()
+# %%
+# spont.break-in, and not much of depolarizations (though some seen in recordings with blockers) or anything else.
+# cell20191120B2 = SingleNeuron('20191120B2')
+# blocknames_list = cell20191120B2.get_blocknames(printing='off')
+# for blockname in blocknames_list:
+#     cell20191120B2.rawdata_remove_nonrecordingchannel(blockname, 1, pairedrecording=True)
+# cell20191120B2.rawdata_note_chemicalinbath('withBlocker_')
+# cell20191120B2.write_results()
+
+# # %%
+# #
+# cell = SingleNeuron('')
+# cell.plot_rawdatablocks()
+
+
+
 
 
 
@@ -603,4 +658,21 @@ cell20191105A1 = SingleNeuron('20191105A1')
 # cell20200708G.rawdata_remove_nonrecordingsection('gapFree_withBlocker_0000.abf', trace_start_t=16)
 # cell20200708G.rawdata_note_chemicalinbath('withBlocker')
 # cell20200708G.write_results()
+
+
 # %%
+# %%
+# quite a few fast-events and no fast-events in light-applied traces;
+# too bad neuron starts dying pretty badly just as lightpulses are getting applied.
+# cell20200818B = SingleNeuron('20200818B')
+# cell20200818B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=27)
+# cell20200818B.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
+# cell20200818B.write_results()
+# %%
+# not a great recording at all; spont.break-in from <Gseal, not much of any activity going on,
+# and starts dying really badly just as lightpulses are getting applied.
+# cell20200818C = SingleNeuron('20200818C')
+# cell20200818C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# cell20200818C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=19)
+# cell20200818C.rawdata_remove_nonrecordingsection('longPulses_0004.abf', trace_end_t=46)  # file misnamed at recordings
+# cell20200818C.write_results()

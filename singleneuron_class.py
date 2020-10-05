@@ -21,24 +21,26 @@ import pandas as pd
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
+rawdata_path = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
 
 
 class SingleNeuron:
     # initializing the class instance
     def __init__(self,
                  singleneuron_name,
-                 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"):
+                 path=rawdata_path):
         """
         singleneuron_name should be a unique identifier for the recording: in my conventions each neuron is named
-            by the date (YYYYMMDD) and letter (uppercase), and occasionally also a number (reflecting the recording channel, in cases where a double patch was performed/attempted).
+            by the date (YYYYMMDD) and letter (uppercase), and occasionally also a number (reflecting the
+            recording channel, in cases where a double patch was performed/attempted).
         singleneuron_name should match the name of the raw data folder/file belonging to singleneuron.
         path should be to a folder containing:
-            1. folder(s) containing the actual raw data recorded for (pairs of) neurons
-                (one folder or file per neuron (pair))
+            1. folder(s) containing the actual raw data recorded for (pairs of) neurons (in my conventions,
+                one folder per rig used, containing one folder or file per recorded neuron (pair))
             2. a 'myResults' folder where analyses notes/results are stored and read from
-            3. the 'myData_experiments_metadata' and 'myData_recordings_metadata' file.
+            3. the 'myData_experiments_metadata' and 'myData_recordings_metadata' csv tables.
 
-        All raw data belonging to singleneuron are returned as a list of neo block objects.
+        All recorded raw data belonging to singleneuron are imported as a list of neo block objects.
         If files with singleneuron_name are found in the 'myResults' folder,
         raw data adjustments are applied based on notes found in rawdata_readingnotes,
         and the relevant empty objects are updated with ones containing analyses results.
@@ -138,14 +140,17 @@ class SingleNeuron:
         experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
         self.experiment_metadata = experiments_metadata.loc[
                                     experiments_metadata.date == experiment_date]
-        if self.experiment_metadata.empty: print('no metadata for the experiment day were found.')
+        if self.experiment_metadata.empty:
+            print('no metadata for the experiment day were found.')
 
         recordings_metadata = pd.read_csv(self.path + '\\myData_recordings_metadata.csv')
         self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
-        if self.recording_metadata.empty: print('no metadata for the recording were found.')
+        if self.recording_metadata.empty:
+            print('no metadata for the recording were found.')
 
         # getting the raw data for the singleneuron:
-        if not self.rawdata_path: print('no files matching neuron name were found.')
+        if not self.rawdata_path:
+            print('no files matching neuron name were found.')
         elif self.rawdata_recordingtype == 'abf':
             self.files_reader_abf()
         elif self.rawdata_recordingtype == 'pxp':
@@ -371,6 +376,7 @@ class SingleNeuron:
         blocks_list = [block.file_origin for block in self.blocks]
         if printing == 'on':
             print(blocks_list)
+
         return blocks_list
 
     # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
@@ -687,7 +693,7 @@ class SingleNeuron:
         'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
         'ttleffect_window': time after TTL pulse turns off but still has effects working through.
         ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
-        ! Any time this function runs, reading-notes are updated with any kwargs that are passed through.
+        !! Any time this function runs, reading-notes are updated with any kwargs that are passed through.
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
         The recommended workflow is to use plot_eventdetecttraces_forsegment() on a (time_slice of a)

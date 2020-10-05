@@ -21,7 +21,7 @@ import singleneuron_analyses_functions as snafs
 
 # plotting all traces of a block, in individual subplots per channel, optionally with events marked
 def plot_block(block, depolarizingevents_df,
-               events_to_mark=pd.Series(), time_axis_unit='ms', segments_overlayed=True):
+               events_to_mark=None, time_axis_unit='ms', segments_overlayed=True):
     """ Takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     Optional arguments:
@@ -35,7 +35,7 @@ def plot_block(block, depolarizingevents_df,
     nsubplots = len(block.channel_indexes)
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
     # marking event baselines and peaks, if applicable
-    if not events_to_mark.empty:
+    if events_to_mark and not events_to_mark.empty:
         blockevents_to_mark = (events_to_mark & (depolarizingevents_df.file_origin == block.file_origin))
         block_events_df = depolarizingevents_df[blockevents_to_mark]
         for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
@@ -297,7 +297,6 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                     'color': 'black'
                 }
 
-        # measures that are specific to action potentials
         if 'thresholdv' in eventmeasures_series.keys():
             if float(eventmeasures_series['thresholdv']) > 0:
                 measuresdict['threshold_v'] = {
@@ -318,7 +317,7 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
                     'color': 'red'
                 }
 
-            if eventmeasures_series['ahp_end_idx'] is not None:
+            if not np.isnan(eventmeasures_series['ahp_end_idx']):
                 measuresdict['ahp_end'] = {
                     'idx': int(eventmeasures_series['ahp_end_idx']),
                     'color': 'green'

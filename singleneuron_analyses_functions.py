@@ -131,9 +131,9 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
     #step3] taking the measurements of each event - osc. phase and inst.freq estimation only in traces where
     # probably no large current step(s) is/are applied
     # (trace is longer than 2 minutes, or the mean current value is no more than 20pA away from current at the start of the trace)
-    if single_segment.t_stop < 120000 \
-            and ((np.mean(current_recording) - 20 < np.mean(current_recording[0:ms_insamples]))
-                or (np.mean(current_recording) + 20 > np.mean(current_recording[0:ms_insamples]))):
+    if single_segment.t_stop.rescale('s') < 120 \
+            and ((np.mean(current_recording) < (np.mean(current_recording[0:ms_insamples]) - 20))
+                or (np.mean(current_recording) > (np.mean(current_recording[0:ms_insamples]) + 20))):
         voltage_approxphase = None
         voltage_approxinstfreq = None
     else:
@@ -149,7 +149,7 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                                                     voltage_eventdetecttrace,
                                                     current_recording,
                                                     auxttl_recording,
-                                                    sampling_period_inms,
+                                                    float(sampling_period_inms),
                                                     ms_insamples,
                                                     event_width_window,
                                                     ahp_width_window,
@@ -258,6 +258,8 @@ def get_events_measures(peaks_idcs,
         ttleffectwindow_insamples = None
 
     eventsmeasures_dictionary = make_eventsmeasures_dictionary()
+    allspikeshoulderpeaks_idcs = []  # this list is used locally only, for labeling events that are spikeshoulderpeaks
+
     for baseline_idx, peak_idx in zip(depolswithpeaks_idcs, peaks_idcs):
 # calculate measures and add them into the dictionary.
 # baseline, peak and amplitude
@@ -351,27 +353,27 @@ def get_events_measures(peaks_idcs,
         threshold_idx = maxdvdt_idx - maxdvdttothreshold_inidcs
 
         if not np.isnan(threshold_idx):
-            threshold_v = voltage_trace[threshold_idx]
             threshold_idx = int(threshold_idx)
+            threshold_v = voltage_trace[threshold_idx]
         else:
-            threshold_v = float('nan')
             threshold_idx = None
+            threshold_v = float('nan')
         eventsmeasures_dictionary['thresholdv'].append(threshold_v)
         eventsmeasures_dictionary['threshold_idx'].append(threshold_idx)
 
         # finding the point where dV/dt = 10mV/ms (a common definition of AP threshold); V value and idx
-        if len(upstrokev_diff_baselinetomax) > 2:
+        if maxdvdt >= 10 and len(upstrokev_diff_baselinetomax) > 2:
             maxdvdt_to_dvdt10_inidcs = descend_trace_until(np.flip(upstrokev_diff_baselinetomax), 10)
         else:
             maxdvdt_to_dvdt10_inidcs = float('nan')
         dvdt10_idx = maxdvdt_idx - maxdvdt_to_dvdt10_inidcs
 
         if not np.isnan(dvdt10_idx):
-            dvdt10_v = voltage_trace[dvdt10_idx]
             dvdt10_idx = int(dvdt10_idx)
+            dvdt10_v = voltage_trace[dvdt10_idx]
         else:
-            dvdt10_v = float('nan')
             dvdt10_idx = None
+            dvdt10_v = float('nan')
         eventsmeasures_dictionary['dvdt10_v'].append(dvdt10_v)
         eventsmeasures_dictionary['dvdt10_idx'].append(dvdt10_idx)
 
@@ -477,12 +479,13 @@ def get_events_measures(peaks_idcs,
             ahpamplitude = baseline_v - ahpmin_v
             ahpmin_idx = int(peak_idx + returntobaseline_inidcs + np.argmin(ahptrace))
         # AHP width, value and end idx
-            ahpwidth_inidcs_sofar = np.argmin(ahptrace)
-            while (ahptrace[ahpwidth_inidcs_sofar] < baseline_v) and (ahpwidth_inidcs_sofar < len(ahptrace) - 2):
-                ahpwidth_inidcs_sofar += 1
-            ahpend_idx = int(peak_idx + returntobaseline_inidcs + ahpwidth_inidcs_sofar)
-            if voltage_trace[ahpend_idx] > baseline_v - (0.1 * ahpamplitude):
-                ahp_width = (peak_idx + returntobaseline_inidcs - ahpend_idx) * sampling_period_inms
+            ahpwidth_inidcs = np.argmin(ahptrace)
+            while (ahptrace[ahpwidth_inidcs] < baseline_v) and (ahpwidth_inidcs < len(ahptrace) - 2):
+                ahpwidth_inidcs += 1
+            ahpend_idx = int(peak_idx + returntobaseline_inidcs + ahpwidth_inidcs)
+            if ahpend_idx < len(voltage_trace) - 1 \
+                    and voltage_trace[ahpend_idx] > baseline_v - (0.1 * ahpamplitude):
+                ahp_width = ahpwidth_inidcs * sampling_period_inms
             else:
                 ahpend_idx = None
                 ahp_width = float('nan')
@@ -510,13 +513,14 @@ def get_events_measures(peaks_idcs,
             ed_ahpamplitude = ed_baseline_v - ed_ahpmin_v
             ed_ahpmin_idx = int(peak_idx + ed_returntobaseline_inidcs + np.argmin(ed_ahptrace))
             # AHP width, value and end idx
-            ed_ahpwidth_inidcs_sofar = np.argmin(ed_ahptrace)
-            while (ed_ahptrace[ed_ahpwidth_inidcs_sofar] < ed_baseline_v) \
-                    and (ed_ahpwidth_inidcs_sofar < len(ed_ahptrace) - 2):
-                ed_ahpwidth_inidcs_sofar += 1
-            ed_ahpend_idx = int(peak_idx + ed_returntobaseline_inidcs + ed_ahpwidth_inidcs_sofar + 1)
-            if voltage_eventdetecttrace[ed_ahpend_idx] > ed_baseline_v:
-                ed_ahp_width = (peak_idx + ed_returntobaseline_inidcs - ed_ahpend_idx) * sampling_period_inms
+            ed_ahpwidth_inidcs = np.argmin(ed_ahptrace)
+            while (ed_ahptrace[ed_ahpwidth_inidcs] < ed_baseline_v) \
+                    and (ed_ahpwidth_inidcs < len(ed_ahptrace) - 2):
+                ed_ahpwidth_inidcs += 1
+            ed_ahpend_idx = int(peak_idx + ed_returntobaseline_inidcs + ed_ahpwidth_inidcs + 1)
+            if ed_ahpend_idx < len(voltage_eventdetecttrace) - 1 \
+                    and voltage_eventdetecttrace[ed_ahpend_idx] > ed_baseline_v - (0.1 * ed_ahpamplitude):
+                ed_ahp_width = ed_ahpwidth_inidcs * sampling_period_inms
             else:
                 ed_ahpend_idx = None
                 ed_ahp_width = float('nan')
@@ -547,11 +551,12 @@ def get_events_measures(peaks_idcs,
             else:
                 search_width = returntobaseline_inidcs
             spikeshoulderpeaks = [idx for idx in peaks_idcs if peak_idx < idx < (peak_idx + search_width)]
+            for peak in spikeshoulderpeaks:
+                allspikeshoulderpeaks_idcs.append(peak)
             n_spikeshoulderpeaks = len(spikeshoulderpeaks)
 
         # labeling spikeshoulderpeaks
-        if eventsmeasures_dictionary['spikeshoulderpeaks_idcs'] \
-                and (peak_idx in eventsmeasures_dictionary['spikeshoulderpeaks_idcs'][-1]):
+        if peak_idx in allspikeshoulderpeaks_idcs:
             event_label = 'spikeshoulderpeak'
 
         # labeling events that occur on a current pulse change
@@ -559,7 +564,7 @@ def get_events_measures(peaks_idcs,
         if preevent_idx < 0:
             preevent_idx = 0
         didt_around_event = np.diff(current_recording[preevent_idx:int(baseline_idx + ahpwindow_insamples)])
-        if np.amax(np.abs(didt_around_event)) > 8:
+        if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 8:
             event_label = 'currentpulsechange'
 
         eventsmeasures_dictionary['event_label'].append(event_label)

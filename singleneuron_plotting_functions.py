@@ -131,17 +131,17 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
         measures_dict = make_eventmeasures_dict_forplotting(eventmeasures_series,
                                                             get_measures_type)
         for key, valsdict in measures_dict.items():
-            point = valsdict['idx']
-            if point - plot_startidx < len(event_trace):
+            point = valsdict['idx'] - plot_startidx
+            if point < len(event_trace):
                 if len(valsdict) == 2:
-                    axis_object.scatter(time_axis[point - plot_startidx], event_trace[point - plot_startidx],
+                    axis_object.scatter(time_axis[point], event_trace[point],
                                         color=valsdict['color'],
                                         label=key)
 
                 if len(valsdict) == 3:
-                    axis_object.hlines(y=event_trace[point - plot_startidx],
-                                       xmin=time_axis[point - plot_startidx],
-                                       xmax=time_axis[point - plot_startidx] + valsdict['duration'],
+                    axis_object.hlines(y=event_trace[point],
+                                       xmin=time_axis[point],
+                                       xmax=time_axis[point] + valsdict['duration'],
                                        color=valsdict['color'],
                                        label=(key + ' = ' + str(valsdict['duration']) + 'ms'))
         axis_object.legend()
@@ -202,21 +202,19 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     for segment_idx in segments_for_plotting_idcs:
         segment_eventsmeasures = block_eventsmeasures.loc[block_eventsmeasures['segment_idx'] == segment_idx]
         vtrace_asanalogsignal = rawdata_block.segments[segment_idx].analogsignals[0]
-        time_axis = vtrace_asanalogsignal.times
         sampling_frequency = float(vtrace_asanalogsignal.sampling_rate)
         sampling_period_inms = float(vtrace_asanalogsignal.sampling_period) * 1000
         vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
 
         # optional: getting the event-detect trace instead of the raw vtrace
         if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-            vtrace, _, _, _, _ = snafs.apply_rawvtrace_manipulations(
+            oscillationstrace, noisetrace = snafs.apply_filters_to_vtrace(
                                                  vtrace,
                                                  getdepolarizingevents_settings['oscfilter_lpfreq'],
                                                  getdepolarizingevents_settings['noisefilter_hpfreq'],
                                                  sampling_frequency,
-                                                 time_axis,
                                                  plot='off')
-
+            vtrace = vtrace - oscillationstrace - noisetrace
         # plotting the events of the segment
         for _, eventmeasures in segment_eventsmeasures.iterrows():
             plot_startidx = (eventmeasures[timealignto_measure]
@@ -265,100 +263,148 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
     # all events have a baseline-point and a peak-point, and it's the same in the raw and event-detect traces.
     measuresdict = {
         'baseline_v': {'idx': eventmeasures_series['baselinev_idx'],
-                       'color': 'green'
-                       },
+                       'color': 'green'},
 
         'peak_v': {'idx': eventmeasures_series['peakv_idx'],
-                   'color': 'red'}
+                   'color': 'red'},
     }
 
     # getting parameters as measured from the raw voltage trace
     if measuretype == 'raw':
-        if float(eventmeasures_series['rise_time']) > 0:
-            measuresdict['rise_time'] = {
-                'idx': eventmeasures_series['rt_start_idx'],
-                'duration': float(eventmeasures_series['rise_time']),
-                'color': 'red'
+        # rise measures
+        if not pd.isna(eventmeasures_series['maxdvdt_idx']):
+            measuresdict['max_dvdt'] = {
+                'idx': eventmeasures_series['maxdvdt_idx'],
+                'color': 'slategrey'
             }
-
-        if float(eventmeasures_series['half_width']) > 0:
-            measuresdict['half_width'] = {
-                'idx': eventmeasures_series['hw_start_idx'],
-                'duration': float(eventmeasures_series['half_width']),
-                'color': 'green'
-            }
-
-        # measures that are specific to subthreshold depolarizing events
-        if 'baseline_width' in eventmeasures_series.keys():
-            if float(eventmeasures_series['baseline_width']) > 0:
-                measuresdict['width'] = {
-                    'idx': eventmeasures_series['baselinev_idx'] + 1,
-                    'duration': float(eventmeasures_series['baseline_width']),
-                    'color': 'black'
-                }
-
-        if 'thresholdv' in eventmeasures_series.keys():
-            if float(eventmeasures_series['thresholdv']) > 0:
-                measuresdict['threshold_v'] = {
-                    'idx': eventmeasures_series['threshold_idx'],
-                    'color': 'blue'
-                }
-
-            if float(eventmeasures_series['threshold_width']) > 0:
-                measuresdict['threshold_width'] = {
-                    'idx': eventmeasures_series['threshold_idx'],
-                    'duration': float(eventmeasures_series['threshold_width']),
-                    'color': 'black'
-                }
-
-            if not np.isnan(eventmeasures_series['ahp_min_idx']):
-                measuresdict['ahp_min'] = {
-                    'idx': int(eventmeasures_series['ahp_min_idx']),
-                    'color': 'red'
-                }
-
-            if not np.isnan(eventmeasures_series['ahp_end_idx']):
-                measuresdict['ahp_end'] = {
-                    'idx': int(eventmeasures_series['ahp_end_idx']),
-                    'color': 'green'
-                }
-
-            if eventmeasures_series['n_spikeshoulderpeaks'] > 0:
-                shoulderpeaks_idcs_asstr = eventmeasures_series['spikeshoulderpeaks_idcs']
-                # unless shoulderpeaks_idcs is an empty list (in the form of a string),
-                # unpack the string into a list of indices and add each to the measuresdict
-                if not shoulderpeaks_idcs_asstr == '[]':
-                    idcs_asstr = shoulderpeaks_idcs_asstr.replace('[', '')
-                    idcs_asstr = idcs_asstr.replace(']', '')
-                    idcs_asstr = idcs_asstr.replace(',', '')
-                    [*idcs_asstrs] = idcs_asstr.split(' ')
-                    for i, idx in enumerate(idcs_asstrs):
-                        measuresdict['spikeshoulderpeak'+str(i)] = {
-                            'idx': int(idx),
-                            'color': 'red'
-                        }
-
-    # getting parameters as measured from the event-detect trace
-    else:
-        if float(eventmeasures_series['ed_rise_time']) > 0:
-            measuresdict['rise_time'] = {
-                'idx': eventmeasures_series['ed_rt_start_idx'],
-                'duration': float(eventmeasures_series['ed_rise_time']),
-                'color': 'red'
-            }
-
-        if float(eventmeasures_series['ed_half_width']) > 0:
-            measuresdict['half_width'] = {
-                'idx': eventmeasures_series['ed_hw_start_idx'],
-                'duration': float(eventmeasures_series['ed_half_width']),
-                'color': 'green'
-            }
-
-        if float(eventmeasures_series['ed_baseline_width']) > 0:
-            measuresdict['width'] = {
-                'idx': eventmeasures_series['baselinev_idx'] + 1,
-                'duration': float(eventmeasures_series['ed_baseline_width']),
+        if not pd.isna(eventmeasures_series['threshold_idx']):
+            measuresdict['threshold'] = {
+                'idx': eventmeasures_series['threshold_idx'],
                 'color': 'black'
+            }
+        if not pd.isna(eventmeasures_series['dvdt10_idx']):
+            measuresdict['dvdt=10_threshold'] = {
+                'idx': eventmeasures_series['dvdt10_idx'],
+                'color': 'lightgrey'
+            }
+
+        if eventmeasures_series['rise_time_10_90'] > 0:
+            measuresdict['rise_time_10_90'] = {
+                'idx': eventmeasures_series['rt10_start_idx'],
+                'duration': eventmeasures_series['rise_time_10_90'],
+                'color': 'firebrick'
+            }
+        if eventmeasures_series['rise_time_20_80'] > 0:
+            measuresdict['rise_time_20_80'] = {
+                'idx': eventmeasures_series['rt20_start_idx'],
+                'duration': eventmeasures_series['rise_time_20_80'],
+                'color': 'tomato'
+            }
+        if eventmeasures_series['rise_time_maxdvdt_peak'] > 0:
+            measuresdict['rise_time_maxdvdt_peak'] = {
+                'idx': eventmeasures_series['maxdvdt_idx'],
+                'duration': eventmeasures_series['rise_time_maxdvdt_peak'],
+                'color': 'red'
+            }
+
+        # width measures
+        if eventmeasures_series['width_baseline'] > 0:
+            measuresdict['width_baseline'] = {
+                'idx': eventmeasures_series['baselinev_idx'],
+                'duration': eventmeasures_series['width_baseline'],
+                'color': 'darkolivegreen'
+            }
+        if eventmeasures_series['width_10'] > 0:
+            measuresdict['width_10pct_amp'] = {
+                'idx': eventmeasures_series['width_10_start_idx'],
+                'duration': eventmeasures_series['width_10'],
+                'color': 'palegreen'
+            }
+        if eventmeasures_series['width_30'] > 0:
+            measuresdict['width_30pct_amp'] = {
+                'idx': eventmeasures_series['width_30_start_idx'],
+                'duration': eventmeasures_series['width_30'],
+                'color': 'greenyellow'
+            }
+        if eventmeasures_series['width_50'] > 0:
+            measuresdict['width_50pct_amp'] = {
+                'idx': eventmeasures_series['width_50_start_idx'],
+                'duration': eventmeasures_series['width_50'],
+                'color': 'green'
+            }
+        if eventmeasures_series['width_70'] > 0:
+            measuresdict['width_70pctamp'] = {
+                'idx': eventmeasures_series['width_70_start_idx'],
+                'duration': eventmeasures_series['width_70'],
+                'color': 'yellowgreen'
+            }
+
+        # ahp measures
+        if not pd.isna(eventmeasures_series['ahp_min_idx']):
+            measuresdict['ahp_min'] = {
+                'idx': eventmeasures_series['ahp_min_idx'],
+                'color': 'darkviolet'
+            }
+        if not pd.isna(eventmeasures_series['ahp_end_idx']):
+            measuresdict['ahp_width'] = {
+                'idx': eventmeasures_series['ahp_end_idx'],
+                'duration': (-1 * eventmeasures_series['ahp_width']),
+                'color': 'purple'
+            }
+
+        # spikeshoulderpeaks
+        if eventmeasures_series['n_spikeshoulderpeaks'] > 0:
+            shoulderpeaks_idcs_asstr = eventmeasures_series['spikeshoulderpeaks_idcs']
+            # unless shoulderpeaks_idcs is an empty list (in the form of a string),
+            # unpack the string into a list of indices and add each to the measuresdict
+            if not shoulderpeaks_idcs_asstr == '[]':
+                idcs_asstr = shoulderpeaks_idcs_asstr.replace('[', '')
+                idcs_asstr = idcs_asstr.replace(']', '')
+                idcs_asstr = idcs_asstr.replace(',', '')
+                [*idcs_asstrs] = idcs_asstr.split(' ')
+                for i, idx in enumerate(idcs_asstrs):
+                    measuresdict['spikeshoulderpeak'+str(i)] = {
+                        'idx': int(idx),
+                        'color': 'orange'
+                    }
+
+    else:  # getting measures for the event-detect trace
+        # rise measures
+        if not pd.isna(eventmeasures_series['ed_maxdvdt_idx']):
+            measuresdict['max_dvdt'] = {
+                'idx': eventmeasures_series['ed_maxdvdt_idx'],
+                'color': 'slategrey'
+            }
+        if eventmeasures_series['ed_rise_time_20_80'] > 0:
+            measuresdict['rise_time_20_80'] = {
+                'idx': eventmeasures_series['ed_rt20_start_idx'],
+                'duration': eventmeasures_series['ed_rise_time_20_80'],
+                'color': 'tomato'
+            }
+        # width measures
+        if eventmeasures_series['ed_half_width'] > 0:
+            measuresdict['width_50pct_amp'] = {
+                'idx': eventmeasures_series['ed_hw_start_idx'],
+                'duration': eventmeasures_series['ed_half_width'],
+                'color': 'green'
+            }
+        if eventmeasures_series['ed_baseline_width'] > 0:
+            measuresdict['width_baseline'] = {
+                'idx': eventmeasures_series['baselinev_idx'],
+                'duration': eventmeasures_series['ed_baseline_width'],
+                'color': 'darkolivegreen'
+            }
+        # ahp measures
+        if not pd.isna(eventmeasures_series['ed_ahp_min_idx']):
+            measuresdict['ahp_min'] = {
+                'idx': eventmeasures_series['ed_ahp_min_idx'],
+                'color': 'darkviolet'
+            }
+        if not pd.isna(eventmeasures_series['ed_ahp_end_idx']):
+            measuresdict['ahp_width'] = {
+                'idx': eventmeasures_series['ed_ahp_end_idx'],
+                'duration': (-1 * eventmeasures_series['ed_ahp_width']),
+                'color': 'purple'
             }
 
     return measuresdict

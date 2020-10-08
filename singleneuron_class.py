@@ -186,6 +186,11 @@ class SingleNeuron:
 
                 if 'depolarizing_events' in path:
                     self.depolarizing_events = pd.read_csv(path, index_col=0)
+                    dtypes_dict = {}
+                    for key in self.depolarizing_events.keys():  # converting columns containing idcs and missing values
+                        if 'idx' in key:                         # to bypass their being cast to float
+                            dtypes_dict[key] = 'Int64'
+                    self.depolarizing_events = self.depolarizing_events.astype(dtypes_dict)
 
         # applying raw data cleanup
         if self.rawdata_readingnotes.get('nonrecordingchannels'):
@@ -480,9 +485,8 @@ class SingleNeuron:
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               newplot_per_event=newplot_per_event,
                                               **kwargs)
-                #
-                if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
-                    kwargs['display_measures'] = False
+            if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
+                kwargs['display_measures'] = False  # turning it off for the overlayed-lines plot(s) that are made next
 
         if newplot_per_block:
             for block_name in blocks_for_plotting:
@@ -733,6 +737,11 @@ class SingleNeuron:
 
         # converting the results to a DataFrame and attaching to the class instance
         self.depolarizing_events = pd.DataFrame(all_eventsmeasures_dictionary).round(decimals=2)
+        dtypes_dict = {}
+        for key in self.depolarizing_events.keys():  # converting columns containing idcs and missing values
+            if 'idx' in key:                         # to bypass their being cast to float
+                dtypes_dict[key] = 'Int64'
+        self.depolarizing_events.astype(dtypes_dict)
 
 
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):

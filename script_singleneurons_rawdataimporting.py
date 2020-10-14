@@ -4,7 +4,164 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
-# %% experiment: ChR activation in Thy1 mouse
+# %%
+# cell20190325A1 = SingleNeuron('20190325A1')
+
+# %%
+# cell20190325A2 = SingleNeuron('20190325A2')
+
+# %%
+# cell20190325B1 = SingleNeuron('20190325B1')
+
+# %%
+# cell20190325B2 = SingleNeuron('20190325B2')
+
+# %% !not an olive neuron!
+# cell20190325C1 = SingleNeuron('20190325C1')
+
+# %% !not an olive neuron!
+# cell20190325C2 = SingleNeuron('20190325C2')
+
+# %%
+# cell20190325D1 = SingleNeuron('20190325D1')
+
+# %%
+# cell20190325D2 = SingleNeuron('20190325D2')
+
+# %%
+# cell20190331A1 = SingleNeuron('20190331A1')
+
+# %%
+# cell20190331A2 = SingleNeuron('20190331A2')
+
+# %%
+# cell20190331B1 = SingleNeuron('20190331B1')
+
+# %%
+# cell20190331B2 = SingleNeuron('20190331B2')
+
+# %%
+# cell20190331C1 = SingleNeuron('20190331C1')
+
+# %%
+# cell20190331C2 = SingleNeuron('20190331C2')
+
+# %%
+# cell20190331D1 = SingleNeuron('20190331D1')
+
+# %%
+# cell20190331D2 = SingleNeuron('20190331D2')
+
+# %%
+# cell20190401A1 = SingleNeuron('20190401A1')
+
+# %%
+# cell20190401A2 = SingleNeuron('20190401A2')
+
+# %%
+# cell20190401B1 = SingleNeuron('20190401B1')
+
+# %%
+# cell20190401B2 = SingleNeuron('20190401B2')
+
+# %%
+# cell20190401C1 = SingleNeuron('20190401C1')
+
+# %%
+# cell20190401C2 = SingleNeuron('20190401C2')
+
+# %%
+# cell20190401D1 = SingleNeuron('20190401D1')
+
+# %%
+# cell20190401D2 = SingleNeuron('20190401D2')
+
+# %%
+# cell20190402A1 = SingleNeuron('20190402A1')
+
+# %%
+# cell20190402A2 = SingleNeuron('20190402A2')
+
+# %%
+# cell20190402B1 = SingleNeuron('20190402B1')
+
+# %%
+# cell20190402B2 = SingleNeuron('20190402B2')
+
+# %%
+# cell20190402C1 = SingleNeuron('20190402C1')
+
+# %%
+# cell20190402C2 = SingleNeuron('20190402C2')
+
+# %%
+# cell20190408A1 = SingleNeuron('20190408A1')
+
+# %%
+# cell20190408A2 = SingleNeuron('20190408A2')
+
+# %%
+# cell20190408B1 = SingleNeuron('20190408B1')
+
+# %%
+# cell20190408B2 = SingleNeuron('20190408B2')
+
+# %%
+# cell20190408C1 = SingleNeuron('20190408C1')
+
+# %%
+# cell20190408C2 = SingleNeuron('20190408C2')
+
+# %%
+# cell20190409A1 = SingleNeuron('20190409A1')
+
+# %%
+# cell20190409A2 = SingleNeuron('20190409A2')
+
+# %%
+# cell20190409B1 = SingleNeuron('20190409B1')
+
+# %%
+# cell20190409B2 = SingleNeuron('20190409B2')
+
+# %%
+# cell20190410A1 = SingleNeuron('20190410A1')
+
+# %%
+# cell20190410A2 = SingleNeuron('20190410A2')
+
+# %%
+# cell20190410B1 = SingleNeuron('20190410B1')
+
+# %%
+# cell20190410B2 = SingleNeuron('20190410B2')
+
+# %%
+# cell20190410C1 = SingleNeuron('20190410C1')
+
+# %%
+# cell20190410C2 = SingleNeuron('20190410C2')
+
+# %%
+# cell20190513A1 = SingleNeuron('20190513A1')
+
+# %%
+# cell20190513A2 = SingleNeuron('20190513A2')
+
+# %%
+# cell20190513B1 = SingleNeuron('20190513B1')
+
+# %%
+# cell20190513B2 = SingleNeuron('20190513B2')
+
+# %%
+# cell20190513C = SingleNeuron('20190513C')
+
+# %%
+# cell20190513D = SingleNeuron('20190513D')
+
+
+# %% experiment: intracellular recording from IO neurons + ChR activation, in Thy1 mouse (activation of inputs to IO)
 # %%
 # cell20190527A = SingleNeuron('20190527A')
 # spont.activity and light pulses
@@ -82,6 +239,8 @@ import pandas as pd
 #                                                  trace_start_t=13)
 # cell20190529E.write_results()
 
+
+# 0722
 
 
 # %%

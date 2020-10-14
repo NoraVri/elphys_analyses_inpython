@@ -1,16 +1,23 @@
-from singleneuron_class import SingleNeuron
+import os
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
+from singleneuron_class import SingleNeuron
+
 # %% list of neurons with light-evoked responses recordings
-# %% experiment: ChR activation in Thy1 mouse (experiment days 20190527, 20190529, 20200630 and 20200701)
+## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse (experiment days 20190527, 20190529, 20200630 and 20200701)
 # singleneuron_data = SingleNeuron('20190527A')
+
+# cell20190527B = SingleNeuron('20190527B')
 #
 # singleneuron_data = SingleNeuron('20190527C')
 #
 # singleneuron_data = SingleNeuron('20190529A1')
+
+# cell20190529A2 = SingleNeuron('20190529A2')
 #
 # singleneuron_data = SingleNeuron('20190529B')
 #
@@ -20,6 +27,11 @@ import pandas as pd
 #
 # singleneuron_data = SingleNeuron('20190529E')
 #
+
+## experiment: pharmacological blockage of inputs to IO neurons
+singleneuron_data = SingleNeuron('20190814A')
+
+## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse
 # singleneuron_data = SingleNeuron('20200630A')
 #
 # singleneuron_data = SingleNeuron('20200630B1')
@@ -32,12 +44,7 @@ import pandas as pd
 #
 
 
-
-singleneuron_data = SingleNeuron('20200708F')
-
-
-
-# %% experiment: RubiGlu uncaging (experiment days 20200306, 20200308, 20200310 and 20200312)
+## experiment: activation of inputs to IO neurons by rubiGlu-uncaging (experiment days 20200306, 20200308, 20200310 and 20200312)
 #
 # singleneuron_data = SingleNeuron('20200306C')
 #
@@ -55,6 +62,14 @@ singleneuron_data = SingleNeuron('20200708F')
 #
 # singleneuron_data = SingleNeuron('20200312G')
 
+
+## experiment:
+# singleneuron_data = SingleNeuron('20200708F')
+
+
+
+# singleneuron_data.plot_rawdatablocks()
+# singleneuron_data.get_blocknames()
 # %% setting parameters for get_depolarizingevents for each neuron
 # neuron20190527A: used block no.12 to find good parameter settings
 # neuron20190527B: used block no.2 to find good parameter settings
@@ -64,124 +79,46 @@ singleneuron_data = SingleNeuron('20200708F')
 # neuron20190529D: used block no.2 to find good parameter settings
 # neuron20190529E: used block no.2 to find good parameter settings
 
+# neuron20190814A: used block no.0 to find good parameter settings
+
 # neuron20200708G: used block no.3 to find good parameter settings
 
-# apsdict, depolsdict = singleneuron_data.plot_eventdetecttraces_forsegment(3, 0, return_dicts=True,
-#                                                                           min_depolspeed=0.3,
-#                                                                           min_depolamp=0.3,
-#                                                                           # peakwindow=7,
-#                                                                           # noisefilter_hpfreq=2000,
-#                                                                           # oscfilter_lpfreq=10,
-#                                                                           # ttleffect_windowinms=3
-#                                                                           )
-from singleneuron_analyses_functions import get_depolarizingevents
-eventmeasuresdict = get_depolarizingevents('something', 0, singleneuron_data.blocks[6].segments[0], min_depolspeed=0.1, min_depolamp=4,
-                            depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
-                            noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
-                            ttleffect_window=None,
-                            plot='off')
 
-# singleneuron_data.get_depolarizingevents_fromrawdata(
-#                                                     min_depolspeed=0.3,
-#                                                     min_depolamp=3,
-#     depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
-#     noisefilter_hpfreq=3000, oscfilter_lpfreq=20,
-#                                                     ttleffect_windowinms=10
-#                                                      )
-# singleneuron_data.write_results()
-# %% seeing all detected APs
-evoked_aps = singleneuron_data.action_potentials.applied_ttlpulse
-spont_aps = ~singleneuron_data.action_potentials.applied_ttlpulse
-# colorscalelims = [-60, -35]
-singleneuron_data.plot_depolevents_overlayed(evoked_aps,
-                                             get_subthreshold_events=False,
-                                             plt_title='evoked aps',
-                                             do_baselining=True,
-                                             colorby_measure='baselinev',
-                                             # color_lims=colorscalelims
-                                             prealignpoint_window_inms=20,
-                                             total_plotwindow_inms=40,
-                                             )
+block_no = 4
+segment_no = 0
 
-singleneuron_data.plot_depolevents_overlayed(spont_aps,
-                                             get_subthreshold_events=False,
-                                             plt_title='spontaneous aps',
-                                             do_baselining=True,
-                                             colorby_measure='baselinev',
-                                             # color_lims=colorscalelims,
-                                             prealignpoint_window_inms=20,
-                                             total_plotwindow_inms=40,
-                                             )
+(eventmeasures_dict,
+ depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
+                                                                                      return_dicts=True,
+                                    # min_depolspeed=0.1,
+                                    # min_depolamp=0.2,
+                                    # depol_to_peak_window=5,
+                                    # event_width_window=40,
+                                    ahp_width_window=200,
+                                    # noisefilter_hpfreq=3000,
+                                    # oscfilter_lpfreq=20,
+                                    # ttleffect_window=None,
+)
 
-singleneuron_data.plot_depoleventsgroups_overlayed(evoked_aps, spont_aps,
-                                                   group_labels=['evoked', 'spontaneous'],
-                                                   get_subthreshold_events=False,
-                                                   do_baselining=True,
-                                                   prealignpoint_window_inms=20,
-                                                   total_plotwindow_inms=40,
-                                                   plt_title='all APs')
-# %% looking at detected depolarizations
-# scatters of all subthreshold events measures
-# singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time',
-#                                                       cmeasure='baselinev')
-evoked_events = singleneuron_data.depolarizing_events.applied_ttlpulse
-spont_events = ~singleneuron_data.depolarizing_events.applied_ttlpulse
-singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20_80',
-                                                      cmeasure='baselinev',
-                                                      evokedevents=evoked_events,
-                                                      spontevents=spont_events)
-# %% a quick look to see if we can isolate fast-events from among all depolarizations
-# neuron20190527A: baselinev < -25, amplitude > 1.5, rise_time < 1
-# neuron20190527C: -80 < baselinev < -30, amplitude > 2, rise_time < 2
-# neuron20190529B: amplitude > 1 - basically all evoked responses look like stacked fast-events
-# neuron20190529D: amplitude > 3, rise_time < 2 - but also: amplitude > 0.5, rise_time < 0.3
-# neuron20190529E: amplitude > 0.4, rise_time < 0.5
+# %% when satisfied with settings, adding them onto singleneuron_data instance
+singleneuron_data.rawdata_readingnotes['getdepolarizingevents_settings'] = depolevents_readingnotes_dict
+singleneuron_data.write_results()
+# %% running get_depolarizingevents function on a batch of neurons
 
-fastevents_largerthan_params = {
-                                'amplitude':3,
-                                # 'baselinev':-80,
-                                }
-fastevents_smallerthan_params = {
-                                 'baselinev':-25,
-                                 'rise_time':1,
-                                 }
+resultsfolderpath = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me\\myResults"
+storedparams_jsonfiles = [file for file in os.listdir(resultsfolderpath) if file.endswith('json')]
+depolevents_tables = [file for file in os.listdir(resultsfolderpath) if 'depolarizing_events' in file]
 
-possiblyfastevents_spont = spont_events
-possiblyfastevents_evoked = evoked_events
-for key, value in fastevents_largerthan_params.items():
-    possiblyfastevents_spont = (possiblyfastevents_spont
-                                & (singleneuron_data.depolarizing_events[key] > value))
-    possiblyfastevents_evoked = (possiblyfastevents_evoked
-                                 & (singleneuron_data.depolarizing_events[key] > value))
-for key, value in fastevents_smallerthan_params.items():
-    possiblyfastevents_spont = (possiblyfastevents_spont
-                                & (singleneuron_data.depolarizing_events[key] < value))
-    possiblyfastevents_evoked = (possiblyfastevents_evoked
-                                 & (singleneuron_data.depolarizing_events[key] < value))
-
-singleneuron_data.plot_depolevents_overlayed(possiblyfastevents_spont,
-                                             colorby_measure='baselinev',
-                                             do_baselining=True,
-                                             # do_normalizing=True,
-                                             prealignpoint_window_inms=10,
-                                             total_plotwindow_inms=25,
-                                             # newplot_per_block=True,
-                                             # blocknames_list=['light_wholeField_0009.abf']
-                                             )
-
-
-singleneuron_data.plot_depolevents_overlayed(possiblyfastevents_evoked,
-                                             colorby_measure='baselinev',
-                                             do_baselining=True,
-                                             do_normalizing=True,
-                                             prealignpoint_window_inms=10,
-                                             total_plotwindow_inms=25,
-                                             )
-plt.suptitle('evoked events')
-
-singleneuron_data.plot_depoleventsgroups_overlayed(possiblyfastevents_spont,
-                                                   possiblyfastevents_evoked,
-                                                   group_labels=['spontaneous', 'evoked'],
-                                                   # blocknames_list=blocksnames_list,
-                                                   do_baselining=True, do_normalizing=True,
-                                                   plt_title='presumably all fast-events')
+for storedparamsfile in storedparams_jsonfiles:
+    cell_name = storedparamsfile[0:10]
+    cell_name = cell_name.split('_')[0]
+    cell_depolevents = [file for file in depolevents_tables if cell_name in file]
+    if not cell_depolevents:
+        resultsfilepath = resultsfolderpath + '\\' + storedparamsfile
+        with open(resultsfilepath, 'r') as file:
+            storedresultsfile = json.loads(file.read())
+        if 'getdepolarizingevents_settings' in storedresultsfile.keys():
+            print(cell_name)
+            singleneuron_data = SingleNeuron(cell_name)
+            singleneuron_data.get_depolarizingevents_fromrawdata()
+            singleneuron_data.write_results()

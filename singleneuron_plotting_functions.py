@@ -35,7 +35,7 @@ def plot_block(block, depolarizingevents_df,
     nsubplots = len(block.channel_indexes)
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
     # marking event baselines and peaks, if applicable
-    if events_to_mark and not events_to_mark.empty:
+    if (events_to_mark is not None) and (not events_to_mark.empty):
         blockevents_to_mark = (events_to_mark & (depolarizingevents_df.file_origin == block.file_origin))
         block_events_df = depolarizingevents_df[blockevents_to_mark]
         for idx, signal in enumerate(block.channel_indexes[0].analogsignals):

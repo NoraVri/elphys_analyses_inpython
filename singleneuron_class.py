@@ -26,9 +26,7 @@ rawdata_path = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirec
 
 class SingleNeuron:
     # initializing the class instance
-    def __init__(self,
-                 singleneuron_name,
-                 path=rawdata_path):
+    def __init__(self, singleneuron_name, path=rawdata_path):
         """
         singleneuron_name should be a unique identifier for the recording: in my conventions each neuron is named
             by the date (YYYYMMDD) and letter (uppercase), and occasionally also a number (reflecting the
@@ -90,7 +88,7 @@ class SingleNeuron:
             if len(self.depolarizing_events) > 0:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
 
-            print('results have been saved.')
+            print(self.name + ' results have been saved.')
 
         else:
             print('no results folder found')
@@ -530,8 +528,7 @@ class SingleNeuron:
                                               **kwargs)
             axis.set_title(axis_title)
 
-    def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=[],
-                                         get_subthreshold_events=True,
+    def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=None,
                                          blocknames_list=None, plt_title='',
                                          **kwargs):
         """
@@ -545,20 +542,15 @@ class SingleNeuron:
         - timealignto_measure = 'peakv_idx' - by default, traces are aligned to event peaks; any
             time-based event-measures are acceptable.
         - prealignpoint_window_inms = 5 - startpoint of the displayed trace, in ms before the alignment-point.
-        - total_plotwindow_inms = 50 - the total length of traces to display.
+        - plotwindow_inms = 50 - the total length of traces to display.
         - axis_object = None - by default, all events will be plotted in a single new plot; if
             an axis object is passed, traces are plotted onto it and no new figure is created.
         - get_measures_type = 'raw' - otherwise, the event-detect traces will be displayed instead of raw v.
         - do_baselining and do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
             depending on get_measures_type) values to do baselining and/or normalizing, respectively.
         """
-        if get_subthreshold_events is True:
-            events_df = self.depolarizing_events
-        else:
-            events_df = self.action_potentials
-
         color_lims = [0, len(events_groups) - 1]
-        colormap, cm_normalizer = plots.get_colors_forlineplots([],color_lims)
+        colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)
 
         allblocks_nameslist = self.get_blocknames(printing='off')
         if blocknames_list is not None:
@@ -568,7 +560,7 @@ class SingleNeuron:
 
         figure, axis = plt.subplots(1,1)
         for i, events_group in enumerate(events_groups):
-            events_for_plotting = events_df[events_group]
+            events_for_plotting = self.depolarizing_events[events_group]
             for block_name in blocks_forplotting:
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
@@ -582,7 +574,7 @@ class SingleNeuron:
         colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
                                    ticks=list(range(len(events_groups)))
                                    )
-        if len(group_labels) == len(events_groups):
+        if group_labels is not None and (len(group_labels) == len(events_groups)):
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
 
@@ -603,12 +595,12 @@ class SingleNeuron:
             stored_kwargs = {
                             'min_depolspeed': 0.1,
                             'min_depolamp': 0.2,
-                            'peakwindow': 5,
-                            'spikewindow': 40,
-                            'spikeahpwindow': 150,
+                            'depol_to_peak_window': 5,
+                            'event_width_window': 40,
+                            'ahp_width_window': 150,
                             'noisefilter_hpfreq': 3000,
                             'oscfilter_lpfreq': 20,
-                            'ttleffect_windowinms': None,
+                            'ttleffect_window': None,
                             'plot': 'on'}
         else:
             stored_kwargs.update(self.rawdata_readingnotes['getdepolarizingevents_settings'])
@@ -625,7 +617,8 @@ class SingleNeuron:
             **stored_kwargs)
 
         if return_dicts:
-            return eventmeasures_dictionary
+            stored_kwargs['plot'] = 'off'
+            return eventmeasures_dictionary, stored_kwargs
 
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,

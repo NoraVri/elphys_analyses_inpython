@@ -5,7 +5,7 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = '201905'
+neuron_name = '20190529A1'
 singleneuron_data = SingleNeuron(neuron_name)
 
 
@@ -61,7 +61,7 @@ singleneuron_data.plot_depolevents(fastevents_candidates,
 
 # %% labeling fast-events as such, and saving the data table
 singleneuron_data.depolarizing_events.event_label[fastevents_candidates] = 'fastevent'
-# singleneuron_data.write_results()
+singleneuron_data.write_results()
 # tinyfastevents_largerthan_params = {
 #                                 'amplitude':0.4,
 #                                 # 'baselinev':-80,

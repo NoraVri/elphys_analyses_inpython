@@ -5,7 +5,7 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = '201905'
+neuron_name = '20190527C'
 singleneuron_data = SingleNeuron(neuron_name)
 
 
@@ -38,6 +38,7 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20
                                                       subthreshold_depolarizations=unlabeled_events)
 
 # %% plotting groups of events baselined&normalized
+# neuron20190527C: -80 < baselinev < -30, amplitude > 2, rise_time < 2
 fastevents_largerthan_params = {
                                 'amplitude':0.5,
                                 # 'baselinev':-80,
@@ -61,7 +62,7 @@ singleneuron_data.plot_depolevents(fastevents_candidates,
 
 # %% labeling fast-events as such, and saving the data table
 singleneuron_data.depolarizing_events.event_label[fastevents_candidates] = 'fastevent'
-# singleneuron_data.write_results()
+singleneuron_data.write_results()
 # tinyfastevents_largerthan_params = {
 #                                 'amplitude':0.4,
 #                                 # 'baselinev':-80,

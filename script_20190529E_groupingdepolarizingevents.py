@@ -38,6 +38,8 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20
                                                       subthreshold_depolarizations=unlabeled_events)
 
 # %% plotting groups of events baselined&normalized
+
+# neuron20190529E: amplitude > 0.4, rise_time < 0.5
 fastevents_largerthan_params = {
                                 'amplitude':0.5,
                                 # 'baselinev':-80,

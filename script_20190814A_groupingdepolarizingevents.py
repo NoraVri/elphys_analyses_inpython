@@ -5,9 +5,18 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = '201905'
+neuron_name = '20190814A'
 singleneuron_data = SingleNeuron(neuron_name)
 
+# Has fast-events for sure: three groups of amp 7, 8 and 10 mV. Only two examples in the largest two groups,
+# but it's enough to make it very clear that the decay is the same.
+
+# I looked for but did not find any events <2mV amp that look like they would have the same rise and decay, too.
+
+# What did jump out were groups of numerous spikelets with all the same amp (~1mV) and decay (separable coupled neurons?)
+
+#!Note: there's one fast-event happening ~13s into gapFree_withBlockers_0000 - since new file is started
+# at the time of solution change, blockers had not actually reached the bath yet.
 
 # %% seeing that APs and spikeshoulderpeaks got detected and labeled correctly
 aps = singleneuron_data.depolarizing_events.event_label == 'actionpotential'
@@ -39,7 +48,7 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20
 
 # %% plotting groups of events baselined&normalized
 fastevents_largerthan_params = {
-                                'amplitude':0.5,
+                                'amplitude':2,
                                 # 'baselinev':-80,
                                 }
 fastevents_smallerthan_params = {
@@ -54,14 +63,14 @@ for key, value in fastevents_smallerthan_params.items():
 singleneuron_data.plot_depolevents(fastevents_candidates,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
-                                   do_normalizing=True,
+                                   # do_normalizing=True,
                                    prealignpoint_window_inms=10,
                                    plotwindow_inms=30,
                                    plt_title='presumably all fast-events')
 
 # %% labeling fast-events as such, and saving the data table
 singleneuron_data.depolarizing_events.event_label[fastevents_candidates] = 'fastevent'
-# singleneuron_data.write_results()
+singleneuron_data.write_results()
 # tinyfastevents_largerthan_params = {
 #                                 'amplitude':0.4,
 #                                 # 'baselinev':-80,

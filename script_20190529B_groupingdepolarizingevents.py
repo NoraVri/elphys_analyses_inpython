@@ -5,7 +5,7 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = '201905'
+neuron_name = '20190529B'
 singleneuron_data = SingleNeuron(neuron_name)
 
 
@@ -38,6 +38,7 @@ singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20
                                                       subthreshold_depolarizations=unlabeled_events)
 
 # %% plotting groups of events baselined&normalized
+# neuron20190529B: amplitude > 1 - basically all evoked responses look like stacked fast-events
 fastevents_largerthan_params = {
                                 'amplitude':0.5,
                                 # 'baselinev':-80,

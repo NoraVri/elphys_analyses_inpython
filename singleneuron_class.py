@@ -528,6 +528,7 @@ class SingleNeuron:
                                               **kwargs)
             axis.set_title(axis_title)
 
+    # plotting groups of depolarizing events overlayed, one color per group
     def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=None,
                                          blocknames_list=None, plt_title='',
                                          **kwargs):
@@ -578,17 +579,26 @@ class SingleNeuron:
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
 
+    # plotting the event-detect trace that was used to find depolarizing events
     def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,
                                           return_dicts=False,
+                                          time_slice=None,
                                           **kwargs):
         """ This function reproduces the results of get_depolarizing_events on a single trace,
         showing all the figures in between.
+        If a segment is very long, this can cause plotting to be very slow or even crash; this can be prevented
+        by instead plotting a time-slice of the segment (by setting time_slice=[t_start, t_stop] (in s)).
+
         If depolarizing-events detection has already been performed (and saved) for the singleneuron instance,
         this function will use those parameter settings to reproduce plots; otherwise, default parameters will be used.
-        Adding kwargs will update those parameters for plotting the trace (without overwriting stored parameters).
+        Adding kwargs will update those parameters for plotting the trace (without overwriting parameters stored on singleneuron).
         For the list of kwargs, see get_depolarizing_events_fromrawdata.
         """
         segment = self.blocks[block_idx].segments[segment_idx]
+        if time_slice:
+            t_start = time_slice[0] * pq.s
+            t_stop = time_slice[1] * pq.s
+            segment = segment.time_slice(t_start, t_stop)
         # if there are no saved values, set getdepolarizingevents-parameters to defaults; otherwise, use saved values
         stored_kwargs = {}
         if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
@@ -620,6 +630,7 @@ class SingleNeuron:
             stored_kwargs['plot'] = 'off'
             return eventmeasures_dictionary, stored_kwargs
 
+    # scattering measured events parameters, one subplot per (named) group of events
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,
                                             **events_groups):

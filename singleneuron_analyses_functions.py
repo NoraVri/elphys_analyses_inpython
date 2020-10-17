@@ -620,23 +620,27 @@ def apply_hilberttransform_to_vtrace(voltage_trace, time_axis, sampling_frequenc
     # TODO: replace the line below with code that does proper mean-centering (in traces with current pulses applied this gives particularly unreliable results)
     centering_value = np.mean(voltage_trace)
     voltage_trace_meancentered = voltage_trace - centering_value
-    voltage_trace_analyticsignal = signal.hilbert(voltage_trace_meancentered)
-    voltage_approxphase = np.angle(voltage_trace_analyticsignal)
-    voltage_approxinstfreq = ((np.diff(np.unwrap(voltage_approxphase))
-                               / (2.0*np.pi) * sampling_frequency))
-    voltage_approxphase = np.angle(voltage_trace_analyticsignal)
+    try:
+        voltage_trace_analyticsignal = signal.hilbert(voltage_trace_meancentered)
+        voltage_approxphase = np.angle(voltage_trace_analyticsignal)
+        voltage_approxinstfreq = ((np.diff(np.unwrap(voltage_approxphase))
+                                   / (2.0*np.pi) * sampling_frequency))
+        voltage_approxphase = np.angle(voltage_trace_analyticsignal)
 
-    if plot == 'on':
-        figure, axes = plt.subplots(2, 1, sharex='all')
-        axes[0].plot(time_axis, voltage_approxphase, label='phase')
-        axes[0].set_ylim([-3.5, 3.5])
-        axes[0].legend()
-        axes[1].plot(time_axis[1:], voltage_approxinstfreq,
-                     color='black',
-                     label='inst.freq.')
-        axes[1].set_ylim([-5, 40])
-        axes[1].legend()
+        if plot == 'on':
+            figure, axes = plt.subplots(2, 1, sharex='all')
+            axes[0].plot(time_axis, voltage_approxphase, label='phase')
+            axes[0].set_ylim([-3.5, 3.5])
+            axes[0].legend()
+            axes[1].plot(time_axis[1:], voltage_approxinstfreq,
+                         color='black',
+                         label='inst.freq.')
+            axes[1].set_ylim([-5, 40])
+            axes[1].legend()
 
+    except MemoryError:
+        voltage_approxphase = None
+        voltage_approxinstfreq = None
     return voltage_approxphase, voltage_approxinstfreq
 
 

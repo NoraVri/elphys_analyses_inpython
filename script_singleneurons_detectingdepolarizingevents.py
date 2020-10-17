@@ -11,6 +11,26 @@ from singleneuron_class import SingleNeuron
 # (evoked by activating axons arriving to the olive, or pharmacologically blocked).
 # recordings that are listed here but do not fit the criteria are marked with '###'
 
+# %% running get_depolarizingevents function on a batch of neurons
+# resultsfolderpath = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me\\myResults"
+# storedparams_jsonfiles = [file for file in os.listdir(resultsfolderpath) if file.endswith('json')]
+# depolevents_tables = [file for file in os.listdir(resultsfolderpath) if 'depolarizing_events' in file]
+#
+# for storedparamsfile in storedparams_jsonfiles:
+#     cell_name = storedparamsfile[0:10]
+#     cell_name = cell_name.split('_')[0]
+#     cell_depolevents = [file for file in depolevents_tables if cell_name in file]
+#     if not cell_depolevents:
+#         resultsfilepath = resultsfolderpath + '\\' + storedparamsfile
+#         with open(resultsfilepath, 'r') as file:
+#             storedresultsfile = json.loads(file.read())
+#         if 'getdepolarizingevents_settings' in storedresultsfile.keys():
+#             print(cell_name)
+#             singleneuron_data = SingleNeuron(cell_name)
+#             singleneuron_data.get_depolarizingevents_fromrawdata()
+#             singleneuron_data.write_results()
+#             del singleneuron_data
+
 # %% list of neurons with light-evoked responses recordings
 ## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse
 # (experiment days 20190527, 20190529, 20200630, 20200701, 20200706, 20200707, 20200708)
@@ -170,22 +190,3 @@ time_slice = [180, 280]
 # %% when satisfied with settings, adding them onto singleneuron_data instance
 singleneuron_data.rawdata_readingnotes['getdepolarizingevents_settings'] = depolevents_readingnotes_dict
 singleneuron_data.write_results()
-# %% running get_depolarizingevents function on a batch of neurons
-
-resultsfolderpath = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me\\myResults"
-storedparams_jsonfiles = [file for file in os.listdir(resultsfolderpath) if file.endswith('json')]
-# depolevents_tables = [file for file in os.listdir(resultsfolderpath) if 'depolarizing_events' in file]
-
-for storedparamsfile in storedparams_jsonfiles:
-    cell_name = storedparamsfile[0:10]
-    cell_name = cell_name.split('_')[0]
-    # cell_depolevents = [file for file in depolevents_tables if cell_name in file]
-    # if not cell_depolevents:
-    resultsfilepath = resultsfolderpath + '\\' + storedparamsfile
-    with open(resultsfilepath, 'r') as file:
-        storedresultsfile = json.loads(file.read())
-    if 'getdepolarizingevents_settings' in storedresultsfile.keys():
-        print(cell_name)
-        singleneuron_data = SingleNeuron(cell_name)
-        singleneuron_data.get_depolarizingevents_fromrawdata()
-        singleneuron_data.write_results()

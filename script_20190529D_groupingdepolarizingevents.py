@@ -5,11 +5,14 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = ''
+neuron_name = '20190529D'
 singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
-
+# only 9 spontaneous fast-events and they're not very large (~3.5 - 6mV) but they very clearly group into 3 amplitudes
+# with all having pretty much exactly the same normalized decay shape.
+# Light-evoked activity always seems to include also a broad, slow depolarization, possibly sometimes with small events
+# riding on top, and quite often a full sodium AP without shoulder.
 
 des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'
@@ -32,35 +35,27 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude',
                                                       # evoked_depols=evoked_unlabeled_events
                                                       )
 
-# fast_events = des_df.event_label == 'fastevent'
-# other_fast_events = des_df.event_label == 'otherfastevent'
-# singleneuron_data.plot_depolevents(fast_events,
-#                                    do_baselining=True,
-#                                    do_normalizing=True,
-#                                    colorby_measure='amplitude',  # colorby_measure='baselinev',
-#                                    prealignpoint_window_inms=5,
-#                                    plotwindow_inms=30,
-#                                    )
-# singleneuron_data.plot_depolevents(other_fast_events,
-#                                    do_baselining=True,
-#                                    do_normalizing=True,
-#                                    colorby_measure='amplitude',  # colorby_measure='baselinev',
-#                                    prealignpoint_window_inms=5,
-#                                    plotwindow_inms=30,
-#                                    )
-# plt.figure()
-# des_df.loc[:,'amplitude'].plot.hist(bins=30)
-# plt.title('all events, amplitude')
-# plt.figure()
-# des_df.loc[fast_events,'amplitude'].plot.hist(bins=15)
-# plt.title('fast-events, amplitude')
-# plt.figure()
-# des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=15)
-# plt.title('fast events, rise-time (20-80%amp)')
-# plt.figure()
-# des_df.loc[fast_events, 'width_50'].plot.hist(bins=15)
-# plt.title('fast events, half-width')
+fast_events = des_df.event_label == 'fastevent'
+singleneuron_data.plot_depolevents(fast_events,
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   colorby_measure='amplitude',  # colorby_measure='baselinev',
+                                   prealignpoint_window_inms=5,
+                                   plotwindow_inms=30,
+                                   )
 
+plt.figure()
+des_df.loc[:,'amplitude'].plot.hist(bins=30)
+plt.title('all events, amplitude')
+plt.figure()
+des_df.loc[fast_events,'amplitude'].plot.hist(bins=15)
+plt.title('fast-events, amplitude')
+plt.figure()
+des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=15)
+plt.title('fast events, rise-time (20-80%amp)')
+plt.figure()
+des_df.loc[fast_events, 'width_50'].plot.hist(bins=15)
+plt.title('fast events, half-width')
 
 # ongoing analysis notes:
 #
@@ -78,16 +73,16 @@ singleneuron_data.plot_depolevents(aps,
 singleneuron_data.plot_rawdatablocks(events_to_mark=~(currentpulsechanges | aps | spikeshoulderpeaks))
 
 # %% labeling noise-events etc.
-noiseevents_candidates = (des_df.baselinev > -35) & (des_df.amplitude < 1)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      possibly_noise=noiseevents_candidates)
-singleneuron_data.plot_depolevents(noiseevents_candidates,
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=5,
-                                   plotwindow_inms=30,
-                                   )
+# noiseevents_candidates = (des_df.baselinev > -35) & (des_df.amplitude < 1)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       possibly_noise=noiseevents_candidates)
+# singleneuron_data.plot_depolevents(noiseevents_candidates,
+#                                    do_baselining=True,
+#                                    colorby_measure='baselinev',
+#                                    prealignpoint_window_inms=5,
+#                                    plotwindow_inms=30,
+#                                    )
 
 
 
@@ -95,13 +90,13 @@ singleneuron_data.plot_depolevents(noiseevents_candidates,
 
 # %% labeling of selected events: things that could be fast-events
 fastevents_largerthan_params = {
-                                'amplitude':0.5,
+                                'amplitude':3.5,
                                 # 'baselinev':-80,
                                 }
 fastevents_smallerthan_params = {
-                                 'rise_time_20_80': 0.7,
+                                 'width_50': 10,
                                  }
-fastevents_candidates = unlabeled_events
+fastevents_candidates = unlabeled_events & ~des_df.applied_ttlpulse
 for key, value in fastevents_largerthan_params.items():
     fastevents_candidates = fastevents_candidates & (des_df[key] > value)
 for key, value in fastevents_smallerthan_params.items():
@@ -110,7 +105,7 @@ for key, value in fastevents_smallerthan_params.items():
 singleneuron_data.plot_depolevents(fastevents_candidates,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
-                                   do_normalizing=True,
+                                   # do_normalizing=True,
                                    prealignpoint_window_inms=10,
                                    plotwindow_inms=30,
                                    plt_title='presumably all fast-events')

@@ -5,11 +5,13 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = ''
+neuron_name = '20190529E'
 singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
-
+# Thy1 mouse, lots of light pulses applied
+# it's very clear that this neuron has no fast-events whatsoever, whether spontaneously or evoked;
+# not even all that sure it has any real events at all so much (neuron was patched more than 6 hours after slicing).
 
 des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'
@@ -49,17 +51,10 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude',
 #                                    plotwindow_inms=30,
 #                                    )
 # plt.figure()
-# des_df.loc[:,'amplitude'].plot.hist(bins=30)
-# plt.title('all events, amplitude')
+# des_df.loc[fast_events,'amplitude'].plot.hist(bins=30)
 # plt.figure()
-# des_df.loc[fast_events,'amplitude'].plot.hist(bins=15)
-# plt.title('fast-events, amplitude')
-# plt.figure()
-# des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=15)
-# plt.title('fast events, rise-time (20-80%amp)')
-# plt.figure()
-# des_df.loc[fast_events, 'width_50'].plot.hist(bins=15)
-# plt.title('fast events, half-width')
+# des_df.loc[:,'rise_time_20_80'].plot.hist(bins=30)
+# des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=30)
 
 
 # ongoing analysis notes:

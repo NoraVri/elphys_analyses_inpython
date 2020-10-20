@@ -5,31 +5,33 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = ''
+neuron_name = '20190729A'
 singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
-
+# almost an hour and a half of recording, and then another ~40min. of recording with excitatory inputs blocked.
+# Nice and stable recording for the most part, with the cell moving back and forth between osc and non-osc states.
+# Looks to be completely devoid of fast-events: my eyes don't see any events >~0.5mV amp, and all things that are
+# clearly events (and not just noise) all look like spikelets.
+# Interestingly, it seems relatively easy to get this neuron to fire APs using depolarizing DC (multiple evoked spikes
+# on depol.steps in long-pulse recordings).
 
 des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'
 spikeshoulderpeaks = des_df.event_label == 'spikeshoulderpeak'
 currentpulsechanges = des_df.event_label == 'currentpulsechange'
-
-# analysis summary figures:
+# !no fast-events detected anywhere.
+# %% analysis summary figures:
 # parameter distributions of candidate fast-events (=events that are so far still unlabeled)
 unlabeled_events = des_df.event_label.isna()
 spont_unlabeled_events = unlabeled_events & ~des_df.applied_ttlpulse
-# evoked_unlabeled_events = unlabeled_events & des_df.applied_ttlpulse
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=spont_unlabeled_events,
-                                                      # evoked_depols=evoked_unlabeled_events
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=spont_unlabeled_events,
-                                                      # evoked_depols=evoked_unlabeled_events
                                                       )
 
 # fast_events = des_df.event_label == 'fastevent'
@@ -49,17 +51,10 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude',
 #                                    plotwindow_inms=30,
 #                                    )
 # plt.figure()
-# des_df.loc[:,'amplitude'].plot.hist(bins=30)
-# plt.title('all events, amplitude')
+# des_df.loc[fast_events,'amplitude'].plot.hist(bins=30)
 # plt.figure()
-# des_df.loc[fast_events,'amplitude'].plot.hist(bins=15)
-# plt.title('fast-events, amplitude')
-# plt.figure()
-# des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=15)
-# plt.title('fast events, rise-time (20-80%amp)')
-# plt.figure()
-# des_df.loc[fast_events, 'width_50'].plot.hist(bins=15)
-# plt.title('fast events, half-width')
+# des_df.loc[:,'rise_time_20_80'].plot.hist(bins=30)
+# des_df.loc[fast_events,'rise_time_20_80'].plot.hist(bins=30)
 
 
 # ongoing analysis notes:
@@ -72,7 +67,7 @@ singleneuron_data.plot_depolevents(aps,
                                    do_baselining=True,
                                    colorby_measure='baselinev',
                                    prealignpoint_window_inms=20,
-                                   plotwindow_inms = 200)
+                                   plotwindow_inms = 100)
 
 # %% quick check for any places where obvious noise-events have been detected
 singleneuron_data.plot_rawdatablocks(events_to_mark=~(currentpulsechanges | aps | spikeshoulderpeaks))
@@ -89,17 +84,22 @@ singleneuron_data.plot_depolevents(noiseevents_candidates,
                                    plotwindow_inms=30,
                                    )
 
-
-
+# there is a single currentpulsechange that did not get labeled as such - doing it manually:
+# singleneuron_data.depolarizing_events.loc[(des_df.amplitude>10)&(unlabeled_events),
+#                                           'event_label'] = 'currentpulsechange'
+# singleneuron_data.write_results()
+# des_df = singleneuron_data.depolarizing_events
 
 
 # %% labeling of selected events: things that could be fast-events
 fastevents_largerthan_params = {
-                                'amplitude':0.5,
-                                # 'baselinev':-80,
+                                'amplitude':0.75,
+                                # 'rise_time_20_80':0.2,
                                 }
 fastevents_smallerthan_params = {
-                                 'rise_time_20_80': 0.7,
+                                 'rise_time_20_80': 2,
+                                 'width_50': 20,
+                                 'baselinev': -40
                                  }
 fastevents_candidates = unlabeled_events
 for key, value in fastevents_largerthan_params.items():
@@ -110,10 +110,12 @@ for key, value in fastevents_smallerthan_params.items():
 singleneuron_data.plot_depolevents(fastevents_candidates,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
-                                   do_normalizing=True,
+                                   # do_normalizing=True,
                                    prealignpoint_window_inms=10,
                                    plotwindow_inms=30,
-                                   plt_title='presumably all fast-events')
+                                   plt_title='possibly fast-events')
+# I see just one event that MIGHT be fast enough to qualify as a fast-event, but it's in a pretty noisy trace
+# so I don't trust it enough to classify as such. And anyway just one single event is of no use.
 
 # %% labeling fast-events as such, and saving the data table
 singleneuron_data.depolarizing_events.loc[fastevents_candidates, 'event_label'] = 'fastevent'

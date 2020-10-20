@@ -31,7 +31,7 @@ from singleneuron_class import SingleNeuron
 #             singleneuron_data.write_results()
 #             del singleneuron_data
 
-# %% list of neurons with light-evoked responses recordings
+# %% recorded neurons, ordered by date
 ## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse
 # (experiment days 20190527, 20190529, 20200630, 20200701, 20200706, 20200707, 20200708)
 # singleneuron_data = SingleNeuron('20190527A')

@@ -5,14 +5,15 @@ import pandas as pd
 
 from singleneuron_class import SingleNeuron
 
-neuron_name = ''
+neuron_name = '20200818B'
 singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
-
+# at first glance it's pretty clear what are the fast events - there's a few groups with amp between 9 - 12 mV,
+# and another group with amp ~5mV. But then I plot them normalized and they're just not entirely identical enough...
 
 des_df = singleneuron_data.depolarizing_events
-aps = des_df.event_label == 'actionpotential'
+aps = (des_df.event_label == 'actionpotential') | (des_df.event_label == 'actionpotential_on_currentpulsechange')
 spikeshoulderpeaks = des_df.event_label == 'spikeshoulderpeak'
 currentpulsechanges = des_df.event_label == 'currentpulsechange'
 
@@ -87,28 +88,23 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_events)
 
 # %% labeling noise-events etc.
-noiseevents_candidates = (des_df.baselinev > -35) & (des_df.amplitude < 1)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      possibly_noise=noiseevents_candidates)
-singleneuron_data.plot_depolevents(noiseevents_candidates,
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=5,
-                                   plotwindow_inms=30,
-                                   )
+# there's bound to be noise in the small events, and there are definitely some things that are not events but
+# just the neuron being happy - but it all happens in the range of small amplitudes (1mV or so) so I don't think
+# it's worth cleaning up right now.
 
 
 
 
 
 # %% labeling of selected events: things that could be fast-events
+# I looked for, but didn't find any events <1mV amp that have a waveform corresponding to the larger-amp fast-events.
+#
 fastevents_largerthan_params = {
-                                'amplitude':0.5,
+                                'amplitude':1,
                                 # 'baselinev':-80,
                                 }
 fastevents_smallerthan_params = {
-                                 'rise_time_20_80': 0.7,
+                                 'rise_time_20_80': 2,
                                  }
 fastevents_candidates = unlabeled_events
 for key, value in fastevents_largerthan_params.items():

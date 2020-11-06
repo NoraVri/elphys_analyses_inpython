@@ -50,7 +50,7 @@ def plot_block(block, depolarizingevents_df,
                             color='red')
         # setting plot settings so that points will be in the right place
         time_axis_unit = 'ms'
-        segments_overlayed=False
+        segments_overlayed = False
 
     # plotting all the traces of the block
     for i in range(nsubplots):
@@ -66,8 +66,6 @@ def plot_block(block, depolarizingevents_df,
             axes[i].plot(time_axis, trace_forplotting)
         axes[i].set_xlabel('time  in ' + time_axis_unit)
         axes[i].set_ylabel(str(trace_unit))
-
-
 
 # %% depolarizing events and action potentials - line plots of raw data
 

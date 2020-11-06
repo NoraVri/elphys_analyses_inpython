@@ -55,7 +55,7 @@ from singleneuron_class import SingleNeuron
 ## experiment: pharmacological blockage of inputs to IO neurons
 # singleneuron_data = SingleNeuron('20190729A')
 
-singleneuron_data = SingleNeuron('20190804A')
+# singleneuron_data = SingleNeuron('20190804A')
 
 # singleneuron_data = SingleNeuron('20190804B')
 
@@ -145,12 +145,12 @@ singleneuron_data = SingleNeuron('20190804A')
 
 ## experiment: activation of inputs to IO neurons by ChR activation in RBP mouse
 # (experiment days 20200805, 20200818, 20200819)
-# singleneuron_data = SingleNeuron('20200818B')
+singleneuron_data = SingleNeuron('20200818B')
 
 # singleneuron_data = SingleNeuron('20200818C')
 
 
-# %% plotting data
+# %% plotting the raw data
 
 singleneuron_data.plot_rawdatablocks(time_axis_unit='s')
 singleneuron_data.get_blocknames()
@@ -168,25 +168,29 @@ singleneuron_data.get_blocknames()
 
 # neuron20200708G: used block no.3 to find good parameter settings
 
+# neuron20200818B: used block no.0 to find good parameter settings
+# neuron20200818C: used block no.0 to find good parameter settings
 
-block_no = 1
+block_no = 0
 segment_no = 0
-time_slice = [180, 280]
+time_slice = [100, 250]
 
 (eventmeasures_dict,
  depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
                                                                                       return_dicts=True,
                                                                                       time_slice=time_slice,
-                                    # min_depolspeed=0.1,
-                                    # min_depolamp=0.2,
+                                    min_depolspeed=0.15,
+                                    min_depolamp=0.3,
                                     # depol_to_peak_window=5,
                                     # event_width_window=40,
-                                    ahp_width_window=200,
-                                    # noisefilter_hpfreq=3000,
-                                    # oscfilter_lpfreq=20,
+                                    ahp_width_window=10,
+                                    # noisefilter_hpfreq=2500,
+                                    # oscfilter_lpfreq=25,
                                     # ttleffect_window=None,
 )
 
 # %% when satisfied with settings, adding them onto singleneuron_data instance
 singleneuron_data.rawdata_readingnotes['getdepolarizingevents_settings'] = depolevents_readingnotes_dict
 singleneuron_data.write_results()
+
+

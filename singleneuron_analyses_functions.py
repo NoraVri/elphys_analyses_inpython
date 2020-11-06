@@ -565,7 +565,10 @@ def get_events_measures(peaks_idcs,
             preevent_idx = 0
         didt_around_event = np.diff(current_recording[preevent_idx:int(baseline_idx + ahpwindow_insamples)])
         if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 8:
-            event_label = 'currentpulsechange'
+            if event_label is None:
+                event_label = 'currentpulsechange'
+            else:
+                event_label = event_label + '_on_currentpulsechange'
 
         eventsmeasures_dictionary['event_label'].append(event_label)
         eventsmeasures_dictionary['spikeshoulderpeaks_idcs'].append(spikeshoulderpeaks)

@@ -32,7 +32,7 @@ manipulatedexcitations_experiments_recordings = recordings_metadata[
 manipulatedexcitations_singleneurons_names = manipulatedexcitations_experiments_recordings.name
 # %%
 # 2. selecting only neuron recordings where manipulations were actually applied, and were recorded for at least 10min
-#(in case of blockers applied, this requires that the raw data has been annotated appropriately;
+# (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 
 evokedexcitations_singleneurons = []

@@ -19,7 +19,9 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # 10min of recordings seems like a decent start for estimating the overall frequency of events occurring).
 
 # 1. selecting only neuron recordings done on relevant experiment days (evoked synaptic excitation or blocker applied)
-evokedexcitations_condition = experimentdays_metadata.genetics.isin(['Thy1', 'RBP'])
+ChRinjected_mice = ['HUM045', 'HUM046']
+evokedexcitations_condition = experimentdays_metadata.genetics.isin(['Thy1', 'RBP']) \
+                              | experimentdays_metadata.virusinjection_ID.isin(ChRinjected_mice)
 blockedexcitations_condition = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
 blockedexcitations_condition[blockedexcitations_condition.isna()] = False
 

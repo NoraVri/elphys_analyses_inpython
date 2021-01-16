@@ -835,3 +835,15 @@ import pandas as pd
 # cell20200818C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=19)
 # cell20200818C.rawdata_remove_nonrecordingsection('longPulses_0004.abf', trace_end_t=46)  # file misnamed at recordings
 # cell20200818C.write_results()
+
+# %% experiments with glutamate puff
+# cell20201116A = SingleNeuron('20201116A')
+
+# %%
+# cell20201116B = SingleNeuron('20201116B')
+# # cell (partially) re-sealed itself twice during the first few minutes of recording; cutting all that off the trace
+# cell20201116B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=553.5)
+# # cell starts to die in seg.5 already of the last puff-response file, but has one nice fast-event there so keeping it
+# cell20201116B.rawdata_remove_nonrecordingsection('puffResponse_0002.abf', remove_segments=[6, 7, 8])
+# cell20201116B.write_results()
+

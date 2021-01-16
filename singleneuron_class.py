@@ -378,8 +378,8 @@ class SingleNeuron:
         """ returns the (file)names of all the blocks of singleneuron as a list, and prints them."""
         blocks_list = [block.file_origin for block in self.blocks]
         if printing == 'on':
-            print(blocks_list)
-
+            for idx, block in enumerate(blocks_list):
+                print(block + ' , idx=' + str(idx))
         return blocks_list
 
     # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
@@ -925,7 +925,7 @@ class SingleNeuron:
         txtfiles_list = [filename for filename in os.listdir() if filename.endswith('.txt')]
 
         for datafile in txtfiles_list:
-            print('currently processing file: ')
+            print('currently processing file: ')  #! put the actual file name here to print
             # in my .txt-file data there are always just two recording channels: V and I
             # getting one block per file, with all the channel_indexes/segments/analogsignals
             block = Block()

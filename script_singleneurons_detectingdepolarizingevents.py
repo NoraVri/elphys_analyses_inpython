@@ -145,9 +145,11 @@ from singleneuron_class import SingleNeuron
 
 ## experiment: activation of inputs to IO neurons by ChR activation in RBP mouse
 # (experiment days 20200805, 20200818, 20200819)
-singleneuron_data = SingleNeuron('20200818B')
+# singleneuron_data = SingleNeuron('20200818B')
 
 # singleneuron_data = SingleNeuron('20200818C')
+
+singleneuron_data = SingleNeuron('20201116B')
 
 
 # %% plotting the raw data
@@ -171,22 +173,24 @@ singleneuron_data.get_blocknames()
 # neuron20200818B: used block no.0 to find good parameter settings
 # neuron20200818C: used block no.0 to find good parameter settings
 
-block_no = 0
-segment_no = 0
-time_slice = [100, 250]
+# neuron20201116B: used blocks 0, 1 and 3
+
+block_no = 3
+segment_no = 3
+# time_slice = [100, 250]
 
 (eventmeasures_dict,
  depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
                                                                                       return_dicts=True,
-                                                                                      time_slice=time_slice,
-                                    min_depolspeed=0.15,
-                                    min_depolamp=0.3,
+                                                                                      # time_slice=time_slice,
+                                    min_depolspeed=0.3,
+                                    # min_depolamp=0.3,
                                     # depol_to_peak_window=5,
                                     # event_width_window=40,
-                                    ahp_width_window=10,
-                                    # noisefilter_hpfreq=2500,
-                                    # oscfilter_lpfreq=25,
-                                    # ttleffect_window=None,
+                                    # ahp_width_window=10,
+                                    noisefilter_hpfreq=2500,
+                                    oscfilter_lpfreq=10,
+                                    ttleffect_window=2500,
 )
 
 # %% when satisfied with settings, adding them onto singleneuron_data instance

@@ -847,3 +847,105 @@ import pandas as pd
 # cell20201116B.rawdata_remove_nonrecordingsection('puffResponse_0002.abf', remove_segments=[6, 7, 8])
 # cell20201116B.write_results()
 
+
+
+
+
+
+
+
+
+
+# %% experiment: ChR injection to MDJ area
+
+
+# %%
+cell20210113G = SingleNeuron('20210113G')
+# raw data cleanup:
+# nice enough recording overall, though cell is definitely deteriorating a bit over time
+# non-oscillating, does have spontaneous spikes and fast-events
+# removing seal formation; all other recorded data looks good (enough)
+cell20210113G.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
+# had to play with LED a bit to get it to turn on, traces got saved under gapFree title - removing these cause there's nothing of interest inside
+cell20210113G.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+cell20210113G.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
+cell20210113G.rawdata_remove_nonrecordingblock('gapFree_0003.abf')
+
+cell20210113G.write_results()
+
+
+
+
+
+
+
+# %%
+cell20210411A = SingleNeuron('20210411A')
+# applying light just seems to turn on an oscillation (very wackily oscillating neuron)
+cell20210411A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+# %%
+cell20210411F = SingleNeuron('20210411F')
+cell20210411F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
+# %%
+cell20210413A = SingleNeuron('20210413A')
+cell20210413A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+# %%
+cell20210413B = SingleNeuron('20210413B')
+cell20210413B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+# %%
+cell20210426B = SingleNeuron('20210426B')
+# has a couple of traces with light applied, exactly one where no spike but a fast-event is evoked (hyperpolarizing the neuron doesn't help, then it dies)
+# raw data cleanup:
+# removing seal formation and another minute or so of recording where seal was not properly broken all the way in
+cell20210426B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=124)
+# also removing last 3 traces where the neuron leaves suddenly and quickly
+cell20210426B.rawdata_remove_nonrecordingsection('light_0000.abf', remove_segments=[7, 8, 9, 10])
+cell20210426B.get_depolarizingevents_fromrawdata()
+cell20210426B.write_results()
+
+# %%
+cell20210426C = SingleNeuron('20210426C')
+# getting held with up to -2nA to maintain halfway decent baselineV, but other than that looks all good
+cell20210426C.get_depolarizingevents_fromrawdata()
+cell20210426C.write_results()
+
+# %%
+cell20210426D = SingleNeuron('20210426D')
+# nice recording overall, even though cell is losing ~20mV of restingV over time (-50 to -30)
+# raw data cleanup:
+# removing seal formation, and some time from the end of the last recording where the neuron died
+cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=35)
+cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=875)
+cell20210426D.get_depolarizingevents_fromrawdata()
+cell20210426D.write_results()
+
+# %%
+cell20210426E = SingleNeuron('20210426E')
+cell20210426E.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
+# %%
+cell20210426F = SingleNeuron('20210426F')
+cell20210426F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
+# %%
+cell20210428B = SingleNeuron('20210428B')
+cell20210428B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
+
+# %%
+
+# raw data cleanup:
+# cell.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+#note actual cleanups applied
+
+# note blocks with special chemicals added to bath:
+
+# extracting basic parameters:

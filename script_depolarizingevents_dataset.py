@@ -19,7 +19,13 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # 10min of recordings seems like a decent start for estimating the overall frequency of events occurring).
 
 # 1. selecting only neuron recordings done on relevant experiment days (evoked synaptic excitation or blocker applied)
-ChRinjected_mice = ['HUM045', 'HUM046']
+ChRinjected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
+                    'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
+
+thy1_experiments = experimentdays_metadata.genetics.isin(['Thy1', 'thy1'])
+thy1experiments_dates = experimentdays_metadata[thy1_experiments].date
+thy1neurons_recorded = recordings_metadata[recordings_metadata.date.isin(thy1experiments_dates)]
+
 evokedexcitations_condition = experimentdays_metadata.genetics.isin(['Thy1', 'RBP']) \
                               | experimentdays_metadata.virusinjection_ID.isin(ChRinjected_mice)
 blockedexcitations_condition = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
@@ -32,11 +38,21 @@ manipulatedexcitations_experiments_recordings = recordings_metadata[
     recordings_metadata.date.isin(manipulatedexcitations_experiments_dates)]
 
 manipulatedexcitations_singleneurons_names = manipulatedexcitations_experiments_recordings.name
+print(manipulatedexcitations_singleneurons_names)
+
+MDJevokedexcitations_condition = experimentdays_metadata.virusinjection_ID.isin(ChRinjected_mice)
+MDJevokedexcitations_experiments_dates = experimentdays_metadata[MDJevokedexcitations_condition].date
+MDJevokedexcitations_experimentdays_recordings = recordings_metadata[
+                                            recordings_metadata.date.isin(MDJevokedexcitations_experiments_dates)]
+MDJevokedexcitations_singleneurons = MDJevokedexcitations_experimentdays_recordings.name
+print(MDJevokedexcitations_singleneurons)
+
 # %%
 # 2. selecting only neuron recordings where manipulations were actually applied, and were recorded for at least 10min
 # (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 
+# !note: select further down also by whether light application was done at different baselinev.
 evokedexcitations_singleneurons = []
 blockedexcitations_singleneurons = []
 atleast10minrecording_singleneurons = []

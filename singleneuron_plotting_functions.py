@@ -25,7 +25,7 @@ def plot_block(block, depolarizingevents_df,
     """ Takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
     one subplot per channel_index.
     Optional arguments:
-    - events_to_mark: should be a subthreshold_events DataFrame; baselinev and peakv points will be marked accordingly.
+    - events_to_mark: should be a pd boolean series for indexing into subthreshold_events DataFrame; baselinev and peakv points will be marked accordingly.
     - time_axis_unit: 'ms' by default, can be changed to 's' (or any other time unit understood by quantities).
     - segments_overlayed: True by default, so that consecutive segments of the same block are
         plotted overlayed. If False, consecutive segments are plotted consecutively in the same plot.
@@ -35,7 +35,7 @@ def plot_block(block, depolarizingevents_df,
     nsubplots = len(block.channel_indexes)
     figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
     # marking event baselines and peaks, if applicable
-    if (events_to_mark is not None) and (not events_to_mark.empty):
+    if (events_to_mark is not None) and (not events_to_mark.empty): #insert here: if events_to_mark='by_label'
         blockevents_to_mark = (events_to_mark & (depolarizingevents_df.file_origin == block.file_origin))
         block_events_df = depolarizingevents_df[blockevents_to_mark]
         for idx, signal in enumerate(block.channel_indexes[0].analogsignals):

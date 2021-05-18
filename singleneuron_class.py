@@ -380,7 +380,9 @@ class SingleNeuron:
         if printing == 'on':
             for idx, block in enumerate(blocks_list):
                 print(block + ' , idx=' + str(idx))
-        return blocks_list
+            # return blocks_list
+        else:
+            return blocks_list
 
     # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
     def get_timespentrecording(self, *block_identifiers):
@@ -426,25 +428,30 @@ class SingleNeuron:
             plots.plot_block(block, self.depolarizing_events, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
 
-    def plot_rawdatatraces_ttlaligned(self, *block_identifiers, ch_idxs=None, time_slice=None, newplot_per_block=False):
-        # by default this function will plot all ttl-applied traces, in a window of -50 - 200ms from ttl onset.
-        allblocknames_list = self.get_blocknames(printing='off')
-        if not block_identifiers:
-            blocknames_list = [block.file_origin for block in self.blocks if (len(block.channel_indexes) == 3)]
-        else:
-            blocknames_list = []
-            for identifier in block_identifiers:
-                blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
-                for block in blocks:
-                    blocknames_list.append(block)
+    # extracted depolarizing events: seeing all detected events, by group label
+    def overviewplots_depolarizingevents(self):
+        ""
 
-        if time_slice is None:
-            time_slice = [-50, 200]
-        if ch_idxs is None:
-            ch_idxs = [1, 3]
 
-        if not newplot_per_block:
-            figure, axes = plt.subplots(len(ch_idxs), 1, sharex='all')
+    # def plot_rawdatatraces_ttlaligned(self, *block_identifiers, ch_idxs=None, time_slice=None, newplot_per_block=False):
+    #     # by default this function will plot all ttl-applied traces, in a window of -50 - 200ms from ttl onset.
+    #     allblocknames_list = self.get_blocknames(printing='off')
+    #     if not block_identifiers:
+    #         blocknames_list = [block.file_origin for block in self.blocks if (len(block.channel_indexes) == 3)]
+    #     else:
+    #         blocknames_list = []
+    #         for identifier in block_identifiers:
+    #             blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
+    #             for block in blocks:
+    #                 blocknames_list.append(block)
+    #
+    #     if time_slice is None:
+    #         time_slice = [-50, 200]
+    #     if ch_idxs is None:
+    #         ch_idxs = [1, 3]
+    #
+    #     if not newplot_per_block:
+    #         figure, axes = plt.subplots(len(ch_idxs), 1, sharex='all')
 
         
 

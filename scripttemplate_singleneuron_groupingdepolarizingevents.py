@@ -10,6 +10,17 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
 
+# %%
+# steps in this script:
+# 1. running get_depolarizingevents with default settings, seeing how it did
+# 1a adjust extraction parameters, seeing again; attach notes on what data was used for parameter extraction
+
+# 2. looking at parameter distributions of extracted depolarizing events
+# 2a labeling selected groups of events (noiseevents, fastevents)
+# 2b looking at evoked vs spont depolarizations / pre- and post-blocker-applied conditions
+# summary plots to give an overview of the neuron's behavior
+
+# %%
 
 des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'

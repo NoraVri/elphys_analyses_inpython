@@ -31,125 +31,6 @@ from singleneuron_class import SingleNeuron
 #             singleneuron_data.write_results()
 #             del singleneuron_data
 
-# %% recorded neurons, ordered by date
-## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse
-# (experiment days 20190527, 20190529, 20200630, 20200701, 20200706, 20200707, 20200708)
-# singleneuron_data = SingleNeuron('20190527A')
-#
-### cell20190527B = SingleNeuron('20190527B')
-#
-### singleneuron_data = SingleNeuron('20190527C')
-#
-# singleneuron_data = SingleNeuron('20190529A1')
-#
-### cell20190529A2 = SingleNeuron('20190529A2')
-#
-# singleneuron_data = SingleNeuron('20190529B')
-#
-# singleneuron_data = SingleNeuron('20190529C')
-#
-# singleneuron_data = SingleNeuron('20190529D')
-#
-# singleneuron_data = SingleNeuron('20190529E')
-
-## experiment: pharmacological blockage of inputs to IO neurons
-# singleneuron_data = SingleNeuron('20190729A')
-
-# singleneuron_data = SingleNeuron('20190804A')
-
-# singleneuron_data = SingleNeuron('20190804B')
-
-# singleneuron_data = SingleNeuron('20190805A2')
-
-# singleneuron_data = SingleNeuron('20190805B1')
-
-# singleneuron_data = SingleNeuron('20190805B2')
-
-# singleneuron_data = SingleNeuron('20190812A')
-
-# singleneuron_data = SingleNeuron('20190812B')
-
-# singleneuron_data = SingleNeuron('20190814A')
-
-# singleneuron_data = SingleNeuron('20190815D1')
-
-# singleneuron_data = SingleNeuron('20191105A1')
-
-# singleneuron_data = SingleNeuron('20191105A2')
-
-# singleneuron_data = SingleNeuron('20191105C')
-
-# singleneuron_data = SingleNeuron('20191106A1')
-
-# singleneuron_data = SingleNeuron('20191106A2')
-
-# singleneuron_data = SingleNeuron('20191119A')
-
-# singleneuron_data = SingleNeuron('20191119B')
-
-# singleneuron_data = SingleNeuron('20191120A')
-
-# singleneuron_data = SingleNeuron('20191120B1')
-
-# singleneuron_data = SingleNeuron('20191120B2')
-
-## experiment: activation of inputs to IO neurons by rubiGlu-uncaging
-# (experiment days 20200306, 20200308, 20200310 and 20200312)
-### singleneuron_data = SingleNeuron('20200306C')
-#
-### singleneuron_data = SingleNeuron('20200308B')
-#
-### singleneuron_data = SingleNeuron('20200308C')
-#
-### singleneuron_data = SingleNeuron('20200308D')
-#
-### singleneuron_data = SingleNeuron('20200308E')
-#
-### singleneuron_data = SingleNeuron('20200310G')
-#
-### singleneuron_data = SingleNeuron('20200312C')
-#
-### singleneuron_data = SingleNeuron('20200312G')
-
-## experiment: activation of inputs to IO neurons by ChR activation in Thy1 mouse
-# (experiment days 20190527, 20190529, 20200630, 20200701, 20200706, 20200707, 20200708)
-# singleneuron_data = SingleNeuron('20200630A')
-#
-# singleneuron_data = SingleNeuron('20200630B1')
-#
-# singleneuron_data = SingleNeuron('20200630B2')
-#
-# singleneuron_data = SingleNeuron('20200630C')
-#
-# singleneuron_data = SingleNeuron('20200630D')
-#
-# singleneuron_data = SingleNeuron('20200701A')
-
-# singleneuron_data = SingleNeuron('20200701B')
-
-# singleneuron_data = SingleNeuron('20200701D')
-
-# singleneuron_data = SingleNeuron('20200706B')
-
-# singleneuron_data = SingleNeuron('20200706D')
-
-# singleneuron_data = SingleNeuron('20200706E')
-
-# singleneuron_data = SingleNeuron('20200708C')
-
-# singleneuron_data = SingleNeuron('20200708D')
-
-# singleneuron_data = SingleNeuron('20200708F')
-
-### singleneuron_data = SingleNeuron('20200708G')
-
-## experiment: activation of inputs to IO neurons by ChR activation in RBP mouse
-# (experiment days 20200805, 20200818, 20200819)
-# singleneuron_data = SingleNeuron('20200818B')
-
-# singleneuron_data = SingleNeuron('20200818C')
-
-singleneuron_data = SingleNeuron('20201116B')
 
 
 # %% plotting the raw data
@@ -159,18 +40,10 @@ singleneuron_data.get_blocknames()
 # %% setting parameters for get_depolarizingevents for each neuron
 # neuron20190527A: used block no.12 to find good parameter settings
 # neuron20190527B: used block no.2 to find good parameter settings
-# neuron20190529A1: used block no.2  to find good parameter settings
-# neuron20190529B: used block no.14 to find good parameter settings
-# neuron20190529C: used block no.3 to find good parameter settings
-# neuron20190529D: used block no.2 to find good parameter settings
-# neuron20190529E: used block no.2 to find good parameter settings
-# neuron20190729A: used block no.1 to find good parameter settings, time-sliced 180-280
 
-# neuron20190814A: used block no.0 to find good parameter settings
 
 # neuron20200708G: used block no.3 to find good parameter settings
 
-# neuron20200818B: used block no.0 to find good parameter settings
 # neuron20200818C: used block no.0 to find good parameter settings
 
 # neuron20201116B: used blocks 0, 1 and 3

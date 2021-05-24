@@ -22,9 +22,9 @@ other_events = des_df.event_label == 'other_event'
 aps = des_df.event_label == 'actionpotential'
 # fast-events, amp and rise-time as histograms and scatters
 plt.figure(), des_df.loc[fastevents,'amplitude'].plot.hist(bins=5)
-plt.title('all spont. events >2mV, amplitude')
+plt.title('fast-events, amplitude')
 plt.figure(), des_df.loc[fastevents,'rise_time_20_80'].plot.hist(bins=5)
-plt.title('all spont. events >2mV, rise-time')
+plt.title('fast-events, rise-time')
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=fastevents,
@@ -60,16 +60,16 @@ singleneuron_data.plot_depoleventsgroups_overlayed(other_events, aps, other_fast
 des_df = singleneuron_data.depolarizing_events
 
 # 1. seeing that evoked things all got labeled as such
-evoked_events = des_df.applied_ttlpulse
+# evoked_events = des_df.applied_ttlpulse
 # singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
 # sub-threshold depolarizations get picked up weirdly sometimes (weird baselinepoints because compound responses),
 # but definitely everything that's evoked got labeled as such so I think it'll do.
 
 # 2. seeing that spontaneous fast-events got picked up
-spont_events = ~des_df.applied_ttlpulse
-unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-possibly_spontfastevents = (spont_events & unlabeled_events)
+# spont_events = ~des_df.applied_ttlpulse
+# unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# possibly_spontfastevents = (spont_events & unlabeled_events)
 # possibly_spontfastevents = (possibly_spontfastevents & (des_df.rise_time_10_90 < 1))
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, time_axis_unit='s')
 # notes:
@@ -78,15 +78,15 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # and there are a few things that are definitely APs (got a shoulder and everything)
 # that didn't get labeled a such and have to get picked out manually.
 # Let's filter down to things with amp > 2mV, and see amplitude and rise-time for the rest to narrow down from there:
-possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 2))
-plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
-plt.title('all spont. events >2mV, amplitude')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
-plt.title('all spont. events >2mV, rise-time')
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
-                                                      )
+# possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 2))
+# plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
+# plt.title('all spont. events >2mV, amplitude')
+# plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
+# plt.title('all spont. events >2mV, rise-time')
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       spont_subthreshold_depols=possibly_spontfastevents,
+#                                                       )
 # Let's see the events with amp > 30mV first -
 # Those are all small-amplitude APs (all very clearly have a shoulder).
 # Labeling them as such:
@@ -155,7 +155,7 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplit
 # and their decay is decidedly different. Most likely they are just regular spikelets.
 
 # 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
-aps = des_df.event_label == 'actionpotential'
+# aps = des_df.event_label == 'actionpotential'
 # singleneuron_data.plot_depolevents((aps & spont_events),
 #                                    do_baselining=True,
 #                                    colorby_measure='baselinev',

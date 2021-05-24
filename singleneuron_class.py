@@ -714,8 +714,8 @@ class SingleNeuron:
     # getting the action_potentials and depolarizing_events DataFames
     def get_depolarizingevents_fromrawdata(self, **kwargs):
         """This function goes over all voltage-traces in all raw-data blocks, and returns
-        two Pandas dataframes: one for action potentials, and one for subthreshold depolarizing events.
-        Each dataframe contains a set of standard measures taken from each event, as well as
+        a Pandas dataframe containing action potentials and subthreshold depolarizing events.
+        The dataframe contains a set of standard measures taken from each event, as well as
         all information needed to recover the location of the event in the original data trace.
         Default values for function parameters are read in from rawdata_readingnotes, and are
         updated there if non-default kwargs are used.

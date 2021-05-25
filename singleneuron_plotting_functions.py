@@ -75,7 +75,7 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
                       plotwindow_inms=40,
                       eventmeasures_series=pd.Series(),
                       get_measures_type='raw', display_measures=False,
-                      do_baselining=False, do_normalizing=False,
+                      do_baselining=True, do_normalizing=False,
                       linecolor='blue', label=None):
     """ This function takes as inputs:
     required arguments:

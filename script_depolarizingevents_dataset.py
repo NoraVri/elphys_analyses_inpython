@@ -19,50 +19,44 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # 10min of recordings seems like a decent start for estimating the overall frequency of events occurring).
 
 # 1. selecting only neuron recordings done on relevant experiment days (evoked synaptic excitation or blocker applied)
-ChRinjected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
+# listing the mice with light-evoked excitations experiments
+injected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
                     'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
+genetic_mice = ['Thy1', 'thy1', 'RBP']
+# blockersapplied_mice = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
+# blockersapplied_mice[blockersapplied_mice.isna()] = False
 
-thy1_experiments = experimentdays_metadata.genetics.isin(['Thy1', 'thy1'])
-thy1experiments_dates = experimentdays_metadata[thy1_experiments].date
-thy1neurons_recorded = recordings_metadata[recordings_metadata.date.isin(thy1experiments_dates)]
+# getting a list of all neurons recorded on the days that those mice were used
+injected_mice_condition = experimentdays_metadata.virusinjection_ID.isin(injected_mice)
+genetic_mice_condition = experimentdays_metadata.genetics.isin(genetic_mice)
+lightevokedexcitations_experiments_dates = experimentdays_metadata[
+    (injected_mice_condition | genetic_mice_condition)].date
+lightevokedexcitations_experimentdays_recordings = recordings_metadata[
+    recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)]
 
-evokedexcitations_condition = experimentdays_metadata.genetics.isin(['Thy1', 'RBP']) \
-                              | experimentdays_metadata.virusinjection_ID.isin(ChRinjected_mice)
-blockedexcitations_condition = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
-blockedexcitations_condition[blockedexcitations_condition.isna()] = False
+relevantneuronrecordings_names = lightevokedexcitations_experimentdays_recordings.name.dropna()
+# relevantneuronrecordings_names.dropna()
+print(relevantneuronrecordings_names)
 
-manipulatedexcitations_experiments_dates = experimentdays_metadata[(evokedexcitations_condition
-                                                                    | blockedexcitations_condition)].date
-
-manipulatedexcitations_experiments_recordings = recordings_metadata[
-    recordings_metadata.date.isin(manipulatedexcitations_experiments_dates)]
-
-manipulatedexcitations_singleneurons_names = manipulatedexcitations_experiments_recordings.name
-print(manipulatedexcitations_singleneurons_names)
-
-MDJevokedexcitations_condition = experimentdays_metadata.virusinjection_ID.isin(ChRinjected_mice)
-MDJevokedexcitations_experiments_dates = experimentdays_metadata[MDJevokedexcitations_condition].date
-MDJevokedexcitations_experimentdays_recordings = recordings_metadata[
-                                            recordings_metadata.date.isin(MDJevokedexcitations_experiments_dates)]
-MDJevokedexcitations_singleneurons = MDJevokedexcitations_experimentdays_recordings.name
-print(MDJevokedexcitations_singleneurons)
 
 # %%
-# 2. selecting only neuron recordings where manipulations were actually applied, and were recorded for at least 10min
-# (in case of blockers applied, this requires that the raw data has been annotated appropriately;
+# 2. selecting only neuron recordings where manipulations were actually applied, and that were recorded
+# for at least 10min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 
 # !note: select further down also by whether light application was done at different baselinev.
 evokedexcitations_singleneurons = []
-blockedexcitations_singleneurons = []
 atleast10minrecording_singleneurons = []
+atleast30minrecording_singleneurons = []
 
-for neuron in manipulatedexcitations_singleneurons_names:
+for neuron in relevantneuronrecordings_names:
     print('importing ' + neuron)
     neuron_data = SingleNeuron(neuron)
     # check time recorded
     rec_time = float(neuron_data.get_timespentrecording()/60)
-    if rec_time >= 10:
+    if rec_time >= 30:
+        atleast30minrecording_singleneurons.append(neuron)
+    elif rec_time >= 10:
         atleast10minrecording_singleneurons.append(neuron)
     # check whether light pulses have been applied
     blocknames_list = neuron_data.get_blocknames(printing='off')
@@ -70,21 +64,23 @@ for neuron in manipulatedexcitations_singleneurons_names:
     if len(lightactivated_list) > 0:
         evokedexcitations_singleneurons.append(neuron)
     # check whether chemicals were actually applied in any of the singleneuron's recordings
-    if neuron_data.rawdata_readingnotes \
-            and ('chemicalsapplied_blocks' in neuron_data.rawdata_readingnotes.keys()):
-        blockedexcitations_singleneurons.append(neuron)
+    # if neuron_data.rawdata_readingnotes \
+    #         and ('chemicalsapplied_blocks' in neuron_data.rawdata_readingnotes.keys()):
+    #     blockedexcitations_singleneurons.append(neuron)
 
 
-singleneurons_for_analysis = list(set(atleast10minrecording_singleneurons)
-                                  & (set(evokedexcitations_singleneurons) | set(blockedexcitations_singleneurons)))
-singleneurons_for_analysis.sort()
 print('total no. of neurons in the data set: '
-      + str(len(singleneurons_for_analysis)))
+      + str(len(relevantneuronrecordings_names)))
 print('no. of neurons that have light-evoked excitations: '
-      + str(len(list(set(evokedexcitations_singleneurons) & set(atleast10minrecording_singleneurons)))))
-print('no. of neurons that have blocked excitations: '
-      + str(len(list(set(blockedexcitations_singleneurons) & set(atleast10minrecording_singleneurons)))))
-
+      + str(len(evokedexcitations_singleneurons)))
+print('no. of neurons that have at least 10 min. of recording: ' +
+      str(len(atleast10minrecording_singleneurons)))
+print('no. of neurons that have at least 10 min. of recording AND light-evoked excitations: '
+      + str(len(list(set(atleast10minrecording_singleneurons) & set(evokedexcitations_singleneurons)))))
+print('no. of neurons that have at least 30 min. of recording: ' +
+      str(len(atleast30minrecording_singleneurons)))
+print('no. of neurons that have at least 30 min. of recording AND light-evoked excitations: '
+      + str(len(list(set(atleast30minrecording_singleneurons) & set(evokedexcitations_singleneurons)))))
 # neurons recorded for > 10 min. and at RT
 
 # workflow from here:

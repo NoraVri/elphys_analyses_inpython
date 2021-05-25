@@ -11,7 +11,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-
+#!! make dVdt/V plots for all spont events, see if they are grouped like that
 
 # summary plots:
 des_df = singleneuron_data.depolarizing_events

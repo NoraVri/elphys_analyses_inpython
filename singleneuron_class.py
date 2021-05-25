@@ -404,6 +404,7 @@ class SingleNeuron:
 
         return time_count
 
+
     # plotting raw data blocks, optionally with (a subset of) depolarizing events marked
     def plot_rawdatablocks(self, *block_identifiers, **kwargs):
         """Plots raw data by block, separate subplots for each channel_index.

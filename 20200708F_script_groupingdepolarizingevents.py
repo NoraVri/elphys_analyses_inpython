@@ -55,10 +55,11 @@ des_df = singleneuron_data.depolarizing_events
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
+# %%
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 # Looking quite alright from the perspective of events getting picked up: definitely everything that's 2mV or larger
-# got listed. My eyes did pick out some doubel-events though, where not the first but only the second peak got labeled
+# got listed. My eyes did pick out some double-events though, where not the first but only the second peak got labeled
 # (and the baseline-point can be off). This'll be interesting to tease apart...
 
 # Let's see amplitude and rise-time distributions to narrow down from there:
@@ -66,13 +67,13 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # But also in events with amp>5mV there seems to be significant variance in rise-time.
 # Let's see only events >5mV to start with:
 possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 5))
-plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
-plt.title('spont. events, amplitude')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (20-80%)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (10-90%)')
+possibly_spontfastevents_df = des_df[possibly_spontfastevents]
+possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=60)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
@@ -83,32 +84,10 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    )
 # OK then, lots of things going on there... I'm sure some of them are classic fast-events, others are double-events,
 # and then there's events with fast rise but different decay than the fast-events (and those come as doubles, too).
-# Let's see if cleaning up a bit will help:
-# there are rather many 'events' in the stretches of recording where this neuron is behaving rather noisily,
-# but they occur at depolarized baselinev and tend to be rather small (naked eye says fast-events are 2mV amp
-# and up, while noise-events are ~1mV)
-noiseevents_candidates = possibly_spontfastevents & (des_df.baselinev > -30) # & (des_df.amplitude < 1.8)  # picked the amp.criterion based on seeing events that rise above the noise
-singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20_80',
-                                                      cmeasure='baselinev',
-                                                      noiseevents_candidates=noiseevents_candidates)
-singleneuron_data.plot_depolevents(noiseevents_candidates,
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=5,
-                                   plotwindow_inms=30,
-                                   )
-# # it doesn't look like I would want to analyze anything about any of these events, except maybe the
-# # single one that was evoked... So labeling the spont ones as noiseevents:
-# # singleneuron_data.depolarizing_events.loc[spont_noiseevents,'event_label'] = 'noiseevent'
-# # singleneuron_data.write_results()
+
 
 # Let's see their widths also, maybe it'll be easier to select them based on that:
-plt.figure(), des_df.loc[possibly_spontfastevents,'width_30'].plot.hist(bins=60)
-plt.title('spont. events, width (at 30% amp)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'width_50'].plot.hist(bins=60)
-plt.title('spont. events, width (at 50% amp)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'width_70'].plot.hist(bins=60)
-plt.title('spont. events, width (at 70% amp)')
+possibly_spontfastevents_df.hist(column=['width_30', 'width_50', 'width_70'], bins=60)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_50',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
@@ -142,6 +121,10 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
 # in the upslope, which gives them longer rise-time and width; and then the rounder events are just quite variable
 # in all of amp, rise and width so that the distributions bleed into each other really badly.
 
+# First let's filter out some of the things that are happening at depolarized baselinev
+# depolarized_events = (possibly_spontfastevents & (des_df.baselinev > -35))
+# singleneuron_data.depolarizing_events.loc[depolarized_events, 'event_label'] = 'other_event'
+# singleneuron_data.write_results()
 
 # Let's check that there isn't things in the previously filtered events that are very clearly fast-events, too;
 
@@ -170,7 +153,7 @@ aps = des_df.event_label == 'actionpotential'
 
 
 
-
+# %%
 # ongoing analysis notes:
 # well... That pretty much does not at all look like what we expect from a neuron that has only axonal fast-events.
 # will definitely have to do some noise-cleanup to get a clearer view on parameter distributions of fast(er) events.
@@ -180,3 +163,18 @@ aps = des_df.event_label == 'actionpotential'
 # over the course of recordings, while the axon keeps doing its thing somehow...
 
 
+# Let's see if cleaning up a bit will help:
+# there are rather many 'events' in the stretches of recording where this neuron is behaving rather noisily,
+# but they occur at depolarized baselinev and tend to be rather small (naked eye says fast-events are 2mV amp
+# and up, while noise-events are ~1mV)
+# noiseevents_candidates = possibly_spontfastevents & (des_df.baselinev > -30) # & (des_df.amplitude < 1.8)  # picked the amp.criterion based on seeing events that rise above the noise
+# singleneuron_data.scatter_depolarizingevents_measures('amplitude', 'rise_time_20_80',
+#                                                       cmeasure='baselinev',
+#                                                       noiseevents_candidates=noiseevents_candidates)
+# singleneuron_data.plot_depolevents(noiseevents_candidates,
+#                                    do_baselining=True,
+#                                    colorby_measure='baselinev',
+#                                    prealignpoint_window_inms=5,
+#                                    plotwindow_inms=30,
+#                                    )
+# These do not look like noise at all, more like AIS spikes - leaving them be for now

@@ -13,13 +13,17 @@ singleneuron_data = SingleNeuron(neuron_name)
 # notes summary:
 # Very boring neuron really, not surprising given that most of the time it needs a lot of -DC to keep a baselinev.
 # Does have fast-events spontaneously, but no APs, and the light-evoked responses are barely perceptible.
+# The smallest of the events did not pass the YY-test for being fast-events; excluding them based on rise-time.
 
 # summary plots:
 des_df = singleneuron_data.depolarizing_events
 fast_events = des_df.event_label == 'fastevent'
 fast_events_df = des_df[fast_events]
 fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
-singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
+singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   do_normalizing=True
+                                   )
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -107,6 +111,9 @@ singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_
 # singleneuron_data.depolarizing_events.loc[spont_fastevents, 'event_label'] = 'fastevent'
 # singleneuron_data.write_results()
 
-
+# Re-labeling the smallest of what I thought were fast-events; Yosi says their rise-time is too different.
+not_fastevents = (fast_events & (des_df.rise_time_20_80 > 1.1))
+singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = 'not_fastevent'
+singleneuron_data.write_results()
 # 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
 # no APs recorded for this neuron

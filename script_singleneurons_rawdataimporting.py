@@ -885,7 +885,23 @@ cell20210113G.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start
 cell20210113G.write_results()
 
 
+# %%
+cell20210124A = SingleNeuron('20210124A')
+cell20210124A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation; everything else looks good
+cell20210124A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
+cell20210124A.write_results()
 
+
+# %%
+cell20210203C = SingleNeuron('20210203C')
+cell20210203C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation; everything else looks good
+cell20210203C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=48)
+cell20210203C.write_results()
+# note blocks with special chemicals added to bath:
 
 
 
@@ -926,14 +942,13 @@ cell20210113G.write_results()
 # cell20210426C.write_results()
 
 # %%
-# cell20210426D = SingleNeuron('20210426D')
+cell20210426D = SingleNeuron('20210426D')
 # nice recording overall, even though cell is losing ~20mV of restingV over time (-50 to -30)
 # raw data cleanup:
 # removing seal formation, and some time from the end of the last recording where the neuron died
-# cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=35)
-# cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=875)
-# cell20210426D.get_depolarizingevents_fromrawdata()
-# cell20210426D.write_results()
+cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=35)
+cell20210426D.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=875)
+cell20210426D.write_results()
 
 # %%
 # cell20210426E = SingleNeuron('20210426E')
@@ -959,4 +974,3 @@ cell20210113G.write_results()
 
 # note blocks with special chemicals added to bath:
 
-# extracting basic parameters:

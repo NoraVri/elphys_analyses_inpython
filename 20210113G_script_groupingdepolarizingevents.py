@@ -21,7 +21,7 @@ other_fastevents = des_df.event_label == 'other_fastevent'
 other_events = des_df.event_label == 'other_event'
 aps = des_df.event_label == 'actionpotential'
 # fast-events, amp and rise-time as histograms and scatters
-plt.figure(), des_df.loc[fastevents,'amplitude'].plot.hist(bins=5)
+plt.figure(), des_df.loc[fastevents,'amplitude'].plot.hist(bins=15)
 plt.title('fast-events, amplitude')
 plt.figure(), des_df.loc[fastevents,'rise_time_20_80'].plot.hist(bins=5)
 plt.title('fast-events, rise-time')

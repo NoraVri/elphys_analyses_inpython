@@ -463,6 +463,7 @@ class SingleNeuron:
                          newplot_per_block=False, newplot_per_event=False,
                          colorby_measure='', color_lims=None,
                          plt_title='',
+                         plot_dvdt=False,
                          **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
@@ -499,7 +500,7 @@ class SingleNeuron:
             blocks_for_plotting = list(blocks_for_plotting.intersection(set(blocknames_list)))
 
         # setting the figure title:
-        axis_title = 'voltage'
+        axis_title = 'voltage (mV)'
         if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
             axis_title += ' event-detect trace, '
         if 'do_baselining' in kwargs.keys() and kwargs['do_baselining']:
@@ -514,13 +515,20 @@ class SingleNeuron:
                 plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               newplot_per_event=newplot_per_event,
+                                              plot_dvdt=plot_dvdt,
                                               **kwargs)
             if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
                 kwargs['display_measures'] = False  # turning it off for the overlayed-lines plot(s) that are made next
 
         if newplot_per_block:
             for block_name in blocks_for_plotting:
-                figure, axis = plt.subplots(1, 1, squeeze=True)
+                if plot_dvdt:
+                    figure, axes = plt.subplots(1, 2, squeeze=True)
+                    axis = axes[0]
+                    dvdt_axis = axes[1]
+                else:
+                    figure, axis = plt.subplots(1, 1, squeeze=True)
+                    dvdt_axis = None
                 figure.suptitle(self.name + block_name + plt_title)
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
@@ -531,10 +539,17 @@ class SingleNeuron:
                     colorby_measure=colorby_measure,
                     color_lims=color_lims,
                     axis_object=axis,
+                    dvdt_axis_object=dvdt_axis,
                     **kwargs)
                 axis.set_title(axis_title)
         else:
-            figure, axis = plt.subplots(1, 1, squeeze=True)
+            if plot_dvdt:
+                figure, axes = plt.subplots(1, 2, squeeze=True)
+                axis = axes[0]
+                dvdt_axis = axes[1]
+            else:
+                figure, axis = plt.subplots(1, 1, squeeze=True)
+                dvdt_axis = None
             plt.suptitle(self.name + plt_title)
             # (optional) setting color limits for the figure
             if colorby_measure:
@@ -557,6 +572,7 @@ class SingleNeuron:
                                               axis_object=axis,
                                               colorby_measure=colorby_measure,
                                               color_lims=color_lims,
+                                              dvdt_axis_object=dvdt_axis,
                                               **kwargs)
             axis.set_title(axis_title)
 

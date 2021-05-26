@@ -40,8 +40,8 @@ singleneuron_data = SingleNeuron(neuron_name)
 des_df = singleneuron_data.depolarizing_events
 
 # 1. seeing that light/puff-evoked things all got labeled as such
-evoked_events = des_df.applied_ttlpulse
-singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
+# evoked_events = des_df.applied_ttlpulse
+# singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
 
 
@@ -54,16 +54,16 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 
 # Let's filter down, and see amplitude and rise-time to narrow down from there:
 # possibly_spontfastevents = (possibly_spontfastevents & (des_df))
-plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
-plt.title('spont. events, amplitude')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (20-80%)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (10-90%)')
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
-                                                      )
+# plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
+# plt.title('spont. events, amplitude')
+# plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
+# plt.title('spont. events, rise-time (20-80%)')
+# plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=60)
+# plt.title('spont. events, rise-time (10-90%)')
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       spont_subthreshold_depols=possibly_spontfastevents,
+#                                                       )
 
 
 singlevoltage_possiblyfastevents = (possibly_spontfastevents & (des_df.baselinev > -50) & (des_df.baselinev < -45))
@@ -71,6 +71,7 @@ singleneuron_data.plot_depolevents(singlevoltage_possiblyfastevents,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
+                                   plot_dvdt=True
                                    )
 
 

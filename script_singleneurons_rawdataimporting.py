@@ -163,15 +163,17 @@ import pandas as pd
 
 # %% experiment: intracellular recording from IO neurons + ChR activation, in Thy1 mouse (activation of inputs to IO)
 # %%
-# cell20190527A = SingleNeuron('20190527A')
+cell20190527A = SingleNeuron('20190527A')
 # spont.activity and light pulses
 # has some tiny (~1mV) oscillations here and there, as well as a strong
 # resonance response to activating inputs
 # also, it looks like depolarizing events of intermediate amplitude are quite often followed by
 # an after-hyperpolarization/resonance response
-# cell20190527A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
-#                                                  trace_start_t=21.5)
-# cell20190527A.write_results()
+# raw data cleanup:
+# removing seal formation
+cell20190527A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
+                                                 trace_start_t=21.5)
+cell20190527A.write_results()
 # %% no light-evoked activity recorded
 # cell20190527B = SingleNeuron('20190527B')
 # just a single long trace of spont.activity: some depolarizing events and spikes, no oscillations.
@@ -190,6 +192,7 @@ import pandas as pd
 # %%
 cell20190529A1 = SingleNeuron('20190529A1')
 cell20190529A1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
 # notes say only A2 was good, but that's not what it looks like in the data...
 # confirmed and reconfirmed: notes are wrong, it's the neuron on channel1 that's good (at least for a few blocks).
 # the neuron on channel2 was patched first, but lost not long after the neuron on ch1 was patched.
@@ -202,15 +205,17 @@ cell20190529A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_star
 cell20190529A1.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
 cell20190529A1.write_results()
 # %% no light-evoked activity recorded
-# cell20190529A2 = SingleNeuron('20190529A2')
-# some spont. activity with clear fast-events and spikelets; no oscillations
-# blocksnames_list = cell20190529A2.get_blocknames(printing='off')
-# blocksnames_list.__delitem__(0)
-# for blockname in blocksnames_list:
-#     cell20190529A2.rawdata_remove_nonrecordingblock(blockname)
-# cell20190529A2.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 1)
-# cell20190529A2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21, trace_end_t=582)
-# cell20190529A2.write_results()
+cell20190529A2 = SingleNeuron('20190529A2')
+cell20190529A2.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# this neuron was recorded in only one block, all the other blocks belong to A1. Removing all that:
+blocksnames_list = cell20190529A2.get_blocknames(printing='off')
+blocksnames_list.__delitem__(0)
+for blockname in blocksnames_list:
+    cell20190529A2.rawdata_remove_nonrecordingblock(blockname)
+cell20190529A2.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 1)
+cell20190529A2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21, trace_end_t=582)
+cell20190529A2.write_results()
 # %%
 cell20190529B = SingleNeuron('20190529B')
 # spont.activity and lots of light pulses; few spont. depolarizations and not oscillating.
@@ -678,13 +683,13 @@ cell20190814A.write_results()
 # cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
 # cell20200630B2.write_results()
 # %%
-# cell20200630C = SingleNeuron('20200630C')
-# spont.activity and light pulses
-# there are some pretty big spontaneous fast-events, as well as a couple of APs, and cell responds to
-# light consistently with an AP or what looks like a whole bunch of fast-events together
+cell20200630C = SingleNeuron('20200630C')
+cell20200630C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # !! for some reason there are two segments in gapFree_0000 - can only be plotted with segments_overlayed=False.
-# cell20200630C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
-# cell20200630C.write_results()
+# raw data cleanup:
+# removing seal formation; other than that everything looks OK
+cell20200630C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
+cell20200630C.write_results()
 # %%
 # cell20200630D = SingleNeuron('20200630D')
 # spont.activity and light pulses
@@ -861,15 +866,35 @@ cell20200818B.write_results()
 # cell20201116B.write_results()
 
 
+# %%
+cell20210105B = SingleNeuron('20210105B')
+cell20210105B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# spont.break-in; removing the first part of the first recording where neuron is getting its bearings
+# and removing the last recording where neuron is definitely all dead. Has some nice recordings in there
+# but getting held with a lot of -DC for quite a lot of the time.
+cell20210105B.rawdata_remove_nonrecordingblock('gapFree_0003.abf')
+cell20210105B.write_results()
+
+# %%
+cell20210110A = SingleNeuron('20210110A')
+cell20210110A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation; everything else looks OK
+cell20210110A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_end_t=29)
+cell20210110A.write_results()
 
 
 
-
-
-
-
-
-# %% experiment: ChR injection to MDJ area
+# %%
+cell20210110G = SingleNeuron('20210110G')
+cell20210110G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation, and a section from the last file where the pipette gets pulled out of the cell;
+# other than that everything looks OK (VERY quiet neuron, not a lot of events happening at all).
+cell20210110G.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=20)
+cell20210110G.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_end_t=720)
+cell20210110G.write_results()
 
 
 # %%
@@ -883,6 +908,24 @@ cell20210113G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # removing seal formation; all other recorded data looks good (enough)
 cell20210113G.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
 cell20210113G.write_results()
+
+# %%
+cell20210113H = SingleNeuron('20210113H')
+cell20210113H.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation; everything else looks good
+cell20210113H.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=37)
+cell20210113H.write_results()
+
+
+
+# %%
+cell20210123B = SingleNeuron('20210123B')
+cell20210123B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# no seal formation recorded; removing final gapFree block where neuron is already dead:
+cell20210123B.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
+cell20210123B.write_results()
 
 
 # %%

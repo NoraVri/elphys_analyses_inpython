@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
-# %% finding the relevant neuron recordings
+# finding the relevant neuron recordings
 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')

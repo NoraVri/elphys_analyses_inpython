@@ -68,7 +68,7 @@ class SingleNeuron:
         """
         this function saves all analysis results belonging to the singleneuron instance
         to a folder on path labeled 'myResults'.
-        !! There should be only one folder with a name starting with 'myResults' on the path.
+        !! There should be only one folder with a name starting with 'myResults' on the path !!
         Each results-table is stored in a separate .csv file, and the parameter values
         used to get them (as well as all other notes needed to exactly recreate the class instance
         stored in self.rawdata_readingnotes) are saved as a .json.

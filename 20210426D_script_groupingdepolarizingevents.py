@@ -33,8 +33,11 @@ singleneuron_data = SingleNeuron(neuron_name)
 # %% extracting depolarizing events
 # notes:
 # Using default parameter settings for extracting depolarizing events; for starters getting only events >2mV.
-# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2)
-# singleneuron_data.write_results()
+# Looking at the raw data with picked-up events marked - there's a few light-responses that rise rather slowly,
+# got a bad baseline-point (peaks are OK though) and got marked spontaneous. Extending ttleffect_window to get these
+# labeled correctly:
+singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=7)
+singleneuron_data.write_results()
 
 # %% plots: seeing that depolarizing events got extracted nicely
 des_df = singleneuron_data.depolarizing_events
@@ -49,7 +52,7 @@ des_df = singleneuron_data.depolarizing_events
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
-# singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
+singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
 # Let's filter down, and see amplitude and rise-time to narrow down from there:
@@ -66,8 +69,8 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 #                                                       )
 
 
-singlevoltage_possiblyfastevents = (possibly_spontfastevents & (des_df.baselinev > -50) & (des_df.baselinev < -45))
-singleneuron_data.plot_depolevents(singlevoltage_possiblyfastevents,
+# singlevoltage_possiblyfastevents = (possibly_spontfastevents & (des_df.baselinev > -50) & (des_df.baselinev < -45))
+singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,

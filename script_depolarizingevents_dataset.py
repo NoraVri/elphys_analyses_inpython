@@ -13,7 +13,7 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # So, let's first narrow down the dataset to neurons where we somehow try to manipulate the fast-events:
 # - experiments in Thy1 mice where inputs from all over the brain are activated
 # - experiments in RBP mice where inputs from the neocortex are activated
-# - experiments where blockers of synaptic inputs are applied
+### - experiments where blockers of synaptic inputs are applied
 # and let's take only neurons that were recorded for >10min. (since from my notes it seems that
 # fast-events can sometimes suddenly be 'turned on' after a few min. of recording, and because
 # 10min of recordings seems like a decent start for estimating the overall frequency of events occurring).
@@ -23,6 +23,7 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 injected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
                     'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
 genetic_mice = ['Thy1', 'thy1', 'RBP']
+# listing mice with blocker-applied experiments
 # blockersapplied_mice = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
 # blockersapplied_mice[blockersapplied_mice.isna()] = False
 
@@ -44,7 +45,6 @@ print(relevantneuronrecordings_names)
 # for at least 10min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 
-# !note: select further down also by whether light application was done at different baselinev.
 evokedexcitations_singleneurons = []
 atleast10minrecording_singleneurons = []
 atleast30minrecording_singleneurons = []
@@ -81,11 +81,30 @@ print('no. of neurons that have at least 30 min. of recording: ' +
       str(len(atleast30minrecording_singleneurons)))
 print('no. of neurons that have at least 30 min. of recording AND light-evoked excitations: '
       + str(len(list(set(atleast30minrecording_singleneurons) & set(evokedexcitations_singleneurons)))))
+# other things to look for (later):
 # neurons recorded for > 10 min. and at RT
+# select further down also by whether light application was done at different baselinev.
+
 
 # workflow from here:
-# - (re-)extracting depolarizing events with tailored settings for each neuron with >10min. recording
-# - annotating depolarizing events with appropriate labels (put.axonal fast-events, other fast-events, other events)
+# for each neuron, examining depolarizing events (_script_groupingdepolarizingevents):
+# - (re-)extracting depolarizing events > 2mV  # in the range below that we find also lots of spikelets and such which are not the focus of this investigation
+# - annotating events with appropriate labels (fastevent, other_fast-event, other_event, noiseevent,)
 #   manually for each neuron in the dataset
-# - getting the parameter distributions of all different groups of events, for each neuron and in the population,
-#   split out by conditions (different baselineV, recording temp, ...)
+# We will start with the neurons that have >30min. of recording (and at least _some number_ of fast-events),
+# and determine from there what are the parameter distributions of each of the groups of events
+# (mean and variance in each neuron, and in the population).   # optionally, we can extend the dataset to include neurons recorded on other experiment days (to get more that have long recording times, and to get some that were recorded at RT)
+# Parameter distributions will have to be split out by baselinev, and possibly other things - this will be determined
+# based on the thorough examination of these lengthy-recording examples.
+# Then, we will examine neurons with >10min. of recording and see if they have any events that fall within those parameters.
+
+# The list of neurons with >30min. recording:
+# ['20190527A',
+# '20190529B',
+# '20190529D',
+# '20200630C',
+# '20200708F',
+# '20210110G',
+# '20210113H',
+# '20210124A',
+# '20210426D']

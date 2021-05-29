@@ -214,15 +214,17 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
         sampling_frequency = float(vtrace_asanalogsignal.sampling_rate)
         sampling_period_inms = float(vtrace_asanalogsignal.sampling_period) * 1000
         vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
+        # subtracting high-frequency noise from the raw voltage (as done for calculating depolevents measures)
+        oscillationstrace, noisetrace = snafs.apply_filters_to_vtrace(
+                                             vtrace,
+                                             getdepolarizingevents_settings['oscfilter_lpfreq'],
+                                             getdepolarizingevents_settings['noisefilter_hpfreq'],
+                                             sampling_frequency,
+                                             plot='off')
+        vtrace = vtrace - noisetrace
 
         # optional: getting the event-detect trace instead of the raw vtrace
         if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
-            oscillationstrace, noisetrace = snafs.apply_filters_to_vtrace(
-                                                 vtrace,
-                                                 getdepolarizingevents_settings['oscfilter_lpfreq'],
-                                                 getdepolarizingevents_settings['noisefilter_hpfreq'],
-                                                 sampling_frequency,
-                                                 plot='off')
             vtrace = vtrace - oscillationstrace - noisetrace
         # plotting the events of the segment
         for _, eventmeasures in segment_eventsmeasures.iterrows():

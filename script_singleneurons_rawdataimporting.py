@@ -165,12 +165,12 @@ import pandas as pd
 # %%
 cell20190527A = SingleNeuron('20190527A')
 # spont.activity and light pulses
-# has some tiny (~1mV) oscillations here and there, as well as a strong
-# resonance response to activating inputs
-# also, it looks like depolarizing events of intermediate amplitude are quite often followed by
-# an after-hyperpolarization/resonance response
+# has some tiny (~1mV) oscillations here and there, as well as a strong resonance response to activating inputs
+# also, it looks like depolarizing events of intermediate amplitude are quite often followed by an
+# after-hyperpolarization/resonance response
 # raw data cleanup:
-# removing seal formation
+cell20190527A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# removing seal formation; everything else looks OK
 cell20190527A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
                                                  trace_start_t=21.5)
 cell20190527A.write_results()

@@ -11,8 +11,9 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# only 9 spontaneous fast-events and they're not very large (~3.5 - 6mV) but they very clearly group into 3 amplitudes
-# with all having pretty much exactly the same normalized decay shape.
+# only 9 spontaneous fast-events in 46min. of recording;
+# they're not very large (~3.5 - 6mV) but they very clearly group into 3 amplitudes with all having pretty much exactly
+# the same normalized decay shape.
 # Light-evoked activity always seems to include also a broad, slow depolarization, possibly sometimes with small events
 # riding on top, and quite often a full sodium AP without shoulder.
 
@@ -25,7 +26,7 @@ currentpulsechanges = des_df.event_label == 'currentpulsechange'
 des_df = singleneuron_data.depolarizing_events
 fast_events = des_df.event_label == 'fastevent'
 fast_events_df = des_df[fast_events]
-fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
+fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=15)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',

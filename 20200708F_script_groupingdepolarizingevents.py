@@ -55,7 +55,7 @@ des_df = singleneuron_data.depolarizing_events
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
-# %%
+
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 # Looking quite alright from the perspective of events getting picked up: definitely everything that's 2mV or larger
@@ -81,50 +81,124 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
+                                   plotwindow_inms=20,
                                    )
 # OK then, lots of things going on there... I'm sure some of them are classic fast-events, others are double-events,
 # and then there's events with fast rise but different decay than the fast-events (and those come as doubles, too).
 
-
 # Let's see their widths also, maybe it'll be easier to select them based on that:
 possibly_spontfastevents_df.hist(column=['width_30', 'width_50', 'width_70'], bins=60)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_50',
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_70',
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_70',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
-# There's a clear break in the width_50 histogram at 7ms, and just a handful events wider than that - let's see them:
+# %%
+# Looks like there's a clear break in the width_50 histogram at 7ms, and just a handful events wider than that -
+# let's see them:
 # probably_notfastevents = (possibly_spontfastevents & (des_df.width_50 > 7))
-# These are not fast-events: though their shape is similar, their normalized waveforms are not identical to each other.
-# The events wider than 7ms all have rise-time > 1.2, which makes me think that the real fast-events may all be faster.
-# Let's see:
-probably_notfastevents = (possibly_spontfastevents
-                          & ((des_df.width_50 > 7) | (des_df.rise_time_10_90 > 1.2))
-                          )
-possibly_spontfastevents = (possibly_spontfastevents
-                          & ~((des_df.width_50 > 7) | (des_df.rise_time_10_90 > 1.2))
-                          )
+# I don't think these are fast-events (they're too round and wide and variable in their normalized decay waveform),
+# but they are definitely events of some sort... not labeling them for now.
+
+# Let's instead work our way through the events by rise-time, starting from the slowest ones.
+# Compound events are easy to recognize by eye by the kink in the rise, let's at least filter those out first.
+# Starting from the slowest-rising events:
+# probably_notfastevents = (possibly_spontfastevents & (des_df.rise_time_20_80 > 1.6))
+# these are all compound events with a kink in their rise. Labeling them as such:
+# compound_events = probably_notfastevents
+# singleneuron_data.depolarizing_events.loc[compound_events, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
+
+# Now let's see events with slightly faster rise:
+# probably_notfastevents = (possibly_spontfastevents & (des_df.rise_time_20_80 > 1))
+# These are all compound events, except for three that are simply rather wide.
+# Let's get histograms of width and see if we can tell them apart:
+# yes, looks like there's always three that are wider than all the others.
+# Let's see that we get compound-events only:
+# probably_compoundevents = (probably_notfastevents & (des_df.width_50 > 5))
+# singleneuron_data.plot_depolevents(probably_compoundevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    )
+# The smallest of these events in fact has a simple rise, the rest are clearly compound with a kink in the rise.
+# Labeling them as such:
+# compound_events = (probably_compoundevents & (des_df.amplitude > 7))
+# singleneuron_data.depolarizing_events.loc[compound_events, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
+
+# Let's see the next batch of events with again slightly faster rise:
+# probably_notfastevents = (possibly_spontfastevents & (des_df.rise_time_20_80 > 0.9))
+# Looks like the two events with the narrowest width are compound events with a clear kink in the rise:
+# compound_events = (probably_notfastevents & (des_df.width_70 < 2))
+# singleneuron_data.plot_depolevents(compound_events,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    )
+# Indeed. Labeling them as such:
+# singleneuron_data.depolarizing_events.loc[compound_events, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
+
+# Let's see the next batch of events with again slightly faster rise:
+# probably_notfastevents = (possibly_spontfastevents & (des_df.rise_time_20_80 > 0.8))
+# In this group there is just one event with a clear kink in the rise, clearly separable from other events by amp.
+# Labeling it as such:
+# compound_event = (probably_notfastevents & (des_df.amplitude > 13) & (des_df.amplitude < 17))
+# singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
+
+# Let's see the next batch of events with again slightly faster rise:
+probably_notfastevents = (possibly_spontfastevents & (des_df.rise_time_20_80 > 0.6)
+                          & (des_df.rise_time_20_80 < 0.9))  # we've examined those already
+
+singleneuron_data.plot_depolevents(probably_notfastevents,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=20,
+                                   timealignto_measure='rt20_start_idx',
+                                   plot_dvdt=True,
+                                   )
 singleneuron_data.plot_depolevents(probably_notfastevents,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    do_normalizing=True,
+                                   plotwindow_inms=20,
+                                   timealignto_measure='rt20_start_idx',
+                                   plot_dvdt=True,
                                    )
-singleneuron_data.plot_depolevents(possibly_spontfastevents,
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   )
-# OK, now it's starting to get clearer what are fast-events. The problem is that some of them have a break
-# in the upslope, which gives them longer rise-time and width; and then the rounder events are just quite variable
-# in all of amp, rise and width so that the distributions bleed into each other really badly.
+probably_notfastevents_df = des_df[probably_notfastevents]
+probably_notfastevents_df.hist(column=['width_30', 'width_50', 'width_70'], bins=60)
+
+
+# %%
+# probably_notfastevents = (possibly_spontfastevents
+#                           & ((des_df.width_50 > 7) | (des_df.rise_time_10_90 > 1.2))
+#                           )
+# possibly_spontfastevents = (possibly_spontfastevents
+#                           & ~((des_df.width_50 > 7) | (des_df.rise_time_10_90 > 1.2))
+#                           )
+# singleneuron_data.plot_depolevents(probably_notfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    )
+# singleneuron_data.plot_depolevents(possibly_spontfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    )
+# OK, now it's starting to get clearer what are fast-events. The problem is that some of them are compound and therefore
+# have a break in the upslope, which gives them longer rise-time and width; and then the rounder events are just quite
+# variable in all of amp, rise and width so that the distributions bleed into each other really badly.
 
 # First let's filter out some of the things that are happening at depolarized baselinev
 # depolarized_events = (possibly_spontfastevents & (des_df.baselinev > -35))
-# singleneuron_data.depolarizing_events.loc[depolarized_events, 'event_label'] = 'other_event'
-# singleneuron_data.write_results()
+
 
 # Let's check that there isn't things in the previously filtered events that are very clearly fast-events, too;
 

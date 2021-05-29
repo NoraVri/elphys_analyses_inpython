@@ -89,7 +89,7 @@ print('no. of neurons that have at least 30 min. of recording AND light-evoked e
 # workflow from here:
 # for each neuron, examining depolarizing events (_script_groupingdepolarizingevents):
 # - (re-)extracting depolarizing events > 2mV  # in the range below that we find also lots of spikelets and such which are not the focus of this investigation
-# - annotating events with appropriate labels (fastevent, other_fast-event, other_event, noiseevent,)
+# - annotating events with appropriate labels (fastevent, other_fastevent, compound_event, other_event, noiseevent,)
 #   manually for each neuron in the dataset
 # We will start with the neurons that have >30min. of recording (and at least _some number_ of fast-events),
 # and determine from there what are the parameter distributions of each of the groups of events

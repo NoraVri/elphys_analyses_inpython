@@ -584,8 +584,7 @@ def apply_filters_to_vtrace(voltage_recording,
                             oscfilter_lpfreq, noisefilter_hpfreq,
                             sampling_frequency,
                             plot='off'):
-    """ This function takes the raw voltage recording and applies filtering and the hilbert transform
-    to get traces for use in event-detection.
+    """ This function takes the raw voltage recording and applies filtering to get traces for use in event-detection.
     """
     # applying filters to the raw data
     lowpass_sos = signal.butter(2, oscfilter_lpfreq, btype='lowpass',

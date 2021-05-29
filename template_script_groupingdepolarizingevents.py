@@ -70,25 +70,29 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
-# Let's filter down, and see amplitude and rise-time to narrow down from there:
+
+# Let's see some events, and their amplitude and rise-time to narrow down from there:
 # possibly_spontfastevents = (possibly_spontfastevents & (des_df))
-plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
-plt.title('spont. events, amplitude')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (20-80%)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=60)
-plt.title('spont. events, rise-time (10-90%)')
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
-                                                      )
 # singleneuron_data.plot_depolevents(possibly_spontfastevents,
 #                                    colorby_measure='baselinev',
 #                                    do_baselining=True,
 #                                    # do_normalizing=True,
 #                                    )
-
-
+possibly_spontfastevents_df = des_df[possibly_spontfastevents]
+nbins = 20
+possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=nbins)
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_70',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
 
 
 # Let's check that there isn't things in the previously filtered events that are very clearly fast-events, too;

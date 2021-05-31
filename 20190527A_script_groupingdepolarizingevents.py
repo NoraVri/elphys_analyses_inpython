@@ -7,12 +7,32 @@ import numpy as np
 
 neuron_name = '20190527A'
 singleneuron_data = SingleNeuron(neuron_name)
-
+des_df = singleneuron_data.depolarizing_events
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # summary plots:
-# des_df = singleneuron_data.depolarizing_events
-# aps = des_df.event_label == 'actionpotential'
+# all the kinds of interesting events detected in this neuron:
+aps = des_df.event_label == 'actionpotential'
+comound_events = des_df.event_label == 'compound_event'
+possibly_spontfastevents = ((~des_df.applied_ttlpulse) & des_df.event_label.isna() & (des_df.amplitude > 3))
+
+singleneuron_data.plot_depoleventsgroups_overlayed(aps, comound_events, possibly_spontfastevents,
+                                                   group_labels=['APs', 'compound events', 'possibly fast-events'],
+                                                   do_baselining=True,
+                                                   do_normalizing=True,
+                                                   plot_dvdt=True,
+                                                   )
+
+# singleneuron_data.plot_depolevents(possibly_spontfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    timealignto_measure='rt20_start_idx',
+#                                    prealignpoint_window_inms=2,
+#                                    plotwindow_inms=13,
+#                                    plot_dvdt=True,
+#                                    )
+
 # fast_events = des_df.event_label == 'fastevent'
 # fast_events_df = des_df[fast_events]
 # fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
@@ -60,6 +80,15 @@ des_df = singleneuron_data.depolarizing_events
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
+singleneuron_data.plot_depolevents(possibly_spontfastevents,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   timealignto_measure='rt20_start_idx',
+                                   prealignpoint_window_inms=3,
+                                   plotwindow_inms=13,
+                                   plot_dvdt=True,
+                                   )
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 # By eye it is clear that all events >2mV got picked up, and that these should be mostly fast-events.
@@ -137,11 +166,11 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
-singleneuron_data.plot_depolevents(possibly_spontfastevents,
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   )
+# singleneuron_data.plot_depolevents(possibly_spontfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    )
 # Let's see these events a bit more up-close:
 singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    colorby_measure='baselinev',

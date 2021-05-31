@@ -520,6 +520,8 @@ class SingleNeuron:
             if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
                 kwargs['display_measures'] = False  # turning it off for the overlayed-lines plot(s) that are made next
 
+
+
         if newplot_per_block:
             for block_name in blocks_for_plotting:
                 if plot_dvdt:
@@ -570,9 +572,9 @@ class SingleNeuron:
                 plots.plot_singleblock_events(rawdata_block, block_events,
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               axis_object=axis,
+                                              dvdt_axis_object=dvdt_axis,
                                               colorby_measure=colorby_measure,
                                               color_lims=color_lims,
-                                              dvdt_axis_object=dvdt_axis,
                                               **kwargs)
             axis.set_title(axis_title)
 
@@ -607,7 +609,14 @@ class SingleNeuron:
         else:
             blocks_forplotting = allblocks_nameslist
 
-        figure, axis = plt.subplots(1,1)
+        if 'plot_dvdt' in kwargs.keys() and kwargs['plot_dvdt']:
+            figure, axes = plt.subplots(1, 2, squeeze=True)
+            axis = axes[0]
+            dvdt_axis = axes[1]
+        else:
+            figure, axis = plt.subplots(1, 1, squeeze=True)
+            dvdt_axis = None
+
         for i, events_group in enumerate(events_groups):
             events_for_plotting = self.depolarizing_events[events_group]
             for block_name in blocks_forplotting:
@@ -617,6 +626,7 @@ class SingleNeuron:
                     plots.plot_singleblock_events(rawdata_block, block_events,
                                                   self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                                   axis_object=axis,
+                                                  dvdt_axis_object=dvdt_axis,
                                                   linecolor=colormap(cm_normalizer(i)),
                                                   label=('event group ' + str(i)),
                                                   **kwargs)

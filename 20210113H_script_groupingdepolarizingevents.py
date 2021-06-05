@@ -52,85 +52,147 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # singleneuron_data.write_results()
 
 # Now let's see all remaining events:
-# singleneuron_data.plot_depolevents(possibly_spontfastevents,
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    )
+singleneuron_data.plot_depolevents(possibly_spontfastevents,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True,
+                                   )
 possibly_spontfastevents_df = des_df[possibly_spontfastevents]
 nbins = 20
-possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=nbins)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
-                                                      )
+possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude', 'maxdvdt'], bins=nbins)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_70',
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_70',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=possibly_spontfastevents,
                                                       )
 # By eye one stands out not only for having the highest baselinev, but also because it looks to have a rounder,
 # wider shape - but by the parameter distributions it doesn't look out of tune with fast-events.
-# Let's see if the dvdt-plot will make things clearer:
+
+# Let's see how things play out when colored by time in the recording:
 singleneuron_data.plot_depolevents(possibly_spontfastevents,
+                                   colorby_measure='peakv_idx',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True,
+                                   )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+                                                      cmeasure='peakv_idx',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+                                                      cmeasure='peakv_idx',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_70',
+                                                      cmeasure='peakv_idx',
+                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      )
+
+# %%
+baselinerange = ((des_df.baselinev > -55) & (des_df.baselinev < -45))
+singleneuron_data.plot_depolevents((possibly_spontfastevents & baselinerange),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
-                                   timealignto_measure='rt20_start_idx',
-                                   prealignpoint_window_inms=1,
-                                   plotwindow_inms=8,
                                    plot_dvdt=True,
                                    )
+
+
+# %%
+wider_events = (possibly_spontfastevents & (des_df.maxdvdt < 0.3) & (des_df.amplitude > 4))
+# singleneuron_data.plot_rawdatablocks(events_to_mark=wider_events)
+singleneuron_data.plot_depolevents((wider_events & baselinerange),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True,
+                                   )
+# OK. Definitely none of the wider events occur early on in the recording, but there's still a quite long period of time
+
+# %%
+probably_fastevents = (possibly_spontfastevents & ~wider_events & baselinerange)
+probably_fastevents_df = des_df[probably_fastevents]
+probably_fastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude', 'maxdvdt'], bins=nbins)
+
+
+
+
+
+
+
+
+
+# Let's see if the dvdt-plot will make things clearer:
+# singleneuron_data.plot_depolevents(possibly_spontfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    timealignto_measure='rt20_start_idx',
+#                                    prealignpoint_window_inms=1,
+#                                    plotwindow_inms=8,
+#                                    plot_dvdt=True,
+#                                    )
 # Indeed, and it looks like the events may be separable by max.dvdt.
 # Let's see:
-possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude'], bins=nbins)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
-                                                      cmeasure='amplitude',
-                                                      spont_events=possibly_spontfastevents
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
-                                                      cmeasure='width_50',
-                                                      spont_events=possibly_spontfastevents
-                                                      )
-# From the scatters it looks like the boundary should be around 0.4mV/ms.
+# possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',], bins=nbins)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+#                                                       cmeasure='amplitude',
+#                                                       spont_events=possibly_spontfastevents
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='width_50',
+#                                                       spont_events=possibly_spontfastevents
+#                                                       )
+# From the scatters it looks like the boundary should be around dvdt=0.04 in the dvdt of the normalized waveform.
 # Here's the thing though: the different shapes of the two types of events are very clear from plotting
 # dV/dt vs V for the normalized voltage, but maxdvdt does not actually separate between the two groups.
-probably_fastevents = (possibly_spontfastevents & (des_df.maxdvdt > 0.4))
-probably_otherfastevents = (possibly_spontfastevents & ~(des_df.maxdvdt > 0.4))
+# probably_fastevents = (possibly_spontfastevents & (des_df.maxdvdt > 0.4))
+# probably_otherfastevents = (possibly_spontfastevents & ~(des_df.maxdvdt > 0.4))
 # plotting the events, in two separate plots
-singleneuron_data.plot_depolevents(probably_fastevents,
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   timealignto_measure='rt20_start_idx',
-                                   prealignpoint_window_inms=1,
-                                   plotwindow_inms=8,
-                                   plot_dvdt=True,
-                                   plt_title='probably all classic fast-events'
-                                   )
-singleneuron_data.plot_depolevents(probably_otherfastevents,
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   timealignto_measure='rt20_start_idx',
-                                   prealignpoint_window_inms=1,
-                                   plotwindow_inms=8,
-                                   plot_dvdt=True,
-                                   plt_title='probably all other events'
-                                   )
+# singleneuron_data.plot_depolevents(probably_fastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    do_normalizing=True,
+#                                    timealignto_measure='rt20_start_idx',
+#                                    prealignpoint_window_inms=1,
+#                                    plotwindow_inms=8,
+#                                    plot_dvdt=True,
+#                                    plt_title='probably all classic fast-events'
+#                                    )
+# singleneuron_data.plot_depolevents(probably_otherfastevents,
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    do_normalizing=True,
+#                                    timealignto_measure='rt20_start_idx',
+#                                    prealignpoint_window_inms=1,
+#                                    plotwindow_inms=8,
+#                                    plot_dvdt=True,
+#                                    plt_title='probably all other events'
+#                                    )
 # histograms
-plt.figure(), plt.suptitle('amplitude (mV)')
-des_df.loc[probably_fastevents, 'amplitude'].hist()
-des_df.loc[probably_otherfastevents, 'amplitude'].hist()
-plt.figure(), plt.suptitle('rise-time (10-90%)')
-des_df.loc[probably_fastevents, 'rise_time_10_90'].hist()
-des_df.loc[probably_otherfastevents, 'rise_time_10_90'].hist()
-plt.figure(), plt.suptitle('width (50% amp)')
-des_df.loc[probably_fastevents, 'width_50'].hist()
-des_df.loc[probably_otherfastevents, 'width_50'].hist()
-plt.figure(), plt.suptitle('max dvdt')
-des_df.loc[probably_fastevents, 'maxdvdt'].hist()
-des_df.loc[probably_otherfastevents, 'maxdvdt'].hist()
+# plt.figure(), plt.suptitle('amplitude (mV)')
+# des_df.loc[probably_fastevents, 'amplitude'].hist()
+# des_df.loc[probably_otherfastevents, 'amplitude'].hist()
+# plt.figure(), plt.suptitle('rise-time (10-90%)')
+# des_df.loc[probably_fastevents, 'rise_time_10_90'].hist()
+# des_df.loc[probably_otherfastevents, 'rise_time_10_90'].hist()
+# plt.figure(), plt.suptitle('width (50% amp)')
+# des_df.loc[probably_fastevents, 'width_50'].hist()
+# des_df.loc[probably_otherfastevents, 'width_50'].hist()
+# plt.figure(), plt.suptitle('max dvdt')
+# des_df.loc[probably_fastevents, 'maxdvdt'].hist()
+# des_df.loc[probably_otherfastevents, 'maxdvdt'].hist()
+# Still not quite sure what to make of this.
+
+# Let's see the 'slower fast-events' in the raw data:
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(probably_otherfastevents & (des_df.amplitude >4)), segments_overlayed=False)
+# Well, it's far from perfect as there's events marked all over, but it does seem like by far the majority are
+# in the last two recording files (shortPulse_0001 and gapFree_0002).

@@ -490,6 +490,7 @@ cell20190814A.write_results()
 # cell20200306B.write_results()
 # %%
 # cell20200306C = SingleNeuron('20200306C')
+# cell20200306C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # lots of data, one block with lightpulses
 # TODO: figure out what's going on with some blocks not getting imported
 # R2, 9 and 11 are missing for some reason, even though there does seem to be a bunch of data there
@@ -521,7 +522,9 @@ cell20190814A.write_results()
 # cell20200308A.write_results()
 # %%
 # cell20200308B = SingleNeuron('20200308B')
+# cell20200308B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # bunch of lighttriggered but no long-pulses; Vrest bad by the end but still has some depolarizing events
+# TODO: figure out what's going on with data not getting imported
 # R1 and R3 are missing for some reason even though in SutterPatch it looks like there is a bunch of nice data there
 # cell20200308B.rawdata_note_chemicalinbath('R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10', 'R11')
 # cell20200308B.write_results()
@@ -586,6 +589,7 @@ cell20190814A.write_results()
 # cell20200310F.write_results()
 # %%
 # cell20200310G = SingleNeuron('20200310G')  # the single greatest cell with light
+# cell20200310G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # has all the kinds of depolarizations spontaneously occurring
 # initially oscillating with ~15mV amp and steadily decreasing; Vrest staying ~-50mV throughout
 # cell20200310G.rawdata_remove_nonrecordingsection('R21_lighttriggered_CCmode.ibw',
@@ -634,6 +638,7 @@ cell20190814A.write_results()
 # cell20200312F.write_results()
 # %%
 # cell20200312G = SingleNeuron('20200312G')
+# cell20200312G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # spont. and light-evoked activity, though it doesn't look like much at all happens in response
 # (a tiny direct depolarization early on, but then that stops too).
 # not oscillating, does have spont APs and fast-events and such; APs stop having an AHP by R3, interestingly
@@ -859,6 +864,7 @@ cell20200818B.write_results()
 
 # %%
 # cell20201116B = SingleNeuron('20201116B')
+# cell20201116B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # # cell (partially) re-sealed itself twice during the first few minutes of recording; cutting all that off the trace
 # cell20201116B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=553.5)
 # # cell starts to die in seg.5 already of the last puff-response file, but has one nice fast-event there so keeping it

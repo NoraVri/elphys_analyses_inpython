@@ -43,6 +43,7 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
+                                   plot_dvdt=True,
                                    )
 possibly_spontfastevents_df = des_df[possibly_spontfastevents]
 nbins = 20

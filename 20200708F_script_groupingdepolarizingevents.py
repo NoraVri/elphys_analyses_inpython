@@ -66,7 +66,7 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # The amplitude histogram shows groups of events 5mV or larger; smaller events are just too numerous to say anything.
 # But also in events with amp>5mV there seems to be significant variance in rise-time.
 # Let's see only events >5mV to start with:
-possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 5))
+possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 5) & (des_df.amplitude < 15))
 possibly_spontfastevents_df = des_df[possibly_spontfastevents]
 possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=60)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
@@ -174,7 +174,16 @@ singleneuron_data.plot_depolevents(probably_notfastevents,
 probably_notfastevents_df = des_df[probably_notfastevents]
 probably_notfastevents_df.hist(column=['width_30', 'width_50', 'width_70'], bins=60)
 
-
+# Let's see how these events evolve over the course of recording, by color-coding them by time:
+singleneuron_data.plot_depolevents(probably_notfastevents,
+                                   colorby_measure='peakv_idx',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=20,
+                                   timealignto_measure='rt20_start_idx',
+                                   plot_dvdt=True,
+                                   )
+# Yup, that looks like the neuron starting to do funnier things with increasing time.
 # %%
 # probably_notfastevents = (possibly_spontfastevents
 #                           & ((des_df.width_50 > 7) | (des_df.rise_time_10_90 > 1.2))

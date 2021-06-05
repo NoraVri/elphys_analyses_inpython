@@ -92,3 +92,5 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    plotwindow_inms=10,
                                    plot_dvdt=True,
                                    )
+
+

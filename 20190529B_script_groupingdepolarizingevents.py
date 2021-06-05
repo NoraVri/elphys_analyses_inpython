@@ -26,11 +26,12 @@ currentpulsechanges = des_df.event_label == 'currentpulsechange'
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
 
-plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=60) # 60bins to start with
+nbins = 60
+plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=nbins) # 60bins to start with
 plt.title('spont. events, amplitude')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=60)
+plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_20_80'].plot.hist(bins=nbins)
 plt.title('spont. events, rise-time (20-80%)')
-plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=60)
+plt.figure(), des_df.loc[possibly_spontfastevents,'rise_time_10_90'].plot.hist(bins=nbins)
 plt.title('spont. events, rise-time (10-90%)')
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
                                                       cmeasure='baselinev',

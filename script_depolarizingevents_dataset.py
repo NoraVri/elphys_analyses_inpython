@@ -99,12 +99,13 @@ print('no. of neurons that have at least 30 min. of recording AND light-evoked e
 # Then, we will examine neurons with >10min. of recording and see if they have any events that fall within those parameters.
 
 # The list of neurons with >30min. recording:
-# ['20190527A',
-# '20190529B',
-# '20190529D',
-# '20200630C',
-# '20200708F',
-# '20210110G',
-# '20210113H',
+# ['20190527A',  # has fast-events and loads of them, 'second type' got filtered out by excluding last 20min. of recording (out of >90 min).
+# '20190529B',   # just over 30 min. of recording, not a single spont fast-event.
+# '20190529D',   # 9 fast-events in 45min. of recording
+# '20200630C',   # 22 fast-events in 42min. of recording, 7 amplitude groups and rise-time variability much wider in low-amp than high-amp events
+# '20200708F',   # work ongoing - loads of fast-events but also lots of compound ones, those all need to be filtered out first before variability in simple-events parameters can be addressed
+# '20210110G',   # 3 events in 39min. of recording, all at the same amplitude (~3mV)
+# '20210113H',   # has 45min. of recording and loads of fast-events,
 # '20210124A',
 # '20210426D']
+

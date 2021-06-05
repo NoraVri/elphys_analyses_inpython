@@ -1,5 +1,6 @@
 from singleneuron_class import SingleNeuron
 from singleneuron_plotting_functions import get_colors_forlineplots
+from singleneuron_analyses_functions import apply_filters_to_vtrace
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import quantities as pq
@@ -75,6 +76,7 @@ def plot2(singleneuron, block_id, baseline_lims=[-100, -20], time_window=[0.002,
         time_axis = time_axis.rescale('ms')
         ttlfirston_time = time_axis[ttlfirston_idx]
         time_axis = time_axis - ttlfirston_time
+        sampling_frequency = float(vtraces[0].sampling_rate.rescale('Hz'))
         for vtrace in vtraces:
             vtrace = np.squeeze(np.array(vtrace))
             # baselining value: meanv in the ms before ttl on
@@ -82,6 +84,9 @@ def plot2(singleneuron, block_id, baseline_lims=[-100, -20], time_window=[0.002,
             # skip trace if baseline value outside of range
             if ~(baseline_lims[0] < baselinev < baseline_lims[1]):
                 continue
+            # getting a de-noised vtrace
+            _, voltage_noisetrace = apply_filters_to_vtrace(vtrace, 5, 3000, sampling_frequency)
+            vtrace = vtrace - voltage_noisetrace
             vtrace = vtrace[(ttlfirston_idx - int(20000 * time_window[0])):(ttlfirston_idx + int(20000 * time_window[1]))]  # grabbing a snippet around ttlon
             vtrace_baselined = vtrace - baselinev
             vtrace_diff = np.diff(vtrace)

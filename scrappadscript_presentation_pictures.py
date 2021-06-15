@@ -129,12 +129,82 @@ plot2(cell20201116B, [1, 3], baseline_lims=[-56, -43], time_window=[0.02, 0.75])
 
 # %% picture: evoking depolarizations using optogenetics
 
-# %% Thy1
+# finding the relevant neuron recordings
+path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
+experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
+
+
+# %% Thy1 - using picture made previously (for grant / SfN2019 poster)
 
 
 # %% RBP
+RBPmice_condition = experimentdays_metadata.genetics.isin(['RBP', 'RBP4-cre/Ai32'])
+RBPevokedexcitations_experiments_dates = experimentdays_metadata[RBPmice_condition].date
+RBPevokedexcitations_experimentdays_recordings = recordings_metadata[
+    recordings_metadata.date.isin(RBPevokedexcitations_experiments_dates)]
+
+relevantneuronrecordings_names = RBPevokedexcitations_experimentdays_recordings.name.dropna()
+print(relevantneuronrecordings_names)
+
+for neuron_name in relevantneuronrecordings_names:
+    neuron_data = SingleNeuron(neuron_name)
+    blockslist = neuron_data.get_blocknames(printing='off')
+    for blockname in blockslist:
+        if 'light' in blockname:
+            plot2(neuron_data, blockname)
+
+# 9 neurons with light-applied traces (3 different recording days)
+# just one with basically no response (20200818B)
+# 20201125 was the best day: C and D are both nice examples; B looks like it may be getting fast-events evoked (has them at rather high frequency to begin with)
+# %%
+neuron_data = SingleNeuron('20201125C')
+plot2(neuron_data, [1, 2, 3, 4], baseline_lims=[-100, -35])
+
+# %%
+neuron_data = SingleNeuron('20201125D')
+plot2(neuron_data, [3, 4, 5], baseline_lims=[-100, -35])
+plot2(neuron_data, [6, 7])
 
 # %% MDJ injection
+injected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
+                    'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
+injectedmice_condition = experimentdays_metadata.virusinjection_ID.isin(injected_mice)
+MDJevokedexcitations_experiments_dates = experimentdays_metadata[injectedmice_condition].date
+MDJevokedexcitations_experimentdays_recordings = recordings_metadata[
+    recordings_metadata.date.isin(MDJevokedexcitations_experiments_dates)]
+
+relevantneuronrecordings_names = MDJevokedexcitations_experimentdays_recordings.name.dropna()
+print(relevantneuronrecordings_names)
+
+for neuron_name in relevantneuronrecordings_names:
+    neuron_data = SingleNeuron(neuron_name)
+    blockslist = neuron_data.get_blocknames(printing='off')
+    for blockname in blockslist:
+        if 'light' in blockname:
+            plot2(neuron_data, blockname)
+
+# only ~5 neurons that did not clearly respond to the light, ever
+
+
+# %% fast-event/APs as all-or-nothing evoked things
+neuron_data = SingleNeuron('20210110E')
+plot2(neuron_data, [ 3, 4], baseline_lims=[-60, -47])  # removed a bunch of traces from light 1 and 2 to get this
+
+# let's see
+
+# %% uncorrelated response amp to baselinev (to contrast with RBP synaptic response)
+# neuron_data = SingleNeuron('20210113A')
+# plot2(neuron_data, [ 3, 4], baseline_lims=[-100, -40])  # let's see these split out by baselinev:
+baselinerange1 = [-90, -80.1]
+baselinerange2 = [-80, -70.1]
+baselinerange3 = [-70, -60.1]
+baselinerange4 = [-60, -50.1]
+
+plot2(neuron_data, [ 3, 4], baseline_lims=baselinerange1)
+plot2(neuron_data, [ 3, 4], baseline_lims=baselinerange2)
+plot2(neuron_data, [ 3, 4], baseline_lims=baselinerange3)
+plot2(neuron_data, 3, baseline_lims=baselinerange4)
 
 
 

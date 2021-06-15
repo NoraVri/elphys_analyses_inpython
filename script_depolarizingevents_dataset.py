@@ -8,7 +8,7 @@ import pandas as pd
 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
-
+# %%
 # in principle any IO neuron could have fast-events, but let's first select only the most relevant ones.
 # So, let's first narrow down the dataset to neurons where we somehow try to manipulate the fast-events:
 # - experiments in Thy1 mice where inputs from all over the brain are activated
@@ -20,30 +20,43 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 
 # 1. selecting only neuron recordings done on relevant experiment days (evoked synaptic excitation or blocker applied)
 # listing the mice with light-evoked excitations experiments
-injected_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
+MDJ_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
                     'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
-genetic_mice = ['Thy1', 'thy1', 'RBP']
+RBP_mice = ['RBP', 'RBP4-cre/Ai32']
+Thy1_mice = ['Thy1', 'thy1']
 # listing mice with blocker-applied experiments
 # blockersapplied_mice = experimentdays_metadata.specialchemicals_type.str.contains('AP5')
 # blockersapplied_mice[blockersapplied_mice.isna()] = False
 
 # getting a list of all neurons recorded on the days that those mice were used
-injected_mice_condition = experimentdays_metadata.virusinjection_ID.isin(injected_mice)
-genetic_mice_condition = experimentdays_metadata.genetics.isin(genetic_mice)
+injected_mice_condition = experimentdays_metadata.virusinjection_ID.isin(MDJ_mice)
+injected_mice_experiments_dates = experimentdays_metadata[injected_mice_condition].date
+injected_mice_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(injected_mice_experiments_dates)]
+injected_mice_neuronrecordings_names = injected_mice_neuronrecordings.name.dropna()
+
+RBP_mice_condition = experimentdays_metadata.genetics.isin(RBP_mice)
+RBP_mice_experiments_dates = experimentdays_metadata[RBP_mice_condition].date
+RBP_mice_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(RBP_mice_experiments_dates)]
+RBP_mice_neuronrecordings_names = RBP_mice_neuronrecordings.name.dropna()
+
+Thy1_mice_condition = experimentdays_metadata.genetics.isin(Thy1_mice)
+Thy1_mice_experiments_dates = experimentdays_metadata[Thy1_mice_condition].date
+Thy1_mice_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(Thy1_mice_experiments_dates)]
+Thy1_mice_neuronrecordings_names = Thy1_mice_neuronrecordings.name.dropna()
+
 lightevokedexcitations_experiments_dates = experimentdays_metadata[
-    (injected_mice_condition | genetic_mice_condition)].date
+    (injected_mice_condition | RBP_mice_condition | Thy1_mice_condition)].date
 lightevokedexcitations_experimentdays_recordings = recordings_metadata[
     recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)]
-
-relevantneuronrecordings_names = lightevokedexcitations_experimentdays_recordings.name.dropna()
-# relevantneuronrecordings_names.dropna()
-print(relevantneuronrecordings_names)
+lightevokedneuronrecordings_names = lightevokedexcitations_experimentdays_recordings.name.dropna()
+# print(lightevokedneuronrecordings_names)
 
 
 # %%
 # 2. selecting only neuron recordings where manipulations were actually applied, and that were recorded
 # for at least 10min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
+relevantneuronrecordings_names = Thy1_mice_neuronrecordings_names
 
 evokedexcitations_singleneurons = []
 atleast10minrecording_singleneurons = []
@@ -106,6 +119,6 @@ print('no. of neurons that have at least 30 min. of recording AND light-evoked e
 # '20200708F',   # work ongoing - loads of fast-events but also lots of compound ones, those all need to be filtered out first before variability in simple-events parameters can be addressed
 # '20210110G',   # 3 events in 39min. of recording, all at the same amplitude (~3mV)
 # '20210113H',   # has 45min. of recording and loads of fast-events,
-# '20210124A',
+# '20210124A',   # almost 1.5hr of recording, lots of fast-events and spont.APs that all look triggered from fast-event.
 # '20210426D']
 

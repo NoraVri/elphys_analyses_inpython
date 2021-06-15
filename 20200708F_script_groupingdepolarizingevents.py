@@ -17,21 +17,39 @@ singleneuron_data = SingleNeuron(neuron_name)
 # later on it starts doing spikes and fast-events vigorously.
 # !Note: it's the cell that just won't die, but that doesn't mean its unaffected by drift - there are periods where
 # it's definitely not all that healthy, and bridge issues etc. may be playing up.
+# Also, it has lots of events that are clearly compound (double peaks, wider than single events).
+# !! They tend to get picked up as a single event by the algorithm, should consider that when calculating frequency.
 
 # summary plots:
-# des_df = singleneuron_data.depolarizing_events
-# aps = des_df.event_label == 'actionpotential'
-# fast_events = des_df.event_label == 'fastevent'
-# fast_events_df = des_df[fast_events]
-# fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
+des_df = singleneuron_data.depolarizing_events
+aps = des_df.event_label == 'actionpotential'
+fast_events = des_df.event_label == 'fastevent'
+compound_events = des_df.event_label == 'compound_event'
+
+fast_events_df = des_df[fast_events]
+fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
+singleneuron_data.plot_depolevents(fast_events,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   )
+singleneuron_data.plot_depolevents(fast_events,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   plot_dvdt=True)
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+                                                      fast_events=fast_events)
+
+singleneuron_data.plot_depolevents(aps,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   plot_dvdt=True
+                                   )
+
+singleneuron_data.plot_depolevents(compound_events,
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   plot_dvdt=True)
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -218,6 +236,13 @@ singleneuron_data.plot_depolevents(probably_notfastevents,
 
 
 
+
+
+
+
+
+
+# %%
 # 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
 aps = des_df.event_label == 'actionpotential'
 # singleneuron_data.plot_depolevents((aps & spont_events),

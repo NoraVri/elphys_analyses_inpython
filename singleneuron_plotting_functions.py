@@ -257,7 +257,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 # %% helper functions:
 # getting colormap information
 def get_colors_forlineplots(colorby_measure, data):
-    colormap = mpl.cm.cividis #viridis
+    colormap = mpl.cm.viridis  # cividis
     if isinstance(data, list) and len(data) == 2:
         cm_normalizer = mpl.colors.Normalize(vmin=data[0],
                                              vmax=data[1])

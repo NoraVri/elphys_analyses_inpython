@@ -5,7 +5,7 @@ import quantities as pq
 import pandas as pd
 import numpy as np
 
-neuron_name = ''
+neuron_name = '20210110F'
 singleneuron_data = SingleNeuron(neuron_name)
 
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
@@ -13,7 +13,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 # notes summary:
 
 
-
+# %%
 # summary plots:
 des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'

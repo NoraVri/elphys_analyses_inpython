@@ -102,4 +102,17 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'width_
 # plotted traces. Other than that, it's clear that this neuron has at least 4 or 5 amplitude-groups of events,
 # irregularly spaced between 5 and 17.5mV and with the largest events being least frequent.
 
-# Let's see
+# Let's see events occurring at a more limited range of baselinev:
+possibly_spontfastevents_narrowbaselinev = (possibly_spontfastevents
+                                            & (des_df.baselinev > -65)
+                                            & (des_df.baselinev < -58))
+possibly_spontfastevents_narrowbaselinev_df = des_df[possibly_spontfastevents_narrowbaselinev]
+singleneuron_data.plot_depolevents(possibly_spontfastevents_narrowbaselinev,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
+nbins = 50
+possibly_spontfastevents_narrowbaselinev_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=nbins)

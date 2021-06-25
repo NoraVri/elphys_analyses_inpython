@@ -959,7 +959,7 @@ class SingleNeuron:
         txtfiles_list = [filename for filename in os.listdir() if filename.endswith('.txt')]
 
         for datafile in txtfiles_list:
-            print('currently processing file: ')  #! put the actual file name here to print
+            print('currently processing file: ' + datafile)
             # in my .txt-file data there are always just two recording channels: V and I
             # getting one block per file, with all the channel_indexes/segments/analogsignals
             block = Block()

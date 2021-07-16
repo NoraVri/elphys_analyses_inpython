@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
-# finding the relevant neuron recordings
+# metadata imports
 path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
@@ -52,13 +52,15 @@ lightevokedneuronrecordings_names = lightevokedexcitations_experimentdays_record
 # print(lightevokedneuronrecordings_names)
 
 # %% getting all IO neuron recordings (skipping Yarom lab rig recordings (at RT) for now)
-IOneuronrecordings_dates = experimentdays_metadata[experimentdays_metadata.slicing_target == 'inferior_olive']
-allrecordedneurons_names = recordings_metadata.name.dropna()
-smithlabrecordings_names = allrecordedneurons_names.loc[~allrecordedneurons_names.str.startswith('2016')]
+IOrecordings_dates = experimentdays_metadata[
+    experimentdays_metadata.slicing_target_structure == 'inferior_olive'].date
+IOslices_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(IOrecordings_dates)]
+IOslices_neuronrecordings_names = IOslices_neuronrecordings.name.dropna()
+smithlabrecordings_names = IOslices_neuronrecordings_names.loc[~IOslices_neuronrecordings_names.str.startswith('2016')]
 
 # %%
 # 2. selecting only neuron recordings where manipulations were actually applied, and that were recorded
-# for at least 10min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
+# for at least 10min/30min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 relevantneuronrecordings_names = smithlabrecordings_names
 
@@ -100,8 +102,27 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 #       + str(len(list(set(atleast30minrecording_singleneurons) & set(evokedexcitations_singleneurons)))))
 
 # %% selected lists of neurons
+# list of neurons manually picked out for having LOTS of fast-events:
+frequent_fastevents_neurons = [
+'20190331A1', #
+'20190331A2', #-
+'20190401A1', # we like this example. -
+'20190401B1', #
+'20190410A2', # not very frequent
+'20190527A',  # this one's a winner. - Indeed, except for the stretches of time where it's making fast-events of a different shape than the classic ones (though there's still plenty of those).
+'20190805A2', # intriguing example because of its oscillations. phase relationship? - Looks like not.
+'20190812A',  # interesting.
+'20190815C',  #-
+'20200708F'   
+'20210113H',  # not very frequent
+'20210124A',  #
+]
 
-# The list of neurons with >30min. recording and light-evoked excitations:
+# compare between oscillating and non-oscillating neurons;
+# separate out fast-events during oscillations and periods of not oscillating;
+# separate by phase of oscillation.
+# %%
+# The list of neurons with >30min. recording and (not RBP) light-evoked excitations:
 # ['20190527A',  # has fast-events and loads of them, 'second type' got filtered out by excluding last 20min. of recording (out of >90 min).
 # '20190529B',   # just over 30 min. of recording, not a single spont fast-event.
 # '20190529D',   # 9 fast-events in 45min. of recording
@@ -112,8 +133,61 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 # '20210124A',   # almost 1.5hr of recording, hundreds of fast-events, and spont.APs that all look triggered from fast-event.
 # '20210426D']   # has almost 40min. recording and some neat fast-events, but also still a lot of cleanup to do
 
+# list of (mostly) IO neurons with > 30min. recording (not including neurons recorded in Yarom lab rig):
+# ['20190319A1',
+# '20190319C1',
+# '20190319C2',
+# '20190325B2',
+# '20190325C1',
+# '20190325C2',
+# '20190325D2',
+# '20190331A1', #
+# '20190331A2', #
+# '20190401A1', #
+# '20190401B1', #
+# '20190402A1',
+# '20190409A1',
+# '20190409A2',
+# '20190409B2',
+# '20190410A2', # not very frequent
+# '20190513C',
+# '20190527A',  #
+# '20190529B',
+# '20190529D',
+# '20190729A',
+# '20190804A',
+# '20190804B',
+# '20190804C',
+# '20190805A2', #
+# '20190805B1',
+# '20190806A',
+# '20190812A',  #
+# '20190812B',
+# '20190814A',
+# '20190815C',  #
+# '20190815D2',
+# '20191105A1',
+# '20191105A2',
+# '20191105C',
+# '20191106A1',
+# '20191106A2',
+# '20191119A',
+# '20191120A',
+# '20191120B1',
+# '20191120B2',
+# '20200102B',
+# '20200310G',
+# '20200630C',
+# '20200708F',
+# '20201125B',
+# '20201125C',
+# '20201228B',
+# '20210110G',
+# '20210113H',  # not very frequent
+# '20210124A',  #
+# '20210426D']
 
-# list of neurons recorded in Smith lab and nRiM lab, with >30min. recording (before raw data cleanup):
+# list of (mostly) IO neurons recorded in Smith lab and nRiM lab, with >30min. recording (before raw data cleanup):
 # ['20190131B1',# nice enough recording with what looks like LOADS of fast-events
 # '20190131B2', # not a lot of fast-events (not a good recording for the most part)
 # '20190131C1', # very nice recording with what looks like LOADS of fast-events
@@ -174,20 +248,18 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 # '20191120B1', # nice enough recording, didn't really see any fast-events
 # '20191120B2', # nice enough recording, didn't really see any fast-events
 # '20191226A',  # not IO neuron, and very boring in its activity
-# '20200102B',  # 
-# '20200306A',
-# '20200310G',
+# '20200102B',  # nice long recording of oscillating neuron, didn't see any fast-events
+# '20200306A',  # not actually a long recording or a very good one; has lots of spont APs but didn't see a lot of fast-events
+# '20200310G', # has glu-uncaging-evoked excitations, too; very nice long recording with some fast-events, but cell is mostly busy oscillating
 # '20200630C', # - has light-evoked excitations, too
 # '20200708F', # - has light-evoked excitations, too
-# '20200909A',
-# '20200909B',
-# '20201125B',
-# '20201125C',
-# '20201228B',
+# '20201125B',  # nice long recording with LOADS of spont.APs and fast-events (RBP mouse, lots of light applied conditions)
+# '20201125C',  # nice long recording, didn't see a lot of fast-events
+# '20201228B',  # nice enough recording, didn't really see any fast-events though (cell mostly just wants to oscillate)
 # '20210110G', # - has light-evoked excitations, too
 # '20210113H', # - has light-evoked excitations, too
 # '20210124A', # - has light-evoked excitations, too
-# '20210216A',
+# '20210216A',  # neuron not doing much of anything at all, not fast-events either.
 # '20210426D'] # - has light-evoked excitations, too
 
 
@@ -209,3 +281,10 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 # Parameter distributions will have to be split out by baselinev, and possibly other things - this will be determined
 # based on the thorough examination of these lengthy-recording examples.
 # Then, we will examine neurons with >10min. of recording and see if they have any events that fall within those parameters.
+
+# %% getting info on neurons recorded from known locations
+
+
+frequent_fastevents_neurons_df = recordings_metadata.loc[
+                                    recordings_metadata.name.isin(frequent_fastevents_neurons)]
+

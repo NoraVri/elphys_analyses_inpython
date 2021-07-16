@@ -974,20 +974,28 @@ cell20191226A.write_results()
 
 # %%
 cell20200102B = SingleNeuron('20200102B')
+# nice long recording of IO neuron oscillating except when light is shining on it (PDX/Ai32 mouse)
+cell20200102B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20200102B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=18)
+cell20200102B.write_results()
 
 # %% experiment: RubiGlu-uncaging
 # %% no light-evoked activity recorded
-# cell20200306A = SingleNeuron('20200306A')
-# cell died between run 10 and 11, yet for some reason 28 runs were recorded altogether
-# altogether it's not a good recording; cell was pretty leaky from the start, and only deteriorating.
+cell20200306A = SingleNeuron('20200306A')
 # spiking only in R1, still has depolarizations and small (~1/2mV) oscillations in R2, but after that it's dead.
-# cell20200306A_allrunsnames = cell20200306A.get_blocknames(printing='off')
-# for i in range(3, 29):
-#     runtoexclude = 'R'+str(i)
-#     fullrunname = [name for name in cell20200306A_allrunsnames
-#                    if name.startswith(runtoexclude)][0]
-#     cell20200306A.rawdata_remove_nonrecordingblock(fullrunname)
-# cell20200306A.write_results()
+# By R3 it's barely holding a restingv; removing that and everything recorded after.
+cell20200306A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing runs where neurons is no longer alive at all:
+for run in cell20200306A.get_blocknames(printing='off'):
+    if run.startswith('R1_') or run.startswith('R2_'):
+        continue
+    else:
+        cell20200306A.rawdata_remove_nonrecordingblock(run)
+cell20200306A.write_results()
+
 # %% no light-evoked activity recorded
 # cell20200306B = SingleNeuron('20200306B')
 # just one block with some spontaneous activity, then it died; not much of any interesting activity
@@ -1095,18 +1103,21 @@ cell20200102B = SingleNeuron('20200102B')
 #                                                  trace_end_t=74)
 # cell20200310F.write_results()
 # %%
-# cell20200310G = SingleNeuron('20200310G')  # the single greatest cell with light
-# cell20200310G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
-# has all the kinds of depolarizations spontaneously occurring
-# initially oscillating with ~15mV amp and steadily decreasing; Vrest staying ~-50mV throughout
-# cell20200310G.rawdata_remove_nonrecordingsection('R21_lighttriggered_CCmode.ibw',
-#                                                  segment_idx=1)
-# for block in cell20200310G.blocks:
-#     if 'R1_' in block.file_origin:
-#         continue
-#     else:
-#         cell20200310G.rawdata_note_chemicalinbath(block.file_origin)
-# cell20200310G.write_results()
+cell20200310G = SingleNeuron('20200310G')
+# the single greatest cell with glu-uncaging; has all the kinds of depolarizations spontaneously occurring
+# initially oscillating with ~15mV amp and steadily decreasing; Vrest staying ~-50mV throughout;
+# great recording until the neuron suddenly dies.
+cell20200310G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing the last recorded trace in which the neuron dies early on:
+cell20200310G.rawdata_remove_nonrecordingsection('R21_lighttriggered_CCmode.ibw', remove_segments=1)
+# marking blocks with RubiGlu in the bath:
+for block in cell20200310G.blocks:
+    if 'R1_' in block.file_origin:
+        continue
+    else:
+        cell20200310G.rawdata_note_chemicalinbath(block.file_origin)
+cell20200310G.write_results()
 # %% no light-evoked activity recorded
 # cell20200312A = SingleNeuron('20200312A')  # this cell has a little more data recorded post-software-crash;
 # has a couple more fast-events there though it lost >10mV of its resting
@@ -1357,6 +1368,7 @@ cell20200818B = SingleNeuron('20200818B')
 cell20200818B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=27)
 cell20200818B.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
 cell20200818B.write_results()
+
 # %%
 # not a great recording at all; spont.break-in from <Gseal, not much of any activity going on,
 # and starts dying really badly just as lightpulses are getting applied.
@@ -1366,6 +1378,10 @@ cell20200818B.write_results()
 # cell20200818C.rawdata_remove_nonrecordingsection('longPulses_0004.abf', trace_end_t=46)  # file misnamed at recordings
 # cell20200818C.write_results()
 
+# %%
+# cell20200909A = SingleNeuron('20200909A')
+#
+# cell20200909A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # %% experiments with glutamate puff
 # cell20201116A = SingleNeuron('20201116A')
 
@@ -1378,6 +1394,36 @@ cell20200818B.write_results()
 # cell20201116B.rawdata_remove_nonrecordingsection('puffResponse_0002.abf', remove_segments=[6, 7, 8])
 # cell20201116B.write_results()
 
+# %%
+cell20201125B = SingleNeuron('20201125B')
+# nice long recording, though neuron is losing AP amp slowly, and in the last 5 minutes or so of recordings it depolarizes a bunch.
+# Still, it's oscillating and doing APs and fast-events throughout (at its natural restingV it seems most fast-events trigger APs).
+cell20201125B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20201125B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=14)
+cell20201125B.write_results()
+
+# %%
+cell20201125C = SingleNeuron('20201125C')
+# mostly very nice recording of oscillating neuron (doing fast-events occasionally, no spont APs),
+# until it dies suddenly (as evidenced by no response at all to light from one trace to the next)
+cell20201125C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20201125C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=22)
+# removing traces where neuron died:
+cell20201125C.rawdata_remove_nonrecordingsection('light_0004.abf', remove_segments=[44, 45, 46, 47, 48])
+cell20201125C.write_results()
+
+# %%
+cell20201228B = SingleNeuron('20201228B')
+# quite nice recording, neuron is mostly just busy oscillating (quite large amp, almost Ca-spikes at first), possibly it fires off a few small fast-events as it depolarizes and dies.
+cell20201228B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20201228B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=15)
+cell20201228B.write_results()
 
 # %%
 cell20210105B = SingleNeuron('20210105B')
@@ -1449,6 +1495,7 @@ cell20210124A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 cell20210124A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=17)
 cell20210124A.write_results()
 
+# %%
 
 # %%
 cell20210203C = SingleNeuron('20210203C')
@@ -1457,10 +1504,18 @@ cell20210203C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # removing seal formation; everything else looks good
 cell20210203C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=48)
 cell20210203C.write_results()
-# note blocks with special chemicals added to bath:
 
-
-
+# %%
+cell20210216A = SingleNeuron('20210216A')
+# nice enough recording, neuron mostly just holding steady until it dies (nothing much of any interesting activity, maybe it's trying to oscillate a bit in the beginning).
+cell20210216A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20210216A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=24)
+# removing parts of the recording where neuron died:
+cell20210216A.rawdata_remove_nonrecordingsection('gapFree_0005.abf', trace_end_t=920)
+cell20210216A.rawdata_remove_nonrecordingblock('gapFree_0006.abf')
+cell20210216A.write_results()
 
 # %%
 # cell20210411A = SingleNeuron('20210411A')

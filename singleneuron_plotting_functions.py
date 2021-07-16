@@ -110,14 +110,14 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
         baseline_value = eventmeasures_series['baselinev']
         event_trace = event_trace - baseline_value
     elif do_baselining and not eventmeasures_series.empty:
-        baseline_value = eventmeasures_series['edtrace_baselinev']
+        baseline_value = eventmeasures_series['ed_baselinev']
         event_trace = event_trace - baseline_value
 
     if do_normalizing and not eventmeasures_series.empty and get_measures_type == 'raw':
         normalize_value = eventmeasures_series['amplitude']
         event_trace = event_trace / normalize_value
     elif do_normalizing and not eventmeasures_series.empty:
-        normalize_value = eventmeasures_series['edtrace_amplitude']
+        normalize_value = eventmeasures_series['ed_amplitude']
         event_trace = event_trace / normalize_value
 
     # plotting the line

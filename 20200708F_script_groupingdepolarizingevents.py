@@ -100,6 +100,7 @@ singleneuron_data.plot_depolevents(possibly_spontfastevents,
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plotwindow_inms=20,
+                                   plot_dvdt=True
                                    )
 # OK then, lots of things going on there... I'm sure some of them are classic fast-events, others are double-events,
 # and then there's events with fast rise but different decay than the fast-events (and those come as doubles, too).

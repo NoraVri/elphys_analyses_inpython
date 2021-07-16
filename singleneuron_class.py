@@ -274,7 +274,8 @@ class SingleNeuron:
         and the segment is adjusted to start and/or end at the new time(s).
         If a single int is passed for remove_segments, this segment will be removed from the block.
         If a list list of ints is provided, each of these will be removed from the block.
-        !!Note: this function will fail if anything besides a (list of) int is passed through for remove_segments
+        !!Note: this function will fail if anything besides a (list of) int is passed through for remove_segments,
+        and care should be taken to remove all relevant segments in one go (or things will bug out when the neuron is called next).
 
         The function returns self.rawdata_blocks with the superfluous data removed,
         and updates rawdata_readingnotes accordingly.
@@ -329,20 +330,20 @@ class SingleNeuron:
                               't_end': trace_end_t,
                               'segment_idx': remove_segments}
             })
-        else:
-            removedsegs_idcs = self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx']
-            if isinstance(removedsegs_idcs, int):
-                if isinstance(remove_segments, int):
-                    removedsegs_idcs = [removedsegs_idcs, remove_segments]
-                elif isinstance(remove_segments, list):
-                    removedsegs_idcs = [removedsegs_idcs, *remove_segments]
-            elif isinstance(removedsegs_idcs, list):
-                if isinstance(remove_segments, int):
-                    removedsegs_idcs = [*removedsegs_idcs, remove_segments]
-                elif isinstance(remove_segments, list):
-                    removedsegs_idcs = [*removedsegs_idcs, *remove_segments]
-
-            self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx'] = removedsegs_idcs
+        # else:
+        #     removedsegs_idcs = self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx']
+        #     if isinstance(removedsegs_idcs, int):
+        #         if isinstance(remove_segments, int):
+        #             removedsegs_idcs = [removedsegs_idcs, remove_segments]
+        #         elif isinstance(remove_segments, list):
+        #             removedsegs_idcs = [removedsegs_idcs, *remove_segments]
+        #     elif isinstance(removedsegs_idcs, list):
+        #         if isinstance(remove_segments, int):
+        #             removedsegs_idcs = [*removedsegs_idcs, remove_segments]
+        #         elif isinstance(remove_segments, list):
+        #             removedsegs_idcs = [*removedsegs_idcs, *remove_segments]
+        #
+        #     self.rawdata_readingnotes['nonrecordingtimeslices'][file_origin]['segment_idx'] = list(set(removedsegs_idcs))
 
     # note which blocks have special chemicals applied
     def rawdata_note_chemicalinbath(self, *block_identifiers):
@@ -463,7 +464,7 @@ class SingleNeuron:
                          newplot_per_block=False, newplot_per_event=False,
                          colorby_measure='', color_lims=None,
                          plt_title='',
-                         plot_dvdt=False,
+                         plot_dvdt=True,
                          **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
@@ -734,6 +735,27 @@ class SingleNeuron:
                                                     colormap='cividis',
                                                     ax=axis)
             axis.set_title('all events')
+
+    # scattering measured events parameters overlayed, one color per group
+    def scatter_depoleventsgroups_overlayed(self, xmeasure, ymeasure, plt_title='',
+                                            **events_groups):
+        color_lims = [0, len(events_groups) - 1]
+        colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)
+
+        figure, axis = plt.subplots()
+        eventsgroups_labels = events_groups.keys()
+        colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                   ticks=list(range(len(events_groups)))
+                                   )
+        colorbar.ax.set_yticklabels(eventsgroups_labels)
+
+        for i, eventgroup in enumerate(events_groups.values()):
+            eventsgroup_measures = self.depolarizing_events[eventgroup]
+            eventsgroup_measures.plot.scatter(x=xmeasure,
+                                              y=ymeasure,
+                                              c=colormap(cm_normalizer(i)),
+                                              ax=axis)
+        plt.suptitle(plt_title)
 
 # %% functions for analyzing raw data
 

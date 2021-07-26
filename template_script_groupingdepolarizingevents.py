@@ -14,7 +14,7 @@ nbins = 50
 # notes summary:
 
 
-
+# %%
 # summary plots:
 aps = des_df.event_label == 'actionpotential'
 comound_events = des_df.event_label == 'compound_event'
@@ -41,50 +41,47 @@ singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents, comound_even
 #                                    plot_dvdt=True,
 #                                    )
 
-fast_events = des_df.event_label == 'fastevent'
-fast_events_df = des_df[fast_events]
-fast_events_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'], bins=nbins)
-singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15)
-singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15)
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
-singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
+# fastevents_df = des_df[fastevents]
+# fastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'], bins=nbins)
+# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    do_normalizing=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15)
+# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15)
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
+# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
+
+# %% plots for publication figures
+
+
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
 # notes:
 
-singleneuron_data.get_depolarizingevents_fromrawdata()
-singleneuron_data.write_results()
 
-# block_no = 3
-# segment_no = 3
+# block_no = 0
+# segment_no = 0
 # time_slice = [100, 250]
 #
 # (eventmeasures_dict,
 #  depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
 #                                                                                       return_dicts=True,
-#                                                                                       # time_slice=time_slice,
-#                                     min_depolspeed=0.3,
-#                                     # min_depolamp=0.3,
-#                                     # depol_to_peak_window=5,
-#                                     # event_width_window=40,
-#                                     # ahp_width_window=10,
-#                                     noisefilter_hpfreq=2500,
-#                                     oscfilter_lpfreq=10,
-#                                     ttleffect_window=2500,
+#                                                                                       time_slice=time_slice,
+# check that AHP width window wide enough
 # )
+
+singleneuron_data.get_depolarizingevents_fromrawdata()
+singleneuron_data.write_results()
 
 # %% plots: seeing that depolarizing events got extracted nicely
 des_df = singleneuron_data.depolarizing_events
@@ -153,30 +150,3 @@ aps = des_df.event_label == 'actionpotential'
 
 
 
-
-# %% labeling of selected events: compound conditions
-fastevents_largerthan_params = {
-                                'amplitude': 0.5,
-                                # 'baselinev':-80,
-                                }
-fastevents_smallerthan_params = {
-                                 'rise_time_20_80': 0.7,
-                                 }
-fastevents_candidates = unlabeled_events
-for key, value in fastevents_largerthan_params.items():
-    fastevents_candidates = fastevents_candidates & (des_df[key] > value)
-for key, value in fastevents_smallerthan_params.items():
-    fastevents_candidates = fastevents_candidates & (des_df[key] < value)
-
-singleneuron_data.plot_depolevents(fastevents_candidates,
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   prealignpoint_window_inms=10,
-                                   plotwindow_inms=30,
-                                   plt_title='presumably all fast-events')
-
-# %% labeling fast-events as such, and saving the data table
-singleneuron_data.depolarizing_events.loc[fastevents_candidates, 'event_label'] = 'fastevent'
-singleneuron_data.write_results()
-des_df = singleneuron_data.depolarizing_events

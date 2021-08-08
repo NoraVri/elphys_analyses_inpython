@@ -11,6 +11,7 @@ This file contains functions for analyzing singleneuron (raw) data.
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from scipy import signal
 import quantities as pq
 
@@ -575,6 +576,68 @@ def get_events_measures(peaks_idcs,
         eventsmeasures_dictionary['n_spikeshoulderpeaks'].append(n_spikeshoulderpeaks)
 
     return eventsmeasures_dictionary
+
+
+def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingevents_settings,
+                       events_series=pd.Series,
+                        timealignto_measure='peakv_idx',
+                        prealignpoint_window_inms=5,
+                        plotwindow_inms=40,
+                        do_normalizing=False,
+                        get_measures_type='raw'
+                        ):
+    # !!this code will fail miserably if there are blocks with different sampling frequency recorded for the same neuron
+    eventmeasures_df = depolarizingevents_df[events_series]
+    sampling_frequency = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_rate)
+    sampling_period_inms = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
+    tracesnippet_length = int(plotwindow_inms / sampling_period_inms)
+    time_axis = np.linspace(start=0, stop=plotwindow_inms, num=tracesnippet_length)
+    # initializing array to collect all events-traces into
+    eventstraces_array = np.zeros((tracesnippet_length, len(eventmeasures_df)))
+    running_event_index = 0
+    for block in rawdata_blocks:
+        block_eventsmeasures = eventmeasures_df[(eventmeasures_df.file_origin == block.file_origin)]
+        if not block_eventsmeasures.empty:
+            segments_idcs = list(set(block_eventsmeasures['segment_idx']))
+            for segment_idx in segments_idcs:
+                segment_eventsmeasures = block_eventsmeasures[(block_eventsmeasures.segment_idx == segment_idx)]
+                vtrace_asanalogsignal = block.segments[segment_idx].analogsignals[0]
+                vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
+                # subtracting high-frequency noise from the raw voltage (as done for calculating depolevents measures)
+                oscillationstrace, noisetrace = apply_filters_to_vtrace(
+                    vtrace,
+                    getdepolarizingevents_settings['oscfilter_lpfreq'],
+                    getdepolarizingevents_settings['noisefilter_hpfreq'],
+                    sampling_frequency,
+                    plot='off')
+                if get_measures_type == 'raw':
+                    vtrace = vtrace - noisetrace
+                else:
+                    vtrace = vtrace - noisetrace - oscillationstrace
+                # getting the event-traces of the segment
+                for _, eventmeasures in segment_eventsmeasures.iterrows():
+                    event_startidx = (eventmeasures[timealignto_measure]
+                                      - (int(prealignpoint_window_inms / sampling_period_inms)))
+                    event_trace = vtrace[event_startidx:event_startidx + tracesnippet_length]
+                    # padding with nans if the tracesnippet is too short (because it's at the end of vtrace)
+                    if tracesnippet_length > len(event_trace):
+                        event_trace = np.append(event_trace,
+                                                (np.zeros(((tracesnippet_length - len(event_trace)), 1)) + np.nan))
+                    # baselining and (optionally) normalizing
+                    if get_measures_type == 'raw':
+                        event_trace = event_trace - eventmeasures['baselinev']
+                    else:
+                        event_trace = event_trace - eventmeasures['ed_baselinev']
+                    if do_normalizing and (get_measures_type == 'raw'):
+                        event_trace = event_trace / eventmeasures['amplitude']
+                    elif do_normalizing:
+                        event_trace = event_trace / eventmeasures['ed_amplitude']
+                    # adding the event trace to the array collecting them for the block
+                    eventstraces_array[:,running_event_index] = event_trace
+                    running_event_index += 1
+    average_trace = np.nanmean(eventstraces_array, axis=1)
+    return average_trace, time_axis
+
 
 
 # helper-functions:

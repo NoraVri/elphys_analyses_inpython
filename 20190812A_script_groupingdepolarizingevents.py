@@ -34,8 +34,6 @@ singleneuron_data = SingleNeuron(neuron_name)
 # %% extracting depolarizing events
 # notes:
 
-singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=3)
-singleneuron_data.write_results()
 
 # block_no = 3
 # segment_no = 3
@@ -54,6 +52,9 @@ singleneuron_data.write_results()
 #                                     oscfilter_lpfreq=10,
 #                                     ttleffect_window=2500,
 # )
+
+singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=3)
+singleneuron_data.write_results()
 
 # %% plots: seeing that depolarizing events got extracted nicely
 des_df = singleneuron_data.depolarizing_events

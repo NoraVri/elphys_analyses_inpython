@@ -221,11 +221,12 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                                              getdepolarizingevents_settings['noisefilter_hpfreq'],
                                              sampling_frequency,
                                              plot='off')
-        vtrace = vtrace - noisetrace
 
-        # optional: getting the event-detect trace instead of the raw vtrace
+            # optional: getting the event-detect trace instead of the raw vtrace
         if 'get_measures_type' in kwargs.keys() and not kwargs['get_measures_type'] == 'raw':
             vtrace = vtrace - oscillationstrace - noisetrace
+        else:
+            vtrace = vtrace - noisetrace
         # plotting the events of the segment
         for _, eventmeasures in segment_eventsmeasures.iterrows():
             plot_startidx = (eventmeasures[timealignto_measure]
@@ -253,6 +254,9 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                                   eventmeasures_series=eventmeasures,
                                   dvdtaxis_object=dvdt_axis,
                                   **kwargs)
+
+
+
 
 # %% helper functions:
 # getting colormap information

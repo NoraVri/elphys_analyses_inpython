@@ -80,12 +80,12 @@ singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents, comound_even
 # check that AHP width window wide enough
 # )
 
-singleneuron_data.get_depolarizingevents_fromrawdata()
-singleneuron_data.write_results()
+# singleneuron_data.get_depolarizingevents_fromrawdata()
+# singleneuron_data.write_results()
 
-# %% plots: seeing that depolarizing events got extracted nicely
+# %% plots and analyses: seeing and labeling depolarizing events
 des_df = singleneuron_data.depolarizing_events
-
+nbins = 100
 # 1. seeing that light/puff-evoked things all got labeled as such
 evoked_events = des_df.applied_ttlpulse
 singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
@@ -95,32 +95,32 @@ singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # 2. seeing that spontaneous fast-events got picked up
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-possibly_spontfastevents = (spont_events & unlabeled_events)
+unlabeled_spont_events = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
 
 # plotting events parameters:
-possibly_spontfastevents_df = des_df[possibly_spontfastevents]
+possibly_spontfastevents_df = des_df[unlabeled_spont_events]
 possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
                                  bins=nbins,
                                  )
 plt.suptitle('all as-yet unlabeled events')
 singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=possibly_spontfastevents,
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
                                                       )
 
 # plotting events:
-# possibly_spontfastevents = (possibly_spontfastevents & (des_df))
+# possibly_spontfastevents = (unlabeled_spont_events & (des_df))
 # singleneuron_data.plot_depolevents(possibly_spontfastevents,
 #                                    colorby_measure='baselinev',
 #                                    plotwindow_inms=15,

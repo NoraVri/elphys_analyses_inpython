@@ -521,8 +521,6 @@ class SingleNeuron:
             if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
                 kwargs['display_measures'] = False  # turning it off for the overlayed-lines plot(s) that are made next
 
-
-
         if newplot_per_block:
             for block_name in blocks_for_plotting:
                 if plot_dvdt:
@@ -631,6 +629,48 @@ class SingleNeuron:
                                                   linecolor=colormap(cm_normalizer(i)),
                                                   label=('event group ' + str(i)),
                                                   **kwargs)
+        colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                   ticks=list(range(len(events_groups)))
+                                   )
+        if group_labels is not None and (len(group_labels) == len(events_groups)):
+            colorbar.ax.set_yticklabels(group_labels)
+        plt.suptitle(plt_title)
+
+    # plotting depolarizing events group averages
+    def plot_depoleventsgroups_averages(self, *events_groups, group_labels=None, plt_title='group averages',
+                                        **kwargs):
+        """optional kwargs:
+        timealignto_measure='peakv_idx',
+        prealignpoint_window_inms=5,
+        plotwindow_inms=40,
+        do_normalizing=False,
+        get_measures_type='raw'
+        """
+
+        # getting colors to plot with
+        color_lims = [0, len(events_groups) - 1]
+        colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)
+        # setting up figure axes
+        if 'plot_dvdt' in kwargs.keys() and kwargs['plot_dvdt']:
+            figure, axes = plt.subplots(1, 2, squeeze=True)
+            axis = axes[0]
+            dvdt_axis = axes[1]
+        else:
+            figure, axis = plt.subplots(1, 1, squeeze=True)
+            dvdt_axis = None
+        for i, events_group in enumerate(events_groups):
+            linecolor = colormap(cm_normalizer(i))
+            events_group_avg, time_axis = snafs.get_events_average(self.blocks, self.depolarizing_events,
+                                                        self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                                        events_group, **kwargs)
+            axis.plot(time_axis, events_group_avg,
+                      color=linecolor, linewidth=4)
+            axis.set_xlabel('time (ms)')
+            if dvdt_axis is not None:
+                diff_events_avg = np.diff(events_group_avg)
+                dvdt_axis.plot(events_group_avg[:-1:], diff_events_avg, color=linecolor)
+                dvdt_axis.set_xlabel('V')
+                dvdt_axis.set_ylabel('dV/dt')
         colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
                                    ticks=list(range(len(events_groups)))
                                    )

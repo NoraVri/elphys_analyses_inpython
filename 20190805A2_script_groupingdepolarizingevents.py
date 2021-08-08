@@ -453,6 +453,10 @@ singleneuron_data.plot_depolevents(possibly_fastevents,
 # singleneuron_data.depolarizing_events.loc[possibly_fastevents, 'event_label'] = 'fastevent'
 # singleneuron_data.write_results()
 
+
+
+
+
 # %% splitting fast-events out by conditions: baselinev, oscphase, maxdvdt
 # first: see for which events oscphase was nicely extracted
 # singleneuron_data.plot_rawdatablocks(segments_overlayed=False, events_to_mark=fast_events)

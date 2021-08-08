@@ -5,17 +5,21 @@ import quantities as pq
 import pandas as pd
 import numpy as np
 
-neuron_name = '20190401B1'
+neuron_name = '20190410A2'
 singleneuron_data = SingleNeuron(neuron_name)
-
+des_df = singleneuron_data.depolarizing_events
+nbins = 50
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
+# nice long recording of neuron doing mostly nothing except maintaining baselinev; then quite far into recordings
+# fast-events get turned on (shortPulse and final gapFree file).
 
-
-
+# %%
 # summary plots:
 
+
+# %% plots for publication figures
 
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
@@ -23,37 +27,20 @@ singleneuron_data = SingleNeuron(neuron_name)
 #   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
 # notes:
-# overall a quite nice and stable-looking recording (no -DC applied anywhere to keep baselinev) except towards
-# the very end (shortPulse 01) where baselinev deteriorates badly. Also, it seems like fast-events frequency is
-# going down over time, disappearing to almost 0 after about 45 minutes of recording.
+# using the second segment of the final gapFree file to extract events
 
-# I will use gapFree_0000 for extracting depolarizing events, as this is the trace with the most fast-events in it.
-# the neuron's oscillations are nicely captured by a 10Hz lp-filter; AHP width window increased to 200ms because 150ms
-# often cuts it too close; min_depolspeed increased to 0.2mV/ms because below that there's really just noise (from seeing the event-detect-trace derivative).
-
-# block_no = 0
-# segment_no = 0
-# time_slice = [400, 500]  # [800, 950]
+# block_no = 3
+# segment_no = 1
 #
 # (eventmeasures_dict,
 #  depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
 #                                                                                       return_dicts=True,
-#                                                                                       time_slice=time_slice,
-#                                                     min_depolamp=0.1,
-#                                                     oscfilter_lpfreq=10,
-#                                                     ahp_width_window=200,
-#                                                     min_depolspeed=0.2,
-#
+#                                                                             oscfilter_lpfreq=10,
+#                                                                             min_depolspeed=0.2  # below that it seems rather random what things get picked up as events, it all mostly just looks like noise
 # )
 
-# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=0.1,
-#                                                      min_depolspeed=0.2,
-#                                                      ahp_width_window=200,
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolspeed=0.2,
 #                                                      oscfilter_lpfreq=10)
-# singleneuron_data.write_results()
-
-
-# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=3)
 # singleneuron_data.write_results()
 
 # %% plots and analyses: seeing and labeling depolarizing events
@@ -61,7 +48,7 @@ des_df = singleneuron_data.depolarizing_events
 nbins = 100
 # 1. seeing that light/puff-evoked things all got labeled as such
 # notes:
-# no ttl-evoked events recorded in this experiment.
+# no ttl-triggered experiments done for this neuron
 
 # 2. seeing that spontaneous fast-events got picked up
 spont_events = ~des_df.applied_ttlpulse

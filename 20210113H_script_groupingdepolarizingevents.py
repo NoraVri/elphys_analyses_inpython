@@ -11,14 +11,85 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
+# quite nice stable recording, with stretches of time where DC current is applied to change baselinev (not to keep it in good range).
 
 # %% extracting depolarizing events
 # notes:
 # this neuron's got loads of events, but response to light is clearly not more than syanpse/spikelet
-# singleneuron_data.get_depolarizingevents_fromrawdata(ttleffect_window=10, min_depolamp=2)
-# singleneuron_data.write_results()
+# using gapFree_0002 for setting extraction parameters
+
+# block_no = 2
+# segment_no = 0
+# time_slice = [100, 250]
+#
+# (eventmeasures_dict,
+#  depolevents_readingnotes_dict) = singleneuron_data.plot_eventdetecttraces_forsegment(block_no, segment_no,
+#                                                                                       return_dicts=True,
+#                                                                                       time_slice=time_slice,
+#                                                                     min_depolamp=0.2, # anything below that is not clearly recognizable as anything
+#                                                                     min_depolspeed=0.15,
+#                                                                     oscfilter_lpfreq=10,
+# )
+
+singleneuron_data.get_depolarizingevents_fromrawdata(ttleffect_window=10,
+                                                     min_depolamp=0.2,
+                                                     min_depolspeed=0.15,
+                                                     oscfilter_lpfreq=10)
+singleneuron_data.write_results()
+
+# %% plots and analyses: seeing and labeling depolarizing events
+des_df = singleneuron_data.depolarizing_events
+nbins = 200
+# 1. seeing that light/puff-evoked things all got labeled as such
+# evoked_events = des_df.applied_ttlpulse
+# singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
+# notes:
 
 
+# 2. seeing that spontaneous fast-events got picked up
+spont_events = ~des_df.applied_ttlpulse
+unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+unlabeled_spont_events = (spont_events & unlabeled_events)
+# singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
+# notes:
+
+
+# plotting events parameters:
+possibly_spontfastevents_df = des_df[unlabeled_spont_events]
+possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+                                 bins=nbins,
+                                 )
+plt.suptitle('all as-yet unlabeled events')
+singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
+                                                      cmeasure='baselinev',
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# %% analyses done on events>2mV (so extracted) only
 # %% plots: seeing that depolarizing events got extracted nicely
 des_df = singleneuron_data.depolarizing_events
 

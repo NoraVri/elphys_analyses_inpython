@@ -84,7 +84,7 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # The amplitude histogram shows groups of events 5mV or larger; smaller events are just too numerous to say anything.
 # But also in events with amp>5mV there seems to be significant variance in rise-time.
 # Let's see only events >5mV to start with:
-possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 5) & (des_df.amplitude < 15))
+# possibly_spontfastevents = (possibly_spontfastevents & (des_df.amplitude > 5) & (des_df.amplitude < 15))
 possibly_spontfastevents_df = des_df[possibly_spontfastevents]
 possibly_spontfastevents_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=60)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',

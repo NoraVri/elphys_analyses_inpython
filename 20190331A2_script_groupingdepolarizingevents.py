@@ -53,56 +53,56 @@ smallslowevents = des_df.event_label.isna()
 des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev',
                                 'approx_oscinstphase', 'approx_oscslope'], bins=nbins)
 plt.suptitle('fast-events')
-singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' fast-events')
-singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' fast-events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fastevents)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fastevents)
-singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fastevents)
+# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' fast-events')
+# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    do_normalizing=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' fast-events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
+# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fastevents)
 
 # compound events
 des_df[compound_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev',
                                      'approx_oscinstphase', 'approx_oscslope'], bins=nbins)
 plt.suptitle('compound events')
-singleneuron_data.plot_depolevents(compound_events, colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' compound events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
-                                                      compound_events=compound_events)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-                                                      compound_events=compound_events)
-singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-                                                      compound_events=compound_events)
+# singleneuron_data.plot_depolevents(compound_events, colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' compound events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
+#                                                       compound_events=compound_events)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+#                                                       compound_events=compound_events)
+# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+#                                                       compound_events=compound_events)
 
 # things that are probably spikelets
 des_df[smallslowevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev', 'approx_oscinstphase', 'approx_oscslope'], bins=nbins)
 plt.suptitle('small, slow events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
-                                                      probably_spikelets=smallslowevents)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-                                                      probably_spikelets=smallslowevents)
-singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-                                                      probably_spikelets=smallslowevents)
-singleneuron_data.plot_depolevents((smallslowevents & (des_df.amplitude > 1)), colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   plot_dvdt=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' small slow events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
+#                                                       probably_spikelets=smallslowevents)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+#                                                       probably_spikelets=smallslowevents)
+# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+#                                                       probably_spikelets=smallslowevents)
+# singleneuron_data.plot_depolevents((smallslowevents & (des_df.amplitude > 1)), colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    do_normalizing=True,
+#                                    plot_dvdt=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' small slow events')
 
 # %% plots for publication figures
 bins=50

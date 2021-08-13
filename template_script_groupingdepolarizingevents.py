@@ -14,50 +14,46 @@ nbins = 50
 # notes summary:
 
 
+# des_df = singleneuron_data.depolarizing_events
+# fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
+# compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section
+# aps = des_df.event_label == 'actionpotential'
+# spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this neuron
+# unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+# unlabeled_spontevents = (spont_events & unlabeled_events)
+# probably_spikelets = (unlabeled_spontevents & (des_df.amplitude < 1.7) & (des_df.maxdvdt < 0.12))  # see plots and analyses section
+
 # %%
 # summary plots:
-aps = des_df.event_label == 'actionpotential'
-comound_events = des_df.event_label == 'compound_event'
-fastevents = des_df.event_label == 'fastevent'
-possibly_unlabeledspontfastevents = ((~des_df.applied_ttlpulse)
-                                     & des_df.event_label.isna()
-                                     & (des_df.amplitude > 3)
-                                     )
-#
-singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents, comound_events, possibly_unlabeledspontfastevents,
-                                                   group_labels=['APs', 'fastevents', 'compound events', 'possibly fast-events'],
-                                                   do_baselining=True,
-                                                   # do_normalizing=True,
-                                                   plot_dvdt=True,
-                                                   )
-#
-# singleneuron_data.plot_depolevents(possibly_unlabeledspontfastevents,
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    do_normalizing=True,
-#                                    timealignto_measure='rt20_start_idx',
-#                                    prealignpoint_window_inms=2,
-#                                    plotwindow_inms=13,
-#                                    plot_dvdt=True,
-#                                    )
+# histograms of events parameters
+# fast-events
+# des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                 bins=nbins)
+# plt.suptitle('fast-events parameter distributions')
 
-# fastevents_df = des_df[fastevents]
-# fastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'], bins=nbins)
-# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    do_normalizing=True,
-#                                    plot_dvdt=True,
-#                                    plotwindow_inms=15)
-# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    plot_dvdt=True,
-#                                    plotwindow_inms=15)
-# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fastevents)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fastevents)
-# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fastevents)
+# compound events
+# des_df[compound_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                 bins=nbins)
+# plt.suptitle('compound events parameter distributions')
+
+# spikelets
+# des_df[probably_spikelets].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                 bins=nbins)
+# plt.suptitle('probably-spikelets parameter distributions')
+
+# action potentials
+# des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                 bins=nbins)
+# plt.suptitle('aps parameter distributions')
+
+# line plots of the main events-groups (aps, fastevents, compound events)
+# singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
+#                                                    group_labels=['aps', 'compound_events', 'fastevents'],
+#                                                    )
 
 # %% plots for publication figures
 
@@ -108,15 +104,15 @@ possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
 plt.suptitle('all as-yet unlabeled events')
 singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      unlabeled_spont_events=unlabeled_spont_events,
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      unlabeled_spont_events=unlabeled_spont_events,
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
                                                       cmeasure='baselinev',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      unlabeled_spont_events=unlabeled_spont_events,
                                                       )
 
 # plotting events:
@@ -148,5 +144,5 @@ aps = des_df.event_label == 'actionpotential'
 
 
 
-
+#### this concludes sorting through all events and labeling them ####
 

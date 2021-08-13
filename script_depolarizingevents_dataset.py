@@ -106,16 +106,16 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 frequent_fastevents_neurons = [
 '20190331A1', #-long recording but not always of great quality; still, high frequency of fast-events and compound events; honestly, perfect example of how measured parameters can vary but still reflect fast-events (it has MANY neat fast-events that adhere perfectly to how we like to see them)
 '20190331A2', #-what a fucking mess.... high frequency of fast-events, but recording quality far from great and not very neat data; another good example of how fast-events parameters can vary with changing recording conditions
-'20190401A1', # we like this example. -nicely extracting depolevents: done, still to sort through.
+'20190401A1', #-quite a nice recording, high frequency of fast-events and relatively few compound ones. Oscillating with small amp throughout.
 '20190401B1', # -nicely extracting depolevents: done, still to sort through.
 '20190410A2', # not very frequent -nicely extracting depolevents: done, still to sort through.
 '20190527A',  # this one's a winner. - Indeed, except for the stretches of time where it's making fast-events of a different shape than the classic ones (though there's still plenty of those).
-'20190805A2', # intriguing example because of its oscillations. phase relationship? - Looks like not.
-'20190812A',  # interesting.
-'20190815C',  #-
-'20200708F'   
-'20210113H',  # not very frequent
-'20210124A',  #
+'20190805A2', # intriguing example because of its oscillations. phase relationship? - Looks like not.-nicely extracting depolevents: done, still to sort through.
+'20190812A',  # interesting. -nicely extracting depolevents: done, still to sort through.
+'20190815C',  #--nicely extracting depolevents: done, still to sort through.
+'20200708F'   # events partially sorted
+'20210113H',  # not very frequent -nicely extracting depolevents: done, still to sort through.
+'20210124A',  #-nicely extracting depolevents: done, still to sort through.
 ]
 
 # compare between oscillating and non-oscillating neurons;

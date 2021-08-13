@@ -36,31 +36,38 @@ unlabeled_spontevents = (spont_events & unlabeled_events)
 probably_spikelets = (unlabeled_spontevents & (des_df.amplitude < 1.7) & (des_df.maxdvdt < 0.12))  # see plots and analyses section3
 
 # %% summary plots:
+# histograms of events parameters
+# fast-events
 des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                 bins=nbins)
 plt.suptitle('fast-events parameter distributions')
 
+# compound events
 des_df[compound_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                 bins=nbins)
 plt.suptitle('compound events parameter distributions')
 
+# spikelets
 des_df[probably_spikelets].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                 bins=nbins)
 plt.suptitle('probably-spikelets parameter distributions')
 
+# action potentials
 des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                 bins=nbins)
 plt.suptitle('aps parameter distributions')
 
-
+# line plots of the main events-groups (aps, fastevents, compound events)
 singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
                                                    group_labels=['aps', 'compound_events', 'fastevents'],
                                                    )
 
+# scatters of events parameters:
+# fast-events
 singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
                                                       fast_events=fastevents)
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',

@@ -24,7 +24,7 @@ spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this ne
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 unlabeled_spontevents = (spont_events & unlabeled_events)
 # probably_spikelets - see plots and analyses section4
-
+# %%
 # summary plots:
 # histograms of events parameters
 # fast-events
@@ -69,17 +69,18 @@ singleneuron_data.plot_depolevents(fastevents,
 # neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
 probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < (550 * 20000)))
 
-singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat fast-events'
-                                   )
+# singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' neat fast-events'
+#                                    )
 des_df[(fastevents & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                                  bins=nbins)
 plt.suptitle('fast-events, neat ones only')
+# %%
 # neat compound fast-events:
 singleneuron_data.plot_depolevents((compound_events & probably_neatevents),
                                    colorby_measure='baselinev',
@@ -332,4 +333,4 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
 #                                                       events_underinvestigation=events_underinvestigation,
 #                                                       )
 
-#### this concludes sorting through all events and labeling them ####
+#### this concludes sorting through all fast-events and labeling them ####

@@ -50,11 +50,19 @@ nbins = 50
 #                                 bins=nbins)
 # plt.suptitle('aps parameter distributions')
 
-# line plots of the main events-groups (aps, fastevents, compound events)
+# line plots:
+# the main events-groups, overlayed (aps, fastevents, compound events)
 # singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
 #                                                    group_labels=['aps', 'compound_events', 'fastevents'],
 #                                                    )
-
+# fast-events:
+# singleneuron_data.plot_depolevents(fastevents,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
 # %% plots for publication figures
 
 
@@ -97,8 +105,7 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 
 
 # plotting events parameters:
-possibly_spontfastevents_df = des_df[unlabeled_spont_events]
-possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
                                  bins=nbins,
                                  )
 plt.suptitle('all as-yet unlabeled events')

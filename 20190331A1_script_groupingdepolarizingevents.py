@@ -81,6 +81,7 @@ probably_neatevents = ((des_df.file_origin == 'gapFree_0000.abf')
                        & (des_df.peakv_idx > 12100000)  # gapFree_0 trace starts at t=1075s, gets good at t=1680s, so after idx=12100000
                        & (des_df.baselinev < -30)  # filters out events that look not so neat
                        )
+# %%
 singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
@@ -88,10 +89,12 @@ singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
                                    plotwindow_inms=15,
                                    plt_title=' neat fast-events'
                                    )
+
 des_df[(fastevents & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                                  bins=nbins)
 plt.suptitle('fast-events, neat ones only')
+# %%
 # neat compound fast-events:
 singleneuron_data.plot_depolevents((compound_events & probably_neatevents),
                                    colorby_measure='baselinev',

@@ -638,43 +638,102 @@ class SingleNeuron:
 
     # plotting depolarizing events group averages
     def plot_depoleventsgroups_averages(self, *events_groups, group_labels=None, plt_title='group averages',
+                                        plot_dvdt=True,
+                                        subtract_traces=False, add_traces=False, delta_t=0,
                                         **kwargs):
         """optional kwargs:
         timealignto_measure='peakv_idx',
         prealignpoint_window_inms=5,
         plotwindow_inms=40,
         do_normalizing=False,
-        get_measures_type='raw'
+        get_measures_type='raw',
+        plot_dvdt=False
         """
 
         # getting colors to plot with
-        color_lims = [0, len(events_groups) - 1]
+        if (len(events_groups) == 2) & (subtract_traces or add_traces):
+            color_lims = [0, len(events_groups)]
+        else:
+            color_lims = [0, len(events_groups) - 1]
         colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)
         # setting up figure axes
-        if 'plot_dvdt' in kwargs.keys() and kwargs['plot_dvdt']:
+        if plot_dvdt:
             figure, axes = plt.subplots(1, 2, squeeze=True)
             axis = axes[0]
             dvdt_axis = axes[1]
         else:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             dvdt_axis = None
+
+        group1average=None
+        group2average=None
+        time_axis=None
+
+        # getting events group averages and plotting them
         for i, events_group in enumerate(events_groups):
             linecolor = colormap(cm_normalizer(i))
-            events_group_avg, time_axis = snafs.get_events_average(self.blocks, self.depolarizing_events,
+            events_group_avg, events_group_std, time_axis = snafs.get_events_average(self.blocks, self.depolarizing_events,
                                                         self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                                         events_group, **kwargs)
             axis.plot(time_axis, events_group_avg,
-                      color=linecolor, linewidth=4)
+                      color=linecolor, linewidth=2.5)
+            axis.plot(time_axis, (events_group_avg - events_group_std),
+                      '--',
+                      color=linecolor)
+            axis.plot(time_axis, (events_group_avg + events_group_std),
+                      '--',
+                      color=linecolor)
             axis.set_xlabel('time (ms)')
             if dvdt_axis is not None:
                 diff_events_avg = np.diff(events_group_avg)
                 dvdt_axis.plot(events_group_avg[:-1:], diff_events_avg, color=linecolor)
                 dvdt_axis.set_xlabel('V')
                 dvdt_axis.set_ylabel('dV/dt')
-        colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
-                                   ticks=list(range(len(events_groups)))
-                                   )
+        # plot traces subtracted or added, if so required (only if no. of plotted traces = 2)
+            if (len(events_groups) == 2) and (subtract_traces or add_traces) and (i == 0):
+                group1average = events_group_avg
+            if (len(events_groups) == 2) and (subtract_traces or add_traces) and (i == 1):
+                group2average = events_group_avg
+        if (group2average is not None):
+            if delta_t is not 0:
+                sampling_period_inms = float(self.blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
+                nsamples_tocull = int(abs(delta_t) / sampling_period_inms)
+                time_axis = time_axis[:-nsamples_tocull:]
+                if delta_t < 0:  # moving the second trace up in time relative to the first one
+                    group2average = group2average[nsamples_tocull::]
+                    group1average = group1average[:-nsamples_tocull:]
+                elif delta_t > 0:  # moving the first trace up in time relative to the second one
+                    group1average = group1average[nsamples_tocull::]
+                    group2average = group2average[:-nsamples_tocull:]
+            if subtract_traces:
+                mathd_trace = group1average - group2average
+            elif add_traces:
+                mathd_trace = group1average + group2average
+            else:
+                mathd_trace = None
+        else:
+            mathd_trace = None
+
+        if mathd_trace is not None:
+            axis.plot(time_axis, mathd_trace,
+                      color=colormap(cm_normalizer(len(events_groups))))
+            if dvdt_axis is not None:
+                diff_mathdevents_avg = np.diff(mathd_trace)
+                dvdt_axis.plot(mathd_trace[:-1:], diff_mathdevents_avg, color=colormap(cm_normalizer(len(events_groups))))
+                dvdt_axis.set_xlabel('V')
+                dvdt_axis.set_ylabel('dV/dt')
+        # add colorbar and tick labels
         if group_labels is not None and (len(group_labels) == len(events_groups)):
+            if subtract_traces:
+                group_labels.append('traces subtracted')
+            if add_traces:
+                group_labels.append('traces added')
+            if delta_t is not 0:
+                group_labels[-1] = group_labels[-1] + 'with dt = ' + str(delta_t) + ' ms'
+        if group_labels is not None:
+            colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                       ticks=list(range(len(group_labels)))
+                                       )
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
 

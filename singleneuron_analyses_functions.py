@@ -636,7 +636,8 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
                     eventstraces_array[:,running_event_index] = event_trace
                     running_event_index += 1
     average_trace = np.nanmean(eventstraces_array, axis=1)
-    return average_trace, time_axis
+    standarddeviation_trace = np.nanstd(eventstraces_array, axis=1)
+    return average_trace, standarddeviation_trace, time_axis
 
 
 

@@ -68,18 +68,58 @@ singleneuron_data.plot_depolevents(fastevents,
 # %% plots for publication figures:
 # neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
 probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < (550 * 20000)))
-
-# singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat fast-events'
-#                                    )
+# %%
+singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast-events'
+                                   )
 des_df[(fastevents & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                                  bins=nbins)
 plt.suptitle('fast-events, neat ones only')
+
+# %%
+# averaged traces:
+amp2mV_group = (fastevents & probably_neatevents & (des_df.amplitude < 2.5))
+amp4mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 2.5) & (des_df.amplitude < 4.5))
+amp6mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 6) & (des_df.amplitude < 6.5))  # just one event in this 'group'
+amp9mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 9.1) & (des_df.amplitude < 9.5))
+amp11mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 10.1))
+
+singleneuron_data.plot_depoleventsgroups_averages(amp2mV_group, amp4mV_group, amp6mV_group, amp9mV_group, amp11mV_group,
+                                                  group_labels=['group1', 'group2', 'group3', 'group4', 'group5'],
+                                                  plot_dvdt=True)
+
+# %%
+# traces subtracted or added together
+compound_event_1 = (compound_events & probably_neatevents & (des_df.amplitude > 20))
+compound_event_2 = (compound_events & probably_neatevents & (des_df.amplitude < 20) & (des_df.amplitude > 19))
+
+singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp6mV_group,
+                                                  group_labels=['compound event', '6mV event'],
+                                                  subtract_traces=True
+                                                  )
+
+singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp9mV_group,
+                                                  group_labels=['compound event', '9mV event'],
+                                                  # do_normalizing=True,
+                                                  subtract_traces=True,
+                                                  delta_t=0.1
+                                                  )
+
+singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp9mV_group,
+                                                  group_labels=['compound event', '9mV event'],
+                                                  subtract_traces=True,
+                                                  delta_t=-0.1,
+                                                  )
+
+singleneuron_data.plot_depoleventsgroups_averages(amp6mV_group, amp9mV_group,
+                                                  group_labels=['6mV event', '9mV event'],
+                                                  add_traces=True, delta_t=0.4,
+                                                  )
 # %%
 # neat compound fast-events:
 singleneuron_data.plot_depolevents((compound_events & probably_neatevents),

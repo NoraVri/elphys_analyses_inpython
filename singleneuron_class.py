@@ -641,17 +641,18 @@ class SingleNeuron:
                                         plot_dvdt=True,
                                         subtract_traces=False, add_traces=False, delta_t=0,
                                         **kwargs):
-        """optional kwargs:
+        """
+        This function plots averages (mean +/- std) of selected groups of events; optionally, the first two groups'
+        averages can be added together or subtracted from each other (with a specified delta-t between the traces).
+        optional kwargs that are passed on to get_events_average:
         timealignto_measure='peakv_idx',
         prealignpoint_window_inms=5,
         plotwindow_inms=40,
         do_normalizing=False,
         get_measures_type='raw',
-        plot_dvdt=False
         """
-
         # getting colors to plot with
-        if (len(events_groups) == 2) & (subtract_traces or add_traces):
+        if (subtract_traces or add_traces):
             color_lims = [0, len(events_groups)]
         else:
             color_lims = [0, len(events_groups) - 1]
@@ -664,7 +665,7 @@ class SingleNeuron:
         else:
             figure, axis = plt.subplots(1, 1, squeeze=True)
             dvdt_axis = None
-
+        # initializing variables, in case added/subtracted traces are to be plotted
         group1average=None
         group2average=None
         time_axis=None
@@ -689,13 +690,13 @@ class SingleNeuron:
                 dvdt_axis.plot(events_group_avg[:-1:], diff_events_avg, color=linecolor)
                 dvdt_axis.set_xlabel('V')
                 dvdt_axis.set_ylabel('dV/dt')
-        # plot traces subtracted or added, if so required (only if no. of plotted traces = 2)
-            if (len(events_groups) == 2) and (subtract_traces or add_traces) and (i == 0):
+        # also plotting traces subtracted or added, if so required
+            if (subtract_traces or add_traces) and (i == 0):
                 group1average = events_group_avg
-            if (len(events_groups) == 2) and (subtract_traces or add_traces) and (i == 1):
+            if (subtract_traces or add_traces) and (i == 1):
                 group2average = events_group_avg
         if (group2average is not None):
-            if delta_t is not 0:
+            if delta_t is not 0:  # taking samples off the start/end of averaged traces to get the right time difference
                 sampling_period_inms = float(self.blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
                 nsamples_tocull = int(abs(delta_t) / sampling_period_inms)
                 time_axis = time_axis[:-nsamples_tocull:]

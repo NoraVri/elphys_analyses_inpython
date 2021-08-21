@@ -578,6 +578,9 @@ def get_events_measures(peaks_idcs,
     return eventsmeasures_dictionary
 
 
+# functions for calculating depolarizing-events things:
+
+# getting the average (mean and std) of a specified group of fast-events:
 def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingevents_settings,
                        events_series=pd.Series,
                         timealignto_measure='peakv_idx',
@@ -586,7 +589,13 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
                         do_normalizing=False,
                         get_measures_type='raw'
                         ):
+    """This function calculates the mean and std of a set of depolarizing events.
+    Voltage waveforms are de-noised and baselined before averaging; optionally they can also be normalized and/or
+    oscillation-subtracted.
+    The function returns an average trace, a std-trace and a corresponding time axis.
+    """
     # !!this code will fail miserably if there are blocks with different sampling frequency recorded for the same neuron
+    # TODO at least put in a warning or something for cases where neuron is recorded at varying sampling freqs
     eventmeasures_df = depolarizingevents_df[events_series]
     sampling_frequency = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_rate)
     sampling_period_inms = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000

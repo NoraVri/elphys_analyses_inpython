@@ -165,4 +165,6 @@ singleneuron_data.plot_depolevents(events_underinvestigation,
 singleneuron_data.depolarizing_events.loc[events_underinvestigation, 'event_label'] = 'fastevent'
 singleneuron_data.write_results()
 
+### -- this concludes finding and labeling fast-events for this neuron. -- ###
+
 # hmm... Looking more closely again one could argue that one of the two ~10mV amp events is in fact compound...

@@ -40,10 +40,10 @@ des_df[compound_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', '
 plt.suptitle('compound events parameter distributions')
 
 # spikelets
-# des_df[probably_spikelets].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-#                                 bins=nbins)
-# plt.suptitle('probably-spikelets parameter distributions')
+des_df[unlabeled_spontevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('unlabeled spont.events - parameter distributions')
 
 # action potentials
 des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
@@ -53,9 +53,9 @@ plt.suptitle('aps parameter distributions')
 
 # line plots:
 # the main events-groups (aps, fastevents, compound events) together in one plot
-singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
-                                                   group_labels=['aps', 'compound_events', 'fastevents'],
-                                                   )
+# singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
+#                                                    group_labels=['aps', 'compound_events', 'fastevents'],
+#                                                    )
 # fast-events:
 singleneuron_data.plot_depolevents(fastevents,
                                    colorby_measure='baselinev',
@@ -65,9 +65,20 @@ singleneuron_data.plot_depolevents(fastevents,
                                    plot_dvdt=True
                                    )
 
-# %% plots for publication figures:
+# %% plots for publication figures: setup
+probably_neatevents = des_df.neat_event
+
 # neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
-probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < (550 * 20000)))
+# it's a great recording until about 550s into the first gapFree file, at which point the cell has a stroke and becomes visibly more leaky.
+# anyway, the first 5 min. of recording will do perfectly.
+# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+# neat5min_end_idx = 300 * float(sampling_frequency)
+# probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < neat5min_end_idx))
+
+# adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()
 # %%
 singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
                                    colorby_measure='baselinev',

@@ -730,7 +730,13 @@ class SingleNeuron:
             if add_traces:
                 group_labels.append('traces added')
             if delta_t is not 0:
-                group_labels[-1] = group_labels[-1] + 'with dt = ' + str(delta_t) + ' ms'
+                group_labels[-1] = group_labels[-1] + ' with dt = ' + str(delta_t) + ' ms'
+                group_labels.append('re-timed trace')
+                if delta_t < 0:
+                    axis.plot(time_axis, group2average, '--')
+                elif delta_t > 0:
+                    axis.plot(time_axis, group1average, '--')
+
         if group_labels is not None:
             colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
                                        ticks=list(range(len(group_labels)))

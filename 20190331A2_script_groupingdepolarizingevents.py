@@ -23,8 +23,7 @@ compound_events = des_df.event_label == 'compound_event'  # see plots and analys
 fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section2-7
 smallslowevents = des_df.event_label.isna()
 
-# %%
-# summary plots:
+# %% summary plots:
 # singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents, compound_events,
 #                                                    group_labels=['APs', 'fastevents', 'compound events'],
 #                                                    do_baselining=True,
@@ -111,10 +110,14 @@ probably_neatevents = ((des_df.file_origin == 'gapFree_0000.abf')
                        & (des_df.peakv_idx > (800 * sampling_rate))
                        & (des_df.peakv_idx < (1100 * sampling_rate))
                        )
-# %%
 # singleneuron_data.plot_rawdatablocks('gapFree_0000', events_to_mark=(fastevents & probably_neatevents))
 # it's not so easy for this neuron to find 5 minutes of consecutive recording where conditions don't change too much
-# - also this stretch isn't exactly ideal, neuron is being held with -DC to keep a good baselinev; maybe some IV files would be better
+# - also this stretch isn't exactly ideal, neuron is being held with -DC to keep a good baselinev; but it's the best consecutive 5 minutes I could find anywhere nonetheless
+# adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()
+# %% fast-events - neat ones only
 singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
                                    colorby_measure='baselinev',
                                    do_baselining=True,

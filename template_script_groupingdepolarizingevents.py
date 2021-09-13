@@ -16,12 +16,12 @@ nbins = 50
 
 # des_df = singleneuron_data.depolarizing_events
 # fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
-# compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section
+# compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section...
 # aps = des_df.event_label == 'actionpotential'
 # spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this neuron
 # unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 # unlabeled_spontevents = (spont_events & unlabeled_events)
-# probably_spikelets = (unlabeled_spontevents & (des_df.amplitude < 1.7) & (des_df.maxdvdt < 0.12))  # see plots and analyses section
+# probably_spikelets = unlabeled_spontevents  # unless seen otherwise
 
 # %%
 # summary plots:

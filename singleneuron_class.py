@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import quantities as pq
 import pandas as pd
+import seaborn as sns
 
 # imports of functions I wrote
 import singleneuron_plotting_functions as plots
@@ -386,9 +387,16 @@ class SingleNeuron:
             return blocks_list
 
     # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
-    def get_timespentrecording(self, *block_identifiers):
+    def get_timespentrecording(self, *block_identifiers, make_baselinev_hist=False, axis=None):
         blocknames_list = self.get_blocknames(printing='off')
         time_count = 0 * pq.s
+        # if a histogram of baselinev is to be made and no axis is passed, create a figure:
+        if make_baselinev_hist:
+            baselinevs_array = np.empty((1,1))
+            ax = axis
+            if axis is None:
+                figure, ax = plt.subplots()
+
         # getting the list of block names for which to count the time recorded
         if not block_identifiers:
             identified_blocks = blocknames_list
@@ -402,9 +410,15 @@ class SingleNeuron:
             block_idx = blocknames_list.index(blockname)
             for segment in self.blocks[block_idx].segments:
                 time_count += (segment.t_stop - segment.t_start)
-
-        return time_count
-
+                # if a histogram of baselinev is to be made, collect them all into an array
+                if make_baselinev_hist:
+                    vtrace = segment.analogsignals[0]
+                    baselinevs_array = np.concatenate((baselinevs_array, vtrace))
+        # plot the baselinev histogram, if required
+        if make_baselinev_hist:
+            nbins = int((np.max(baselinevs_array) - np.min(baselinevs_array)) * 10)
+            ax.hist(baselinevs_array, bins=nbins)
+        return time_count.rescale('minute')
 
     # plotting raw data blocks, optionally with (a subset of) depolarizing events marked
     def plot_rawdatablocks(self, *block_identifiers, **kwargs):
@@ -429,11 +443,6 @@ class SingleNeuron:
             block = self.blocks[allblocknames_list.index(blockname)]
             plots.plot_block(block, self.depolarizing_events, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
-
-    # extracted depolarizing events: seeing all detected events, by group label
-    def overviewplots_depolarizingevents(self):
-        ""
-
 
     # def plot_rawdatatraces_ttlaligned(self, *block_identifiers, ch_idxs=None, time_slice=None, newplot_per_block=False):
     #     # by default this function will plot all ttl-applied traces, in a window of -50 - 200ms from ttl onset.
@@ -798,6 +807,7 @@ class SingleNeuron:
     # scattering measured events parameters, one subplot per (named) group of events
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,
+                                            plot_fit=True,
                                             **events_groups):
         """
         This function creates an overview of scatterplots:
@@ -820,6 +830,8 @@ class SingleNeuron:
                                                   colormap='cividis',
                                                   ax=axis)
                 axis.set_title(eventgroupname)
+                if plot_fit:
+                    sns.regplot(x=xmeasure, y=ymeasure, data=eventsgroup_measures, ax=axis, scatter=False)
 
         elif len(events_groups) == 1:
             figure, axis = plt.subplots(1, 1)
@@ -832,6 +844,8 @@ class SingleNeuron:
                                               colormap='cividis',
                                               ax=axis)
             axis.set_title(eventgroupname)
+            if plot_fit:
+                sns.regplot(x=xmeasure, y=ymeasure, data=eventsgroup_measures, ax=axis, scatter=False,)
 
         else:
             figure, axis = plt.subplots(1, 1)
@@ -840,9 +854,12 @@ class SingleNeuron:
                                                     c=cmeasure,
                                                     colormap='cividis',
                                                     ax=axis)
+            if plot_fit:
+                sns.regplot(x=xmeasure, y=ymeasure, data=self.depolarizing_events, ax=axis, scatter=False)
             axis.set_title('all events')
 
     # scattering measured events parameters overlayed, one color per group
+    #TODO replace with nice plots with fits and such using seaborn's lmplot
     def scatter_depoleventsgroups_overlayed(self, xmeasure, ymeasure, plt_title='',
                                             **events_groups):
         color_lims = [0, len(events_groups) - 1]

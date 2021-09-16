@@ -62,31 +62,60 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 
 
 # plotting events parameters:
-# des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
-#                                  bins=nbins,
-#                                  )
-# plt.suptitle('all as-yet unlabeled events')
+des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+                                 bins=nbins,
+                                 )
+plt.suptitle('all as-yet unlabeled events')
 singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=unlabeled_spont_events,
                                                       )
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-#                                                       cmeasure='baselinev',
-#                                                       spont_subthreshold_depols=unlabeled_spont_events,
-#                                                       )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
                                                       cmeasure='baselinev',
                                                       spont_subthreshold_depols=unlabeled_spont_events,
                                                       )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+                                                      cmeasure='amplitude',
+                                                      spont_subthreshold_depols=unlabeled_spont_events,
+                                                      )
 # from these plots it seems highly likely that any event with amp>4mV is a fast-event (or a compound one) by rise-time;
-# also by maxdvdt there seems to be a grouping (events
+# also by maxdvdt there seems to be a grouping, which should help to determine if the events with amp 2-4mV are also fast-events.
+# Notably, there looks to be two groups of fast-events - probably something happened in the recording to make it so. Should check.
 
+# 1. First, let's see events with amp>4mV:
+# events_underinvestigation = (unlabeled_spont_events & (des_df.amplitude >= 4))
+# singleneuron_data.plot_depolevents(events_underinvestigation,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
 
+# indeed, those look mostly like fast-events, but it's not exactly neat - I think there's a few compound ones in there,
+# especially in the largest events/those occurring at more depolarized baselinev. Let's see:
+# des_df[events_underinvestigation].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+#                                  bins=nbins,
+#                                  )
+# plt.suptitle('events under investigation')
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
+#                                                       cmeasure='amplitude',
+#                                                       spont_subthreshold_depols=events_underinvestigation,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'width_50',
+#                                                       cmeasure='amplitude',
+#                                                       spont_subthreshold_depols=events_underinvestigation,
+#                                                       )
+# well, if there are compound events it's not clear from these distributions... Except for the single largest event
+# (which stands out by amplitude and rise-time) which is clearly compound (as seen by dVdt/V-plot shape) I do not see
+# any reason why these couldn't all be simple fast-events. Labeling them as such:
+# compound_event = (events_underinvestigation & (des_df.amplitude > 14))
+# fast_events = (events_underinvestigation & ~(des_df.amplitude > 14))
+# singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
+# singleneuron_data.depolarizing_events.loc[fast_events, 'event_label'] = 'fastevent'
+# singleneuron_data.write_results()
 
-
-
-
-
+# 2. Now let's see events that are <4mV but may still be fast-events:
 
 
 

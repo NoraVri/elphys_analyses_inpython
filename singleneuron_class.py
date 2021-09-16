@@ -807,7 +807,7 @@ class SingleNeuron:
     # scattering measured events parameters, one subplot per (named) group of events
     def scatter_depolarizingevents_measures(self, xmeasure, ymeasure,
                                             cmeasure=None,
-                                            plot_fit=True,
+                                            plot_fit=False,
                                             **events_groups):
         """
         This function creates an overview of scatterplots:

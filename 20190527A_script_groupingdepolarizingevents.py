@@ -50,11 +50,11 @@ des_df[fastevents].hist(column=['rise_time_20_80', 'width_50', 'amplitude',
                                 ],
                         bins=nbins)
 plt.suptitle('fast-events')
-# singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    plot_dvdt=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' fast-events')
+singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   plot_dvdt=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' fast-events')
 # singleneuron_data.plot_depolevents(fastevents, colorby_measure='baselinev',
 #                                    do_baselining=True,
 #                                    do_normalizing=True,
@@ -104,10 +104,10 @@ plt.suptitle('small, slow events')
 # %% plots for publication figures
 bins=20
 sampling_rate = int(singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate)
-probably_neatevents = ((des_df.file_origin == 'gapFree_0006.abf')
-                       # (des_df.file_origin == 'gapFree_0004.abf')
-                       # & (des_df.peakv_idx > (550 * sampling_rate))
-                       # & (des_df.peakv_idx < (850 * sampling_rate))  # a more or less random 5 minutes from within the trace really, it's all quite nice and stable
+probably_neatevents = ( # (des_df.file_origin == 'gapFree_0006.abf')
+                       (des_df.file_origin == 'gapFree_0004.abf')
+                       & (des_df.peakv_idx > (550 * sampling_rate))
+                       & (des_df.peakv_idx < (850 * sampling_rate))  # a more or less random 5 minutes from within the trace really, it's all quite nice and stable
                        )
 
 # singleneuron_data.plot_rawdatablocks('gapFree_0004', events_to_mark=probably_neatevents)
@@ -126,17 +126,17 @@ des_df[(fastevents & probably_neatevents)].hist(column=['rise_time_20_80', 'widt
 plt.suptitle('fast-events, neat ones only')
 
 # neat compound fast-events:
-singleneuron_data.plot_depolevents((compound_events & probably_neatevents),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
-des_df[(compound_events & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                                 bins=bins)
-plt.suptitle('compound events, neat ones only')
+# singleneuron_data.plot_depolevents((compound_events & probably_neatevents),
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' neat compound events'
+#                                    )
+# des_df[(compound_events & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                                  bins=bins)
+# plt.suptitle('compound events, neat ones only')
 
 # neat APs:
 singleneuron_data.plot_depolevents((aps & probably_neatevents),
@@ -144,7 +144,7 @@ singleneuron_data.plot_depolevents((aps & probably_neatevents),
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plotwindow_inms=15,
-                                   plt_title=' neat compound events'
+                                   plt_title=' neat aps'
                                    )
 des_df[(aps & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],

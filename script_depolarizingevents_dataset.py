@@ -111,10 +111,10 @@ frequent_fastevents_neurons = [
 '20190410A2', #-not very frequent fast-events, but with rather clear separation between those and other depolarizing things - though possibly some compound_events did get labeled as fast-events, should really take another look.
 '20190527A',  #-this one's a winner. - Indeed, many fast-events in quite clearly distinct amplitude-groups. Interestingly, relatively few compound-events (and they don't start coming until quite far into recording), though possibly some got labeled as 'regular' fast-events.
 '20190805A2', #-intriguing example because of its steady oscillations; quite nice recording overall with relatively little deterioration. Interestingly, there's a HUGE (>30mV) fast-event that appears later on in recordings, after APs stop having spikeshoulderpeaks
-'20190812A',  # interesting. -nicely extracting depolevents: done, still to sort through.
-'20190815C',  #--nicely extracting depolevents: done, still to sort through.
+'20190812A',  #-quite nice recording, neuron oscillating most of the time yet even very small (~1mV) fast-events could be picked up.
+'20190815C',  #-not such a nice recording, but despite that tons of fast-events that are clearly recognizable as such.
 '20200708F'   # events partially sorted
-'20210113H',  # not very frequent -nicely extracting depolevents: done, still to sort through.
+'20210113H',  #-nice stable recording, with stretches where baselinev is changed with DC current; may have some very small fast-events (hard to find cutoff value from spikelets, but distribution of small events parameters definitely looking not-normal).
 '20210124A',  #-nicely extracting depolevents: done, still to sort through.
 ]
 

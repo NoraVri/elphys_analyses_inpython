@@ -7,8 +7,7 @@ import numpy as np
 
 neuron_name = ''
 singleneuron_data = SingleNeuron(neuron_name)
-des_df = singleneuron_data.depolarizing_events
-nbins = 50
+nbins = 100
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
@@ -21,7 +20,7 @@ nbins = 50
 # spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this neuron
 # unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 # unlabeled_spontevents = (spont_events & unlabeled_events)
-# probably_spikelets = unlabeled_spontevents  # unless seen otherwise
+# smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
 # %%
 # summary plots:
@@ -39,10 +38,10 @@ nbins = 50
 # plt.suptitle('compound events parameter distributions')
 
 # spikelets
-# des_df[probably_spikelets].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+# des_df[smallslowevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
 #                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
 #                                 bins=nbins)
-# plt.suptitle('probably-spikelets parameter distributions')
+# plt.suptitle('smallslowevents parameter distributions')
 
 # action potentials
 # des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
@@ -90,20 +89,20 @@ nbins = 50
 # %% plots and analyses: seeing and labeling depolarizing events
 des_df = singleneuron_data.depolarizing_events
 nbins = 100
-# 1. seeing that light/puff-evoked things all got labeled as such
+# Seeing that light/puff-evoked things all got labeled as such:
 evoked_events = des_df.applied_ttlpulse
 singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
 
 
-# 2. seeing that spontaneous fast-events got picked up
+# Seeing that spontaneous fast-events got picked up:
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 unlabeled_spont_events = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
-
+# Finding and labeling fast-events (and other types of events encountered along the way):
 # plotting events parameters:
 des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
                                  bins=nbins,
@@ -117,14 +116,15 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
                                                       cmeasure='baselinev',
                                                       unlabeled_spont_events=unlabeled_spont_events,
                                                       )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
                                                       cmeasure='baselinev',
                                                       unlabeled_spont_events=unlabeled_spont_events,
                                                       )
 
-# plotting events:
-# possibly_spontfastevents = (unlabeled_spont_events & (des_df))
-# singleneuron_data.plot_depolevents(possibly_spontfastevents,
+# 1.
+
+# events_underinvestigation = (unlabeled_spont_events & (des_df.))
+# singleneuron_data.plot_depolevents(events_underinvestigation,
 #                                    colorby_measure='baselinev',
 #                                    plotwindow_inms=15,
 #                                    do_baselining=True,
@@ -133,23 +133,8 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_
 #                                    )
 
 
-# 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
-aps = des_df.event_label == 'actionpotential'
-# singleneuron_data.plot_depolevents((aps & spont_events),
-#                                    do_baselining=True,
-#                                    colorby_measure='baselinev',
-#                                    prealignpoint_window_inms=30,
-#                                    plotwindow_inms = 100,
-#                                    plt_title='spontaneous APs')
-# singleneuron_data.plot_depolevents((aps & ~spont_events),
-#                                    do_baselining=True,
-#                                    colorby_measure='baselinev',
-#                                    prealignpoint_window_inms=30,
-#                                    plotwindow_inms = 100,
-#                                    plt_title='light-evoked APs')
 
 
 
 
-#### this concludes sorting through all events and labeling them ####
-
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####

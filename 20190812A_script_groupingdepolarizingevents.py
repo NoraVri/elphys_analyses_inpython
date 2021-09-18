@@ -11,12 +11,63 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
+# Very nice and interesting recording - neuron changes its behavior a little over the course of time, going from
+# small-ish wacky oscillations to large-amp ones. Clearly has fast-events throughout, but frequency decreasing.
 
+des_df = singleneuron_data.depolarizing_events
+nbins = 100
+fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section 1-3
+compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section 1
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this neuron
+unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+unlabeled_spontevents = (spont_events & unlabeled_events)
+smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
 # summary plots - all events:
+# histograms of events parameters
+# fast-events
+des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('fast-events parameter distributions')
 
+# compound events - there's just the one
+# des_df[compound_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+#                                 'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+#                                 bins=nbins)
+# plt.suptitle('compound events parameter distributions')
+
+# spikelets
+des_df[smallslowevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('smallslowevents parameter distributions')
+
+# action potentials
+des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('aps parameter distributions')
+
+# line plots:
+# the main events-groups, overlayed (aps, fastevents, compound events)
+singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
+                                                   group_labels=['aps', 'compound_events', 'fastevents'],
+                                                   )
+# fast-events:
+singleneuron_data.plot_depolevents(fastevents,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
 
 # summary plots - 'neat' events:
+
+
+
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -47,37 +98,37 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 
 # %% plots and analyses: seeing and labeling depolarizing events
-des_df = singleneuron_data.depolarizing_events
-nbins = 100
-# 1. seeing that light/puff-evoked things all got labeled as such
+# des_df = singleneuron_data.depolarizing_events
+# nbins = 100
+# Seeing that light/puff-evoked things all got labeled as such
 # notes:
 # no ttl-evoked experiments recorded for this neuron (though it does have glu-blockers applied).
 
-# 2. seeing that spontaneous fast-events got picked up
-spont_events = ~des_df.applied_ttlpulse
-unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-unlabeled_spont_events = (spont_events & unlabeled_events)
+# Seeing that spontaneous fast-events got picked up
+# spont_events = ~des_df.applied_ttlpulse
+# unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# unlabeled_spont_events = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
 
 # plotting events parameters:
-des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
-                                 bins=nbins,
-                                 )
-plt.suptitle('all as-yet unlabeled events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
-                                                      cmeasure='amplitude',
-                                                      spont_subthreshold_depols=unlabeled_spont_events,
-                                                      )
+# des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+#                                  bins=nbins,
+#                                  )
+# plt.suptitle('all as-yet unlabeled events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       spont_subthreshold_depols=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       spont_subthreshold_depols=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+#                                                       cmeasure='amplitude',
+#                                                       spont_subthreshold_depols=unlabeled_spont_events,
+#                                                       )
 # from these plots it seems highly likely that any event with amp>4mV is a fast-event (or a compound one) by rise-time;
 # also by maxdvdt there seems to be a grouping, which should help to determine if the events with amp 2-4mV are also fast-events.
 # Notably, there looks to be two groups of fast-events - probably something happened in the recording to make it so. Should check.
@@ -116,14 +167,53 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvd
 # singleneuron_data.write_results()
 
 # 2. Now let's see events that are <4mV but may still be fast-events:
+# In the remaining events there are a handful that stand out for having fast maxdvdt, and fast rise-time (<1ms).
+# Let's see them:
+# events_underinvestigation = (unlabeled_spont_events & (des_df.maxdvdt > 0.15))
+# singleneuron_data.plot_depolevents(events_underinvestigation,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
+# There is one event there of ~0.8mV that seems to have a faster normalized decay waveform than the other events, but
+# it does have a very fast rise-time and from looking at it in the raw data trace I can't say that it's a noise-thing
+# for any reason, so I will keep it as a fast-event. The other events (1 < amp < 3 mV) are quite by-the-book; decay
+# shape is relatively much affected by the ongoing oscillations. Labeling them all as fast-events:
+# singleneuron_data.depolarizing_events.loc[events_underinvestigation, 'event_label'] = 'fastevent'
+# singleneuron_data.write_results()
 
+# 3a. The remaining events definitely don't look all uniformly distributed in their parameters, but it's hard to say
+# whether there's really another group of fast-events hiding in there somewhere, even though events still have amp up
+# to 2mV. Let's just see any events with amp > 1mV and rise-time < 1.5ms - if there are still fast-events, they will
+# be in there.
+# events_underinvestigation = (unlabeled_spont_events & (des_df.rise_time_20_80 < 1.5) & (des_df.amplitude >= 1))
+# singleneuron_data.plot_depolevents(events_underinvestigation,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
+# that's actually really clear - most of these are fast-events with identical rise, decays are affected by ongoing
+# oscillations. They are separable from the slower-rise events by maxdvdt. Labeling the fast-events:
+# fast_events = (events_underinvestigation & (des_df.maxdvdt >= 0.04))
+# singleneuron_data.depolarizing_events.loc[fast_events, 'event_label'] = 'fastevent'
+# singleneuron_data.write_results()
 
+# 3b. In fact, let's see just see all events with decent amp (> 1mV) or fast maxdvdt (>0.05mV/ms), to make sure we're
+# not missing any that are clearly fast-events:
+# events_underinvestigation = (unlabeled_spont_events & (des_df.amplitude >= 1))
+# events_underinvestigation = (unlabeled_spont_events & (des_df.maxdvdt >= 0.05))
+# singleneuron_data.plot_depolevents(events_underinvestigation,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
+# OK, now I'm quite convinced that it won't be possible to find more fast-events in there. (They may be there, but
+# unseparable from the mess of other small depolarizing events).
 
-
-
-
-
-
-
-
-
+### -- This concludes sorting through depolarizing events and labeling them -- ###

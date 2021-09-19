@@ -103,7 +103,7 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 # notes:
 
 # Finding and labeling fast-events (and other types of events encountered along the way):
-# plotting events parameters:
+# plotting all as-yet unlabeled events parameters:
 des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
                                  bins=nbins,
                                  )
@@ -117,10 +117,10 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
                                                       unlabeled_spont_events=unlabeled_spont_events,
                                                       )
 singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
-                                                      cmeasure='baselinev',
+                                                      cmeasure='amplitude',
                                                       unlabeled_spont_events=unlabeled_spont_events,
                                                       )
-
+# Labeling fast-events and other events fitting in categories not labeled automatically (fastevent, compound_event, other_event, noiseevent)
 # 1.
 
 # events_underinvestigation = (unlabeled_spont_events & (des_df.))
@@ -131,7 +131,22 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvd
 #                                    # do_normalizing=True,
 #                                    plot_dvdt=True
 #                                    )
-
+# des_df[events_underinvestigation].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+#                                  bins=nbins,
+#                                  )
+# plt.suptitle('events currently under investigation')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       events_underinvestigation=events_underinvestigation,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       events_underinvestigation=events_underinvestigation,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+#                                                       cmeasure='amplitude',
+#                                                       events_underinvestigation=events_underinvestigation,
+#                                                       )
 
 
 

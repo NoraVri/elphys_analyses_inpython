@@ -113,9 +113,9 @@ frequent_fastevents_neurons = [
 '20190805A2', #-intriguing example because of its steady oscillations; quite nice recording overall with relatively little deterioration. Interestingly, there's a HUGE (>30mV) fast-event that appears later on in recordings, after APs stop having spikeshoulderpeaks
 '20190812A',  #-quite nice recording, neuron oscillating most of the time yet even very small (~1mV) fast-events could be picked up.
 '20190815C',  #-not such a nice recording, but despite that tons of fast-events that are clearly recognizable as such.
-'20200708F'   # events partially sorted
+'20200708F'   #-highly relevant recording: has AP-5 (only) applied for much of the time; mostly not oscillating, but here and there they turn on and there is always a very strong resonance response to light application. Recording is badly affected by drift for stretches at the time, but in between it's mostly very nice.
 '20210113H',  #-nice stable recording, with stretches where baselinev is changed with DC current; may have some very small fast-events (hard to find cutoff value from spikelets, but distribution of small events parameters definitely looking not-normal).
-'20210124A',  #-nicely extracting depolevents: done, still to sort through.
+'20210124A',  #-magnificent example with tons of fast-events in many amplitude groups, very stable across stretches where baselinev is changed with DC current; has oscillations coming on (and off) as the recording progresses
 ]
 
 # compare between oscillating and non-oscillating neurons;

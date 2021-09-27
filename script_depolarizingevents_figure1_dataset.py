@@ -21,9 +21,9 @@ frequent_fastevents_neurons = [
 '20190805A2', #
 '20190812A',  # fast-events sorted, neat events selecting still to do
 '20190815C',  # fast-events sorted, neat events selecting still to do
-# '20200708F',  # events partially sorted
+'20200708F',  # fast-events sorted, neat events selecting still to do
 '20210113H',  # fast-events sorted, neat events selecting still to do
-# '20210124A',  # events not yet sorted
+'20210124A',  # fast-events sorted, neat events selecting still to do
 ]
 
 # %% histograms of events parameters

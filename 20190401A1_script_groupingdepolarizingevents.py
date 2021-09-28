@@ -23,9 +23,11 @@ aps = des_df.event_label == 'actionpotential'
 spont_events = ~des_df.applied_ttlpulse  # no TTL-applied experiments in this neuron
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 unlabeled_spontevents = (spont_events & unlabeled_events)
-# probably_spikelets - see plots and analyses section4
-# %%
-# summary plots:
+smallslowevents = unlabeled_spontevents
+
+# %% summary plots - all events:
+# histogram of baselinev in the entire recording:
+singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
 # histograms of events parameters
 # fast-events
 des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
@@ -53,9 +55,9 @@ plt.suptitle('aps parameter distributions')
 
 # line plots:
 # the main events-groups (aps, fastevents, compound events) together in one plot
-# singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
-#                                                    group_labels=['aps', 'compound_events', 'fastevents'],
-#                                                    )
+singleneuron_data.plot_depoleventsgroups_overlayed(aps, compound_events, fastevents,
+                                                   group_labels=['aps', 'compound_events', 'fastevents'],
+                                                   )
 # fast-events:
 singleneuron_data.plot_depolevents(fastevents,
                                    colorby_measure='baselinev',
@@ -64,55 +66,72 @@ singleneuron_data.plot_depolevents(fastevents,
                                    # do_normalizing=True,
                                    plot_dvdt=True
                                    )
+# scatters of events parameters:
+# fast-events
+singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude', cmeasure='baselinev',
+                                                      fast_events=fastevents)
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+                                                      fast_events=fastevents)
+singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+                                                      fast_events=fastevents)
 
-# %% plots for publication figures: setup
-probably_neatevents = des_df.neat_event
-
-# neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
-# it's a great recording until about 550s into the first gapFree file, at which point the cell has a stroke and becomes visibly more leaky.
-# anyway, the first 5 min. of recording will do perfectly.
-# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# neat5min_end_idx = 300 * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < neat5min_end_idx))
-
-# adding the neatevents-series to the depolarizing_events-df:
-# probably_neatevents.name = 'neat_event'
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
-# singleneuron_data.write_results()
-# %%
-singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
+# %% summary plots - neat events only:
+nbins = 100  #
+neat_events = singleneuron_data.depolarizing_events.neat_event
+# fast-events
+singleneuron_data.plot_depolevents((fastevents & neat_events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plotwindow_inms=15,
                                    plt_title=' neat fast-events'
                                    )
-des_df[(fastevents & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                                 bins=nbins)
+                                        bins=nbins)
 plt.suptitle('fast-events, neat ones only')
 
-# %%
-# averaged traces:
-amp2mV_group = (fastevents & probably_neatevents & (des_df.amplitude < 2.5))
-amp4mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 2.5) & (des_df.amplitude < 4.5))
-amp6mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 6) & (des_df.amplitude < 6.5))  # just one event in this 'group'
-amp9mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 9.1) & (des_df.amplitude < 9.5))
-amp11mV_group = (fastevents & probably_neatevents & (des_df.amplitude > 10.1))
+# compound events
+singleneuron_data.plot_depolevents((compound_events & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat compound events'
+                                   )
+des_df[(compound_events & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                             bins=nbins)
+plt.suptitle('compound events, neat ones only')
 
-singleneuron_data.plot_depoleventsgroups_averages(amp2mV_group, amp4mV_group, amp6mV_group, amp9mV_group, amp11mV_group,
-                                                  group_labels=['group1', 'group2', 'group3', 'group4', 'group5'],
+# aps
+singleneuron_data.plot_depolevents((aps & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat aps'
+                                   )
+des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                             bins=nbins)
+plt.suptitle('aps, neat ones only')
+
+# %% plots: fast-events normalized and averaged
+# setup - marking amplitude- and baselinev-groups
+# not a lot of baselinev variability in the neat events in this neuron
+amp2mV_group = (fastevents & neat_events & (des_df.amplitude < 2.5))
+amp4mV_group = (fastevents & neat_events & (des_df.amplitude > 2.5) & (des_df.amplitude < 4.5))
+amp9mV_group = (fastevents & neat_events & (des_df.amplitude > 9.1) & (des_df.amplitude < 9.5))
+amp11mV_group = (fastevents & neat_events & (des_df.amplitude > 10.1))  # just one event in this 'group'
+
+singleneuron_data.plot_depoleventsgroups_averages(amp2mV_group, amp4mV_group, amp9mV_group, amp11mV_group,
+                                                  group_labels=['group1', 'group2', 'group3', 'group4'],
                                                   plot_dvdt=True)
 
-# %%
-# traces subtracted or added together
-compound_event_1 = (compound_events & probably_neatevents & (des_df.amplitude > 20))
-compound_event_2 = (compound_events & probably_neatevents & (des_df.amplitude < 20) & (des_df.amplitude > 19))
-
-singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp6mV_group,
-                                                  group_labels=['compound event', '6mV event'],
-                                                  subtract_traces=True
-                                                  )
+# %% plots: subtracting single events from compound ones
+compound_event_1 = (compound_events & neat_events & (des_df.amplitude > 20))
+compound_event_2 = (compound_events & neat_events & (des_df.amplitude < 20) & (des_df.amplitude > 19))
 
 singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp9mV_group,
                                                   group_labels=['compound event', '9mV event'],
@@ -127,25 +146,10 @@ singleneuron_data.plot_depoleventsgroups_averages(compound_event_1, amp9mV_group
                                                   delta_t=-0.1,
                                                   )
 
-singleneuron_data.plot_depoleventsgroups_averages(amp6mV_group, amp9mV_group,
+singleneuron_data.plot_depoleventsgroups_averages(amp4mV_group, amp9mV_group,
                                                   group_labels=['6mV event', '9mV event'],
                                                   add_traces=True, delta_t=0.4,
                                                   )
-# %%
-# neat compound fast-events:
-singleneuron_data.plot_depolevents((compound_events & probably_neatevents),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
-des_df[(compound_events & probably_neatevents)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                                 bins=nbins)
-plt.suptitle('compound events, neat ones only')
-
-
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -191,17 +195,17 @@ plt.suptitle('compound events, neat ones only')
 # singleneuron_data.write_results()
 
 # %% plots and analyses: seeing and labeling depolarizing events
-des_df = singleneuron_data.depolarizing_events
-nbins = 100
+# des_df = singleneuron_data.depolarizing_events
+# nbins = 100
 # seeing that light/puff-evoked things all got labeled as such
 # notes:
 # no TTL-evoked events recorded in this experiment.
 
 
 # 1. seeing that spontaneous fast-events got picked up
-spont_events = ~des_df.applied_ttlpulse
-unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-unlabeled_spont_events = (spont_events & unlabeled_events)
+# spont_events = ~des_df.applied_ttlpulse
+# unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# unlabeled_spont_events = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
 # notes:
 # I'm not gonna say that ALL spikelets got picked up, but it looks really damn close... Definitely looks like
@@ -209,23 +213,23 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 
 
 # plotting events parameters:
-possibly_spontfastevents_df = des_df[unlabeled_spont_events]
-possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
-                                 bins=nbins,
-                                 )
-plt.suptitle('all as-yet unlabeled events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
-                                                      cmeasure='baselinev',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
+# possibly_spontfastevents_df = des_df[unlabeled_spont_events]
+# possibly_spontfastevents_df.hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+#                                  bins=nbins,
+#                                  )
+# plt.suptitle('all as-yet unlabeled events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_50',
+#                                                       cmeasure='baselinev',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
 
 # OK, it's clear from these distributions that there are LOTS of things that could be fast-events, but there's also
 # some puzzling things in there.
@@ -328,14 +332,14 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'width_
 
 # 3. Now let's move on to the smaller events. It's clear from every plot that up to 1mV amp we just have tons of things,
 # so let's focus on events with amp>1.
-events_underinvestigation = (unlabeled_spont_events & (des_df.amplitude > 1))
+# events_underinvestigation = (unlabeled_spont_events & (des_df.amplitude > 1))
 # From the rise-time/amp scatter it would seem that there are just a
 # dozen or two of events that don't fit with the cloud of small, slow things; it's even clearer when coloring
 # for maxdvdt:
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='maxdvdt',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='maxdvdt',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
 # 3a. Let's see events with amp>1 and maxdvdt>0.1:
 # Ok. The larger ones of these events (>2.8mV) are definitely all fast-events, below that it's more complicated.
 # Also, there's a single compound event in there, the one happening at the most depolarized baselinev. Labeling as such:
@@ -356,7 +360,7 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
 # what I tend to see for spikelets. Let's see events with amp>3 and determine what they could be:
 # OK. Those are either spikelets, or an oscillation coming on in some other way - either way, they are
 # definitely not fast-events.
-# %%
+
 # singleneuron_data.plot_depolevents((events_underinvestigation & (des_df.maxdvdt > 0.1)),
 #                                    colorby_measure='baselinev',
 #                                    plotwindow_inms=15,
@@ -366,7 +370,7 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
 #                                    # newplot_per_event=True,
 #                                    )
 
-# %%
+
 # des_df[events_underinvestigation].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
 #                                  bins=nbins,
 #                                  )
@@ -384,4 +388,22 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
 #                                                       events_underinvestigation=events_underinvestigation,
 #                                                       )
 
+# 5. looking at 'neat events', it is clear that the largest one there is in fact a compound one (has one of the 2mV-amp
+# fast-events preceding it). Labeling it as such:
+# compound_event = ((des_df.neat_event) & (des_df.amplitude > 10.5) & (des_df.event_label == 'fastevent'))
+# singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
+
 #### this concludes sorting through all fast-events and labeling them ####
+# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
+# it's a great recording until about 550s into the first gapFree file, at which point the cell has a stroke and becomes visibly more leaky.
+# anyway, the first 5 min. of recording will do perfectly.
+# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+# neat5min_end_idx = 300 * float(sampling_frequency)
+# probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < neat5min_end_idx))
+
+# adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()

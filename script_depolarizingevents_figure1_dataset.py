@@ -10,12 +10,18 @@ path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelated
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
 
-# list of neuron recordings to work with, as found in script_depolarizingevents_dataset: (>30min. recording at PT, and high frequency of fast-events by eye)
+# list of neuron recordings to work with, as found in script_depolarizingevents_dataset: (>30min. recording at PT,
+# and high frequency of fast-events by eye).
+# Analysis procedure for each of these neurons:
+# - extracting depolarizing events, tweaking algorithm parameter settings to extract as small as possible events
+# - sorting through all depolarizing events and labeling fast-events and compound-events (and any obvious noise-events encountered along the way)
+# - selecting 5 min. of recording time that best represents the neuron's typical behavior, and marking events
+#   occurring there as 'neat'
 frequent_fastevents_neurons = [
-'20190331A1', #-for one compound event, was able to subtract the smaller first peak and get a larger, single fast-event
-'20190331A2', #
-'20190401A1', #
-'20190401B1', #
+'20190331A1', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, and started playing with compound events
+'20190331A2', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, but haven't done anything yet with compound events but there are lots
+'20190401A1', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, and started playing with compound events
+'20190401B1', # fast-events sorted, neat events selected, summary plots done; did one plot of averaged events
 '20190410A2', #
 '20190527A',  #
 '20190805A2', #
@@ -29,7 +35,8 @@ frequent_fastevents_neurons = [
 # %% histograms of events parameters
 
 # all events, split out by category (AP, fastevent, compound_event, smallslowevent)
-
+# for each neuron in the list, one figure showing parameters for all events, and one showing only 'neat' ones
+# (if those have been marked).
 eventstypes_list = ['ap', 'fastevent', 'compound_event', ]
 parameters_forplotting = {'amplitude': [-1, 25, 100],  #binlims min, binlims max, ###--not working yet-- max count (y axis limit)
                           'rise_time_20_80': [0, 5, 100],

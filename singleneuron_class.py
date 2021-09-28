@@ -950,7 +950,6 @@ class SingleNeuron:
                 dtypes_dict[key] = 'Int64'
         self.depolarizing_events.astype(dtypes_dict)
 
-
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):
         all_longpulsesmeasures = snafs.make_longpulsesmeasures_dictionary()
 

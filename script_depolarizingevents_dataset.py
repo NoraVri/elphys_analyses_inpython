@@ -104,7 +104,7 @@ print('no. of neurons that have at least 30 min. of recording: ' +
 # %% selected lists of neurons
 # list of neurons manually picked out for having LOTS of fast-events:
 frequent_fastevents_neurons = [
-'20190331A1', #-long recording but not always of great quality; still, high frequency of fast-events and compound events; honestly, perfect example of how measured parameters can vary but still reflect fast-events (it has MANY neat fast-events that adhere perfectly to how we like to see them)
+'20190331A1', #-long recording but not always of great quality; still, high frequency of fast-events and compound events; honestly, perfect example of how measured parameters can vary but still reflect fast-events (it has MANY neat fast-events that adhere perfectly to how we like to see them). For one compound event, was able to subtract the smaller first peak and get a larger, single fast-event
 '20190331A2', #-what a fucking mess.... high frequency of fast-events, but recording quality far from great and not very neat data; another good example of how fast-events parameters can vary with changing recording conditions
 '20190401A1', #-quite a nice recording, high frequency of fast-events and relatively few compound ones. Oscillating with small amp throughout.
 '20190401B1', #-quite nice recording, high frequency of fast-events and barely any compound ones; amplitude grouping not so clear. Oscillating with small amp throughout.

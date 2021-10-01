@@ -24,7 +24,7 @@ smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
 # %% summary plots - all events:
 # histogram of baselinev in the entire recording:
-singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
+# singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
 # histograms of events parameters
 nbins = 100
 # fast-events
@@ -262,7 +262,9 @@ plt.suptitle('aps, neat ones only')
 # window_start_t =
 # window_end_t =
 # sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
+# if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+#     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
+# else: trace_start_t = 0
 # neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
 # neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
 # probably_neatevents = ((des_df.file_origin == block_name)

@@ -22,14 +22,14 @@ frequent_fastevents_neurons = [
 '20190331A2', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, but haven't done anything yet with compound events but there are lots
 '20190401A1', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, and started playing with compound events
 '20190401B1', # fast-events sorted, neat events selected, summary plots done; did one plot of averaged events
-'20190410A2', #
-'20190527A',  #
-'20190805A2', #
-'20190812A',  # fast-events sorted, neat events selecting still to do
-'20190815C',  # fast-events sorted, neat events selecting still to do
-'20200708F',  # fast-events sorted, neat events selecting still to do
-'20210113H',  # fast-events sorted, neat events selecting still to do
-'20210124A',  # fast-events sorted, neat events selecting still to do
+'20190410A2', # fast-events sorted, neat events selected, summary plots done
+'20190527A',  # fast-events sorted, neat events selected, summary plots done
+'20190805A2', # fast-events sorted, neat events selected, summary plots done
+'20190812A',  # fast-events sorted, neat events selected, summary plots done
+'20190815C',  # fast-events sorted, neat events selected, summary plots done
+'20200708F',  # fast-events sorted, neat events selected, summary plots done
+'20210113H',  # fast-events sorted, neat events selected, summary plots done
+'20210124A',  # fast-events sorted, neat events selected, summary plots done
 ]
 
 # %% histograms of events parameters

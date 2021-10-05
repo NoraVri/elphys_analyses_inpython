@@ -16,7 +16,10 @@ singleneuron_data = SingleNeuron(neuron_name)
 # not surprising considering that it's not all that healthy (held with quite a lot of -DC most of the time).
 # Its evoked events are worth taking a closer look at though: at first look they behave rather like fast-events would.
 # Evoked APs especially are a mess of all sorts of depolarizations happening...
-# summary plots:
+
+
+# %%
+# summary plots - old:
 des_df = singleneuron_data.depolarizing_events
 evoked_events = des_df.applied_ttlpulse
 spont_events = ~evoked_events
@@ -60,7 +63,7 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 # notes:
 # The algorithm quite regularly picks up a second baseline/peak pair in the light-evoked response; that
 # looks right to me though even in cases where the light stimulus is very short (add ChR activation time constant and it's well within range).
-# Noticed later that in many cases, this second peak is marked not marked as TTL-evoked, so ran the algorithm again.
+# Noticed later that in many cases, this second peak is marked not marked as TTL-evoked, so ran the algorithm again with extended ttleffect_window.
 
 # 2. seeing that spontaneous fast-events got picked up
 # spont_events = ~des_df.applied_ttlpulse
@@ -120,5 +123,29 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 # Also, almost all these APs seem to be evoked by rather high amplitude, wide pre-potentials, and the baseline-points
 # are not always so well found by the algorithm.
 
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# plotting raw data with events marked:
+# singleneuron_data.plot_rawdatablocks('gapFree',
+#                                      events_to_mark=(fastevents | compound_events),
+#                                      segments_overlayed=False)
 
+# This neuron has no spont.fast-events, so the first 5 min. of the first recording file will do just fine.
+# block_name = 'gapFree_0000.abf'
+# window_start_t = 0
+# window_end_t = 300
+# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+# if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
+#     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
+# else: trace_start_t = 0
+# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
+# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
+# probably_neatevents = ((des_df.file_origin == block_name)
+#                        & (des_df.peakv_idx >= neat5min_start_idx)
+#                        & (des_df.peakv_idx < neat5min_end_idx)
+#                        )
+# # adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()
 

@@ -17,12 +17,21 @@ singleneuron_data = SingleNeuron(neuron_name)
 # while during most of the recording the smaller-amp (~4-6mV) fast-events were more abundant than the larger-amp ones.
 # This neuron also has many APs, with many (especially spont.ones) looking like they were evoked by a fast-event.
 
-# summary plots:
+des_df = singleneuron_data.depolarizing_events
+fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
+compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section...
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  #
+unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+unlabeled_spontevents = (spont_events & unlabeled_events)
+smallslowevents = unlabeled_spontevents  # unless seen otherwise
+# %%
+# summary plots - old:
 des_df = singleneuron_data.depolarizing_events
 fastevents = des_df.event_label == 'fastevent'
-other_fastevents = des_df.event_label == 'other_fastevent'
-other_events = des_df.event_label == 'other_event'
+other_events = des_df.event_label == 'other_event'  # just one of those:
 aps = des_df.event_label == 'actionpotential'
+
 # fast-events, amp and rise-time as histograms and scatters
 plt.figure(), des_df.loc[fastevents,'amplitude'].plot.hist(bins=25)
 plt.title('all spont. events >2mV, amplitude')
@@ -68,12 +77,12 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 
 
-# %% plots: seeing that depolarizing events got extracted nicely
-des_df = singleneuron_data.depolarizing_events
-fastevents = des_df.event_label == 'fastevent'
+# %% plots and analyses: seeing and labeling depolarizing events
+# des_df = singleneuron_data.depolarizing_events
+# fastevents = des_df.event_label == 'fastevent'
 
 # 1. seeing that evoked things all got labeled as such
-evoked_events = des_df.applied_ttlpulse
+# evoked_events = des_df.applied_ttlpulse
 # singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
 # I saw one or two light-responses where something that looked like a subthreshold depolarizing event didn't
@@ -82,9 +91,9 @@ evoked_events = des_df.applied_ttlpulse
 # Evoked responses look mostly like compound synaptic depolarizations and spikelets.
 
 # 2. seeing that spontaneous fast-events got picked up
-spont_events = ~des_df.applied_ttlpulse
-unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-possibly_spontfastevents = (spont_events & unlabeled_events)
+# spont_events = ~des_df.applied_ttlpulse
+# unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# possibly_spontfastevents = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, time_axis_unit='s')
 
 # notes:
@@ -128,6 +137,11 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # Labeling it as "other_event":
 # other_event = (possibly_spontfastevents & (des_df.amplitude > 12))
 # singleneuron_data.depolarizing_events.loc[other_event, 'event_label'] = 'other_event'
+# singleneuron_data.write_results()
+# correction: this single 'other event' is in fact clearly a compound event as we've (by now) seen in many other
+# neurons; labeling it as such:
+# compound_event = (singleneuron_data.depolarizing_events.event_label == 'other_event')
+# singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
 # singleneuron_data.write_results()
 
 # The events > 3mV we're left with are definitely all fast-events: normalized decay shape practically identical,
@@ -204,4 +218,16 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 #                                    plt_title='light-evoked APs')
 # interestingly, the spont. and light-evoked APs look VERY similar - there just seem to be more in the spont. group.
 # spont.APs often seem to have a 'foot' made by a fast-event, will be interesting to look into.
-#weirdly, in gapFree_0000 some marks seem to go onto the wrong place, even though this doesn't show up in the AP summary plots... Will have to look into that at some point.
+
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# For this neuron, the light files are the neatest (until the neuron suddenly depolarizes and dies) - there's exactly
+# 5 minutes of consecutive neat recording time in those files.
+# probably_neatevents = ((des_df.file_origin == 'light_0000.abf')
+#                        | (des_df.file_origin == 'light_0001.abf')
+#                        | ((des_df.file_origin == 'light_0002.abf') & (des_df.segment_idx <= 13))
+#                        )
+# adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()

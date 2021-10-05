@@ -369,4 +369,5 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
 
+# %%
 

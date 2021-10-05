@@ -108,7 +108,7 @@ singleneuron_data.plot_depolevents((aps & neat_events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
-                                   plotwindow_inms=15,
+                                   plotwindow_inms=25,
                                    plt_title=' neat aps'
                                    )
 des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',

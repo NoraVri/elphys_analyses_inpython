@@ -151,7 +151,7 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
                                        xmax=time_axis[point] + valsdict['duration'],
                                        color=valsdict['color'],
                                        label=(key + ' = ' + str(valsdict['duration']) + 'ms'))
-        axis_object.legend()
+        axis_object.legend(loc='upper left')
 
 
 # plotting all/selected events of a rawdata_block, overlayed or individually (through plot_single_event)

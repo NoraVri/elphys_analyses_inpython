@@ -251,7 +251,7 @@ plt.suptitle('aps, neat ones only')
 
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during a selected 5 minutes of best typical behavior
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
 #                                      events_to_mark=(fastevents | compound_events),
@@ -274,4 +274,21 @@ plt.suptitle('aps, neat ones only')
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()
+# %% marking 'neat' events: the first 20 events to occur
+fastevents = des_df.event_label == 'fastevent'
+neatevents = fastevents.copy()
+neatevents[neatevents] = False
+fastevents = fastevents[fastevents]
+n = 19  # N - 1 (0-based indexing)
+i = 0
+for idx, value in fastevents.iteritems():
+    if i <= 19:
+        neatevents[idx] = True
+        i += 1
+    else:
+        break
+neatevents.name = 'n_neat_fastevents'
+# adding the neatevents-series to the depolarizing_events-df:
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
 # singleneuron_data.write_results()

@@ -15,7 +15,14 @@ singleneuron_data = SingleNeuron(neuron_name)
 # Events in this neuron are all 2mV or smaller, and in the amp/rise-time distributions there is nothing to
 # indicate that there would be a distinct group of fast-events.
 
-
+des_df = singleneuron_data.depolarizing_events
+fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
+compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section...
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  #
+unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+unlabeled_spontevents = (spont_events & unlabeled_events)
+smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
 
 
@@ -66,11 +73,32 @@ possibly_spontfastevents = (spont_events & unlabeled_events)
 # and rise-time vs amp scatter just shows a cloud.
 
 # 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
-aps = des_df.event_label == 'actionpotential'
-singleneuron_data.plot_depolevents((aps & spont_events),
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=30,
-                                   plotwindow_inms = 100,
-                                   plt_title='spontaneous APs')
+# aps = des_df.event_label == 'actionpotential'
+# singleneuron_data.plot_depolevents((aps & spont_events),
+#                                    do_baselining=True,
+#                                    colorby_measure='baselinev',
+#                                    prealignpoint_window_inms=30,
+#                                    plotwindow_inms = 100,
+#                                    plt_title='spontaneous APs')
 # Looks OK, they all seem to be evoked by current
+
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# this neuron has no fast-events, so the first 5 minutes of the first recording file will do just fine.
+# block_name = 'gapFree_0000.abf'
+# window_start_t = 0
+# window_end_t = 300
+# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+# trace_start_t = 0
+# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
+# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
+# probably_neatevents = ((des_df.file_origin == block_name)
+#                        & (des_df.peakv_idx >= neat5min_start_idx)
+#                        & (des_df.peakv_idx < neat5min_end_idx)
+#                        )
+# # adding the neatevents-series to the depolarizing_events-df:
+# probably_neatevents.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.write_results()
+# %%
+

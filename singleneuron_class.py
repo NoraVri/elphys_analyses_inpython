@@ -22,7 +22,7 @@ import seaborn as sns
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
-rawdata_path = "D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+rawdata_path = "G:\\My Drive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
 
 
 class SingleNeuron:
@@ -705,7 +705,7 @@ class SingleNeuron:
             if (subtract_traces or add_traces) and (i == 1):
                 group2average = events_group_avg
         if (group2average is not None):
-            if delta_t is not 0:  # taking samples off the start/end of averaged traces to get the right time difference
+            if delta_t != 0:  # taking samples off the start/end of averaged traces to get the right time difference
                 sampling_period_inms = float(self.blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
                 nsamples_tocull = int(abs(delta_t) / sampling_period_inms)
                 time_axis = time_axis[:-nsamples_tocull:]
@@ -738,7 +738,7 @@ class SingleNeuron:
                 group_labels.append('traces subtracted')
             if add_traces:
                 group_labels.append('traces added')
-            if delta_t is not 0:
+            if delta_t != 0:
                 group_labels[-1] = group_labels[-1] + ' with dt = ' + str(delta_t) + ' ms'
                 group_labels.append('re-timed trace')
                 if delta_t < 0:

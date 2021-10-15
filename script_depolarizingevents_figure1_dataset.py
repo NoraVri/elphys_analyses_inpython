@@ -9,7 +9,7 @@ import quantities as pq
 import pandas as pd
 
 # metadata imports
-path="G:\\My Drive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+path="D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
 
@@ -21,18 +21,18 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # - selecting 5 min. of recording time that best represents the neuron's typical behavior, and marking events
 #   occurring there as 'neat'
 frequent_fastevents_neurons = [
-'20190331A1', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, and started playing with compound events
-'20190331A2', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, but haven't done anything yet with compound events but there are lots
-'20190401A1', # fast-events sorted, neat events selected, summary plots done; also did some plots of averaged events, and started playing with compound events
-'20190401B1', # fast-events sorted, neat events selected, summary plots done; did one plot of averaged events
-'20190410A2', # fast-events sorted, neat events selected, summary plots done
-'20190527A',  # fast-events sorted, neat events selected, summary plots done
-'20190805A2', # fast-events sorted, neat events selected, summary plots done
-'20190812A',  # fast-events sorted, neat events selected, summary plots done
-'20190815C',  # fast-events sorted, neat events selected, summary plots done
-'20200708F',  # fast-events sorted, neat events selected, summary plots done
-'20210113H',  # fast-events sorted, neat events selected, summary plots done
-'20210124A',  # fast-events sorted, neat events selected, summary plots done
+'20190331A1', # ; also did some plots of averaged events, and started playing with compound events
+'20190331A2', # ; also did some plots of averaged events, but haven't done anything yet with compound events but there are lots
+'20190401A1', # ; also did some plots of averaged events, and started playing with compound events
+'20190401B1', # ; did one plot of averaged events
+'20190410A2', #
+'20190527A',  #
+'20190805A2', #
+'20190812A',  #
+'20190815C',
+'20200708F',  
+'20210113H',
+'20210124A',
 ]
 
 
@@ -51,6 +51,10 @@ parameters_forplotting = {'amplitude': [-1, 25, 100],  #binlims min, binlims max
                           }
 binsize = 0.1
 plot_smallslowevents = False
+
+# %% one plot for all neurons: histograms of averaged events' parameters
+for neuron in frequent_fastevents_neurons:
+    des_df = pd.read_csv()
 
 # %% three figures for each neuron: line plot of neat events, histograms of neat events and histograms of all events
 for neuron in frequent_fastevents_neurons:
@@ -152,6 +156,7 @@ for table in depolarizingevents_tables:
     depolarizing_events = pd.read_csv((results_path + '\\' + table), index_col=0)
     if sum(depolarizing_events.event_label == 'fastevent') > 0:
         labeled_fastevents_neurons.append(table[:-24])
+
 # %% one figure for frequent-fastevents neurons: neat fast-events normalized and averaged
 from singleneuron_analyses_functions import get_events_average
 figure, axes = plt.subplots(1, 2)

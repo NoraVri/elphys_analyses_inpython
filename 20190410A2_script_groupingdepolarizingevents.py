@@ -7,6 +7,8 @@ import numpy as np
 
 neuron_name = '20190410A2'
 singleneuron_data = SingleNeuron(neuron_name)
+# rec20190410A_data = SingleNeuron(neuron_name)
+# %%
 des_df = singleneuron_data.depolarizing_events
 nbins = 50
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)

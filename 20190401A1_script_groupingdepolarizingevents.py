@@ -15,7 +15,6 @@ nbins = 200
 # Neuron is oscillating throughout with small amp (1 - 3mV) wacky oscillations, and has LOADS of fast-events all
 # the time, though frequency does seem to decrease a bit as recording continues.
 
-
 des_df = singleneuron_data.depolarizing_events
 fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section2-4
 compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section2a-3
@@ -27,7 +26,7 @@ smallslowevents = unlabeled_spontevents
 
 # %% summary plots - all events:
 # histogram of baselinev in the entire recording:
-singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
+# singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
 # histograms of events parameters
 # fast-events
 des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
@@ -393,7 +392,11 @@ singleneuron_data.plot_depoleventsgroups_averages(amp4mV_group, amp9mV_group,
 # compound_event = ((des_df.neat_event) & (des_df.amplitude > 10.5) & (des_df.event_label == 'fastevent'))
 # singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
 # singleneuron_data.write_results()
-
+# and looks like I was a bit too lenient with the smallest events - in the neat events it's really clear which of the
+# ones of amp~2mV are indeed fast-events, and which aren't (the three widest ones). Re-labeling at least those:
+# not_fastevents = (fastevents & neat_events & (des_df.width_50 > 4))
+# singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = np.nan
+# singleneuron_data.write_results()
 #### this concludes sorting through all fast-events and labeling them ####
 # %% selecting 5 minutes of best typical behavior and marking 'neat' events
 # neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
@@ -407,3 +410,39 @@ singleneuron_data.plot_depoleventsgroups_averages(amp4mV_group, amp9mV_group,
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
+# %% axonal spines paper - figure1 panels
+sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
+start_t_idx = (27 - 6) * sampling_frequency
+end_t_idx = (27 - 6 + 50) * sampling_frequency
+figure1events = ((des_df.file_origin == 'gapFree_0001.abf')
+                 & (des_df.peakv_idx > start_t_idx)
+                 & (des_df.peakv_idx < end_t_idx))
+singleneuron_data.plot_rawdatablocks('gapFree_0001.abf', events_to_mark=(figure1events & fastevents))
+
+singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast events'
+                                   )
+singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast events'
+                                   )
+singleneuron_data.plot_depoleventsgroups_averages((fastevents & figure1events),
+                                                  do_normalizing=True,
+                                                  plotwindow_inms=15)
+
+singleneuron_data.plot_depolevents((compound_events & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat compound events'
+                                   )
+
+

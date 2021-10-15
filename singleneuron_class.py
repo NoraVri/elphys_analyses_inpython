@@ -22,7 +22,7 @@ import seaborn as sns
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
-rawdata_path = "G:\\My Drive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+rawdata_path = "D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
 
 
 class SingleNeuron:
@@ -735,9 +735,9 @@ class SingleNeuron:
         # add colorbar and tick labels
         if group_labels is not None and (len(group_labels) == len(events_groups)):
             if subtract_traces:
-                group_labels.append('traces subtracted')
+                group_labels.append('subtracted')
             if add_traces:
-                group_labels.append('traces added')
+                group_labels.append('added')
             if delta_t != 0:
                 group_labels[-1] = group_labels[-1] + ' with dt = ' + str(delta_t) + ' ms'
                 group_labels.append('re-timed trace')

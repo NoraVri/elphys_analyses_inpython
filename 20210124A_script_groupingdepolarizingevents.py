@@ -332,6 +332,13 @@ plt.suptitle('aps, neat ones only')
 #                                                       events_underinvestigation=events_underinvestigation,
 #                                                       )
 
+# looking at the events again while making figure panels, there's one that's marked fastevent but clearly stands out
+# for having a wobbly dvdt/V-plot; marking it as compound event instead:
+# compound_event = (neat_events & fastevents
+#                   & (des_df.baselinev > -65) & (des_df.baselinev < -55)
+#                   & (des_df.amplitude > 10))
+# singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
+# singleneuron_data.write_results()
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% selecting 5 minutes of best typical behavior and marking 'neat' events
 # plotting raw data with events marked:
@@ -369,5 +376,68 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
 
-# %%
 
+
+# %% axonal spines paper - figure1 panels
+sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+start_t_idx = (853 - 17) * sampling_frequency
+end_t_idx = (853 - 17 + 50) * sampling_frequency
+figure1events = ((des_df.file_origin == 'gapFree_0002.abf')
+                 & (des_df.peakv_idx > start_t_idx)
+                 & (des_df.peakv_idx < end_t_idx))
+# singleneuron_data.plot_rawdatablocks('gapFree_0002.abf', events_to_mark=(figure1events & fastevents))
+
+singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast events'
+                                   )
+singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast events'
+                                   )
+singleneuron_data.plot_depoleventsgroups_averages((fastevents & figure1events),
+                                                  do_normalizing=True,
+                                                  plotwindow_inms=15)
+
+singleneuron_data.plot_depolevents((compound_events & figure1events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat compound events'
+                                   )
+# %%
+# fast-events from 5 min. of recording
+singleneuron_data.plot_depolevents((fastevents & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   timealignto_measure='rt20_start_idx',
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast-events'
+                                   )
+
+singleneuron_data.plot_depolevents((fastevents & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   timealignto_measure='rt20_start_idx',
+                                   plotwindow_inms=8,
+                                   prealignpoint_window_inms=2,
+                                   plt_title=' neat fast-events'
+                                   )
+# normalized and averaged per baselinev group
+lowbaselinev_group = (fastevents & neat_events & (des_df.baselinev < -65))
+intermediatebaselinev_group = (fastevents & neat_events & (des_df.baselinev > -65) & (des_df.baselinev < -55))
+highbaselinev_group = (fastevents & neat_events & (des_df.baselinev > -55))
+singleneuron_data.plot_depoleventsgroups_averages(lowbaselinev_group, intermediatebaselinev_group, highbaselinev_group,
+                                                  do_normalizing=True,
+                                                  timealignto_measure='rt20_start_idx',
+                                                  plotwindow_inms=8,
+                                                  prealignpoint_window_inms=2)

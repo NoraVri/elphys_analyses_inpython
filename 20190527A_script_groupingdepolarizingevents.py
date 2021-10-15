@@ -7,6 +7,7 @@ import numpy as np
 
 neuron_name = '20190527A'
 singleneuron_data = SingleNeuron(neuron_name)
+
 des_df = singleneuron_data.depolarizing_events
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
@@ -110,6 +111,12 @@ des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                              bins=nbins)
 plt.suptitle('aps, neat ones only')
+# %% plots: subtracting single events from compound ones
+events_4mVgroup = (neat_events & fastevents & (des_df.amplitude > 3.8) & (des_df.amplitude < 4.8))
+compoundevents_group = (compound_events & (des_df.amplitude > 10) & (des_df.baselinev < -50))
+singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4mVgroup,
+                                                  subtract_traces=True,
+                                                  delta_t=0.5)
 
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,

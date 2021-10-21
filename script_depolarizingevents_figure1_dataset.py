@@ -21,20 +21,36 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # - selecting 5 min. of recording time that best represents the neuron's typical behavior, and marking events
 #   occurring there as 'neat'
 frequent_fastevents_neurons = [
-'20190331A1', # ; also did some plots of averaged events, and started playing with compound events
-'20190331A2', # ; also did some plots of averaged events, but haven't done anything yet with compound events but there are lots
-'20190401A1', # ; also did some plots of averaged events, and started playing with compound events
-'20190401B1', # ; did one plot of averaged events
-'20190410A2', #
-'20190527A',  #
-'20190805A2', #
-'20190812A',  #
-'20190815C',
-'20200708F',  
-'20210113H',
-'20210124A',
+'20190331A1', # there's a pattern to the neat double-events (of which there are lots) and the second peak in double-events looks different from the first. Also, APs usually have a triple up-stroke.
+'20190331A2', # very few double-events, the 4 'neat' ones that are there all look different from each other. APs all seem to have a double or triple up-stroke.
+'20190401A1', # very few double-events, the 4 'neat' ones that are there all look different from each other. APs all seem to have a triple up-stroke.
+'20190401B1', # very few double-events, only a single 'neat' one. APs all seem to have double or triple up-stroke.
+'20190410A2', # only a single double-event, even that one doubtful; relatively few fast-events, too. APs have single (evoked during +DC) or double up-stroke.
+'20190527A',  # a handful of double-events, all (except one) occurring late in the recording under deteriorated conditions. AP up-strokes have at least two, up to 4 or 5 phases.
+'20190805A2', # clear example of a neuron with large-amp fast-events that are seen only at more hyperpolarized baselinev, because otherwise they evoke AP. Only one compound event in the whole entire recording, and it's definitely more like a failed AP (amp 40mV, though no shoulder). AP up-strokes have all the kinds of shapes I've seen so far.
+'20190812A',  # only a single double-event in the whole recording, even then doubtful - it stands out mostly by amplitude.
+'20190815C',  # 3 amp groups
+'20200708F',  # 3 amp groups
+'20210113H',  # 4 amp groups
+'20210124A',  # 4 amp groups;
 ]
-
+# %%
+frequent_fastevents_neurons_ampgroups = [
+    ('20190331A1', 3),
+    ('20190331A2', 3),
+    ('20190401A1', 3),
+    ('20190401B1', 3),
+    ('20190410A2', 2),
+    ('20190527A', 5),
+    ('20190805A2',3),
+    ('20190812A',4),
+    ('20190815C',3),
+    ('20200708F',3),
+    ('20210113H',4),
+    ('20210124A',4),
+]
+ampgroups_df = pd.DataFrame(frequent_fastevents_neurons_ampgroups)
+ampgroups_df.hist(column=1)
 
 # %% histograms of events parameters
 
@@ -146,7 +162,16 @@ for neuron in frequent_fastevents_neurons:
         axes[i].set_title(parameter)
         i += 1
     axes[-1].legend()
-
+# %% seeing all double events for each neuron
+for neuron in frequent_fastevents_neurons:
+    neuron_data = SingleNeuron(neuron)
+    neuron_data.plot_depolevents((neuron_data.depolarizing_events.event_label == 'compound_event'),
+                                 colorby_measure='baselinev',
+                                 do_baselining=True,
+                                 # do_normalizing=True,
+                                 plotwindow_inms=15,
+                                 plt_title=' neat compound events'
+                                 )
 # %% line plots
 # getting a list of all neurons that have labeled fastevents
 labeled_fastevents_neurons = []
@@ -173,7 +198,8 @@ for i, neuron in enumerate(frequent_fastevents_neurons):
                                    neuron_data.rawdata_readingnotes['getdepolarizingevents_settings'],
                                    neat_fastevents,
                                    timealignto_measure='rt20_start_idx',
-                                   plotwindow_inms=20,
+                                   prealignpoint_window_inms=2,
+                                   plotwindow_inms=25,
                                    do_normalizing=True)
     linecolor = colormap(cmnormalizer(i))
     axes[0].plot(time_axis, normalized_neatfastevents_avg, linewidth=2.5, color=linecolor)

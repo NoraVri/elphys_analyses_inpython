@@ -433,24 +433,84 @@ singleneuron_data.plot_depoleventsgroups_averages(compound_event, (ampgroup5 & b
 
 #### this concludes sorting through all events and labeling them ####
 
-# %% selecting 5 minutes of best typical behavior
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks('gapFree',
+# singleneuron_data.plot_rawdatablocks(
 #                                      events_to_mark=(fastevents | compound_events),
 #                                      segments_overlayed=False)
+# notes:
+# not a great recording initially, but it improves over the first half hour of recordings and stays stable for quite
+# a while there; even if resting at baselinev ~-35mV, it seems quite happy, oscillating a bit and firing off lots of
+# fast-events, double-events and APs. It is losing restingV steadily over the course of recordings, with noticeable
+# impact on oscs and AP amp starting from file IV_0002. So, selecting the second part of gapFree_0000 and the first
+# two IV-files as stable recording time. However, upon closer inspection it is clear that the recording is deteriorated
+# already in the IV files: the divide is really clear, with fast-events in gapFree_0000 reaching at least
+# 0.3mV/ms maxdVdt while fast-events occurring during IV files barely reach 0.2mV/ms. So, labeling only events from
+# the first file as neat:
 
-# 5 min. of recording from gapFree_0000, from 1900s to 2200s
-# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices']['gapFree_0000.abf']['t_start']
-# neat5min_start_idx = (1680 - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (1980 - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == 'gapFree_0000.abf')
-#                        & (des_df.peakv_idx > neat5min_start_idx)  # gapFree_0 trace starts at t=1075s, gets good at t=1680s, so after idx=12100000
-#                        & (des_df.peakv_idx < neat5min_end_idx)
-#                        # & (des_df.baselinev < -30)  # filters out events that look not so neat, sitting on top of a large depolarizing DC pulse
-#                        )
+# second part of gapFree_0000, starting from 1680s in
+sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
+trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices']['gapFree_0000.abf']['t_start']
+neat5min_start_idx = (1680 - trace_start_t) * float(sampling_frequency)
+probably_neatevents = ((des_df.file_origin == 'gapFree_0000.abf')
+                       & (des_df.peakv_idx > neat5min_start_idx)  # gapFree_0 trace starts at t=1075s, gets good at t=1680s, so after idx=12100000
+                       )
+# the IV files
+# probably_neatevents2 = ((des_df.file_origin == 'IV_0000.abf') | (des_df.file_origin == 'IV_0001.abf'))
+# probably_neatevents = (probably_neatevents1 | probably_neatevents2)
+
+# plotting the neat events in the raw data trace to confirm labeling:
+# singleneuron_data.plot_rawdatablocks(*des_df[((fastevents | compound_events)
+#                                               & probably_neatevents)].file_origin.unique(),
+#                                      events_to_mark=((fastevents | compound_events) & probably_neatevents),
+#                                      segments_overlayed=False)
+
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
 
+# %% marking 'n neat fast events': the first 10 - 20 events to occur during stable recording at resting baselinev
+# fastevents = ((des_df.event_label == 'fastevent') & (des_df.neat_event)) & (des_df.baselinev > -40)
+# neatevents = fastevents.copy()
+# neatevents[neatevents] = False
+# fastevents = fastevents[fastevents]
+# n = 19  # N - 1 (0-based indexing)
+# i = 0
+# # check that these events occur during resting baselinev
+# for idx, value in fastevents.iteritems():
+#     if i <= 19:
+#         neatevents[idx] = True
+#         i += 1
+#     else:
+#         break
+# neatevents.name = 'n_neat_fastevents'
+# adding the neatevents-series to the depolarizing_events-df:
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
+# singleneuron_data.write_results()
+# %% plots and analyses: seeing APs and labeling fast-event triggered ones
+# this neuron's got tons of APs with a double or even triple up-stroke; not sure what to do with that.
+# Probably should first look at the double-events: in this neuron they look like they're composed of two differently
+# shaped events (fast-event then AIS activation?).
+
+# Let's first see the neat double events at hyperpolarized baselinev, and see if we can subtract single fast-events
+# from them to get another single fast-event:
+double_events = (compound_events & neat_events & (des_df.baselinev < -40))
+single_events = (fastevents & neat_events & (des_df.baselinev < -40))
+
+singleneuron_data.plot_depolevents((double_events | single_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat events'
+                                   )
+# %%
+double_event1 = (double_events & (des_df.baselinev > -44))
+single_events1 = (single_events & (des_df.maxdvdt >= 0.54) & (des_df.maxdvdt <= 0.56))
+
+singleneuron_data.plot_depoleventsgroups_averages(double_event1, single_events1,
+                                                  group_labels=['compound event', 'single event'],
+                                                  subtract_traces=True,
+                                                  delta_t=-1.8,
+                                                  plotwindow_inms=20)

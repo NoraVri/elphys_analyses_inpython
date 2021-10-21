@@ -438,16 +438,16 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.depolarizing_events.loc[compound_event, 'event_label'] = 'compound_event'
 # singleneuron_data.depolarizing_events.loc[hugefastevents, 'event_label'] = 'fastevent'
 # singleneuron_data.write_results()
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
 #                                      events_to_mark=(fastevents | compound_events),
 #                                      segments_overlayed=False)
 
-# 5 min. of recording from the first recording file, from 30s to 330s
+# from the first recording file, from 30s to 760s - AP amp deteriorating a tiny bit even there, but after that it gets more noticeable.
 # block_name = 'gapFree_0001.abf'
 # window_start_t = 30
-# window_end_t = 330
+# window_end_t = 760
 # sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
 # if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
 #     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']

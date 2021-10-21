@@ -7,15 +7,15 @@ import numpy as np
 
 neuron_name = '20190410A2'
 singleneuron_data = SingleNeuron(neuron_name)
-# rec20190410A_data = SingleNeuron(neuron_name)
-# %%
+
 des_df = singleneuron_data.depolarizing_events
 nbins = 50
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# nice long recording of neuron doing mostly nothing except maintaining baselinev; then quite far into recordings
-# fast-events get turned on (shortPulse and final gapFree file).
+# nice long recording of neuron doing mostly nothing except maintaining baselinev and oscillating a bit; then quite
+# far into recordings (after ~40min, out of 80min recording) fast-events get turned on (shortPulse and final gapFree file).
+# not sure what to make of this: fast-events reach 0.2-0.3mV/ms maxdvdt tops for the first while, then 0.5mV/ms for the last bit of recording.
 
 fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
 compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section
@@ -93,13 +93,13 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
 plt.suptitle('fast-events, neat ones only')
 
 # compound events - no neat compound events in this neuron
-# singleneuron_data.plot_depolevents((compound_events & neat_events),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat compound events'
-#                                    )
+singleneuron_data.plot_depolevents((compound_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat compound events'
+                                   )
 # des_df[(compound_events & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
 #                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
 #                                              bins=nbins)
@@ -201,28 +201,23 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.write_results()
 ### -- this concludes finding and labeling fast-events for this neuron. -- ###
 
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree', 'shortPulse',
 #                                      events_to_mark=(fastevents | compound_events),
 #                                      segments_overlayed=False)
 
-# the shortPulse file seems the most suited to serve as example of 'best typical' behavior; with each segment being
-# 1.6s in length (and there being a break in recording between segments), I'll need to select 188 segments. The middle
-# of the file looks most varied in terms of fast-events amplitudes, so I'll start from segment 800 (out of 1434)
-# block_name = 'shortPulse_0001.abf'
-# segment_start = 850
-# probably_neatevents = ((des_df.file_origin == block_name)
-#                        & (des_df.segment_idx >= segment_start)
-#                        & (des_df.segment_idx <= (segment_start + 188))
-#                        )
-# singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat compound events'
-#                                    )
+# the shortPulse file seems the most suited to serve as example of 'best typical' behavior; by then fast-events got turned on
+block_name = 'shortPulse_0001.abf'
+probably_neatevents = ((des_df.file_origin == block_name)
+                       )
+singleneuron_data.plot_depolevents((fastevents & probably_neatevents),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat compound events'
+                                   )
 
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'

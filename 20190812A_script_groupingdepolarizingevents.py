@@ -25,7 +25,7 @@ unlabeled_events = des_df.event_label.isna()  # all events that were not given a
 unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
-# summary plots - all events:
+# %% summary plots - all events:
 # histogram of baselinev in the entire recording:
 # singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
 # histograms of events parameters
@@ -265,8 +265,13 @@ plt.suptitle('aps, neat ones only')
 # OK, now I'm quite convinced that it won't be possible to find more fast-events in there. (They may be there, but
 # unseparable from the mess of other small depolarizing events).
 
+# In fact, looking again at 'neat' events I'm seeing that anything with amp < 2mV is too messy to be definitely
+# a fast-event. Re-labeling any fast-events smaller than that:
+# not_fastevents = (fastevents & (des_df.amplitude <= 2))
+# singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = np.nan
+# singleneuron_data.write_results()
 ### -- This concludes sorting through depolarizing events and labeling them -- ###
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
 #                                      events_to_mark=(fastevents | compound_events),
@@ -274,21 +279,10 @@ plt.suptitle('aps, neat ones only')
 # this neuron changes its behavior quite a lot over the course of recordings: starts out not oscillating, then
 # oscillations start coming on and off, growing in amplitude and decreasing in wackyness over the course of recordings.
 # I think the neuron is on its best behavior in gapFree_0001, where it's oscillating (or at least listening to
-# oscillations) throughout and has the highest frequency (by eye) of fast-events and spont.APs. I'm choosing the last
-# 5 minutes of this trace where the wacky oscillation pattern looks most steady and there's the most spont.APs.
-# block_name = 'gapFree_0001.abf'
-# window_start_t = 500
-# window_end_t = 800
-# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-#     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
-# else: trace_start_t = 0
-# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx >= neat5min_start_idx)
-#                        & (des_df.peakv_idx < neat5min_end_idx)
-#                        )
+# oscillations) throughout and has the highest frequency (by eye) of fast-events and spont.APs, but honestly, it's
+# looking quite stable throughout the first three gapFree files; fast-events suddenly drop in maxdvdt (from up to 1
+# down to 0.3 mV/ms) once long current pulses are applied.
+# probably_neatevents = (des_df.file_origin.str.match(pat='gapFree_0'))
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)

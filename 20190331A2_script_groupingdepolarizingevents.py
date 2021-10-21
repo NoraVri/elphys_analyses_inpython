@@ -806,15 +806,16 @@ singleneuron_data.plot_depoleventsgroups_averages((ampgroup1 & baselinevgroup3),
 
 #### this concludes sorting through all events and labeling them ####
 # (except for among events <1.5mV, where there may still be a group of fast-events not labeled as such - see section6).
-# %% selecting 5 minutes of best typical behavior
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # sampling_rate = int(singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate)
 # probably_neatevents = ((des_df.file_origin == 'gapFree_0000.abf')
-#                        & (des_df.peakv_idx > (800 * sampling_rate))
-#                        & (des_df.peakv_idx < (1100 * sampling_rate))
+#                        & (des_df.peakv_idx > (1656 * sampling_rate))
 #                        )
-# singleneuron_data.plot_rawdatablocks('gapFree_0000', events_to_mark=(fastevents & probably_neatevents))
-# it's not so easy for this neuron to find 5 minutes of consecutive recording where conditions don't change too much
-# - also this stretch isn't exactly ideal, neuron is being held with -DC to keep a good baselinev; but it's the best consecutive 5 minutes I could find anywhere nonetheless
+# probably_neatevents = ((des_df.file_origin == 'IV_0000.abf') | (des_df.file_origin == 'IV_0001.abf'))
+# singleneuron_data.plot_rawdatablocks(*des_df[probably_neatevents].file_origin.unique(), events_to_mark=(fastevents & probably_neatevents))
+# notes: very unstable recording for the most part, even while baselinev is steady there's a clear slow-down
+# of fast-events rise-time starting from the IV files. So, marking only events from the last part of gapFree_0000 as 'neat'.
+
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)

@@ -441,8 +441,10 @@ class SingleNeuron:
 
         for blockname in blocknames_list:
             block = self.blocks[allblocknames_list.index(blockname)]
-            plots.plot_block(block, self.depolarizing_events, **kwargs)
+            figure, axes = plots.plot_block(block, self.depolarizing_events, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+        if len(blocknames_list) == 1:
+            return figure, axes
 
     # def plot_rawdatatraces_ttlaligned(self, *block_identifiers, ch_idxs=None, time_slice=None, newplot_per_block=False):
     #     # by default this function will plot all ttl-applied traces, in a window of -50 - 200ms from ttl onset.

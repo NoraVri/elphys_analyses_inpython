@@ -385,7 +385,7 @@ end_t_idx = (853 - 17 + 50) * sampling_frequency
 figure1events = ((des_df.file_origin == 'gapFree_0002.abf')
                  & (des_df.peakv_idx > start_t_idx)
                  & (des_df.peakv_idx < end_t_idx))
-# singleneuron_data.plot_rawdatablocks('gapFree_0002.abf', events_to_mark=(figure1events & fastevents))
+singleneuron_data.plot_rawdatablocks('gapFree_0002.abf', events_to_mark=(figure1events & fastevents))
 
 singleneuron_data.plot_depolevents((fastevents & figure1events),
                                    colorby_measure='baselinev',

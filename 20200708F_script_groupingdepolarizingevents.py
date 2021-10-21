@@ -81,8 +81,8 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', c
                                                       fast_events=fastevents)
 # %% summary plots - neat events only:
 nbins = 100  #
-# neat_events = singleneuron_data.depolarizing_events.neat_event
-neat_events = probably_neatevents
+neat_events = singleneuron_data.depolarizing_events.neat_event
+# neat_events = probably_neatevents
 # fast-events
 singleneuron_data.plot_depolevents((fastevents & neat_events),
                                    colorby_measure='baselinev',
@@ -95,7 +95,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
-
+# %%
 # compound events
 singleneuron_data.plot_depolevents((compound_events & neat_events),
                                    colorby_measure='baselinev',

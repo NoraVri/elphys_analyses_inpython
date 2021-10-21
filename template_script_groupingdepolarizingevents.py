@@ -120,19 +120,7 @@ plt.suptitle('aps, neat ones only')
 # baselinevgroup1 = (des_df.baselinev < )
 # baselinevgroup2 = (des_df.baselinev > )
 # ampgroup1 = (fastevents & neat_events & (des_df.amplitude < ))
-# ampgroup2 = (fastevents & neat_events & (des_df.amplitude > ) & (des_df.amplitude < ))
-# ampgroup3 = (fastevents & neat_events & (des_df.amplitude > ) & (des_df.amplitude < ))
-# ampgroup4 = (fastevents & neat_events & (des_df.amplitude > ) & (des_df.amplitude < ))
-# ampgroup5 = (fastevents & neat_events & (des_df.amplitude > ))
 #
-# # fast-events normalized
-# singleneuron_data.plot_depolevents((fastevents & neat_events),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat fast-events, normalized'
-#                                    )
 # # fast-events normalized, averaged per baselinev group
 # singleneuron_data.plot_depoleventsgroups_averages((fastevents & neat_events & baselinevgroup1),
 #                                                   (fastevents & neat_events & baselinevgroup2),
@@ -251,13 +239,14 @@ plt.suptitle('aps, neat ones only')
 
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% marking 'neat' events: events occurring during a selected 5 minutes of best typical behavior
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# neurons that were recorded under bad conditions for the entire duration of recording should not get neat_events marked.
 # plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks('gapFree',
-#                                      events_to_mark=(fastevents | compound_events),
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents | compound_events),
 #                                      segments_overlayed=False)
+# notes:
 
-# 5 min. of recording from file , from s to s
+# ... min. of recording from file , from s to s
 # block_name = ''
 # window_start_t =
 # window_end_t =
@@ -275,13 +264,15 @@ plt.suptitle('aps, neat ones only')
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
-# %% marking 'neat' events: the first 20 events to occur
-fastevents = des_df.event_label == 'fastevent'
+# %% marking 'n neat fast events': the first 10 - 20 events to occur during stable recording at resting baselinev
+# neurons with < 10 neat spont. fast-events should not get them marked; those with > 20 get the first 20 that occur marked, regardless of representativeness of amplitude groups etc.
+fastevents = ((des_df.event_label == 'fastevent') & (des_df.neat_event))
 neatevents = fastevents.copy()
 neatevents[neatevents] = False
 fastevents = fastevents[fastevents]
 n = 19  # N - 1 (0-based indexing)
 i = 0
+# check that these events occur during resting baselinev
 for idx, value in fastevents.iteritems():
     if i <= 19:
         neatevents[idx] = True
@@ -292,3 +283,5 @@ neatevents.name = 'n_neat_fastevents'
 # adding the neatevents-series to the depolarizing_events-df:
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
 # singleneuron_data.write_results()
+# %% plots and analyses: seeing APs and labeling fast-event triggered ones
+

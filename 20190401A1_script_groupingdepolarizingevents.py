@@ -126,8 +126,12 @@ amp11mV_group = (fastevents & neat_events & (des_df.amplitude > 10.1))  # just o
 
 singleneuron_data.plot_depoleventsgroups_averages(amp2mV_group, amp4mV_group, amp9mV_group, amp11mV_group,
                                                   group_labels=['group1', 'group2', 'group3', 'group4'],
+                                                  plotwindow_inms=20,
                                                   plot_dvdt=True)
-
+singleneuron_data.plot_depoleventsgroups_overlayed(amp2mV_group, amp4mV_group, amp9mV_group, amp11mV_group,
+                                                   group_labels=['group1', 'group2', 'group3', 'group4'],
+                                                  plotwindow_inms=20,
+                                                  plot_dvdt=True)
 # %% plots: subtracting single events from compound ones
 compound_event_1 = (compound_events & neat_events & (des_df.amplitude > 20))
 compound_event_2 = (compound_events & neat_events & (des_df.amplitude < 20) & (des_df.amplitude > 19))
@@ -398,51 +402,67 @@ singleneuron_data.plot_depoleventsgroups_averages(amp4mV_group, amp9mV_group,
 # singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = np.nan
 # singleneuron_data.write_results()
 #### this concludes sorting through all fast-events and labeling them ####
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
-# neat single events: let's see events occurring in gapFree_0001, <550s in (after that there's some noise in the recording)
-# it's a great recording until about 550s into the first gapFree file, at which point the cell has a stroke and becomes visibly more leaky.
-# anyway, the first 5 min. of recording will do perfectly.
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# it's a great recording until about 550s into the first gapFree file, at which point the cell has a stroke and
+# becomes visibly more leaky.
 # sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# neat5min_end_idx = 300 * float(sampling_frequency)
+# neat5min_end_idx = 550 * float(sampling_frequency)
 # probably_neatevents = ((des_df.file_origin == 'gapFree_0001.abf') & (des_df.peakv_idx < neat5min_end_idx))
 
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
+
+
+
+
 # %% axonal spines paper - figure1 panels
 sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
-start_t_idx = (27 - 6) * sampling_frequency
-end_t_idx = (27 - 6 + 50) * sampling_frequency
+start_t_idx = (168 - 6) * sampling_frequency
+end_t_idx = (168 - 6 + 50) * sampling_frequency
 figure1events = ((des_df.file_origin == 'gapFree_0001.abf')
                  & (des_df.peakv_idx > start_t_idx)
                  & (des_df.peakv_idx < end_t_idx))
-singleneuron_data.plot_rawdatablocks('gapFree_0001.abf', events_to_mark=(figure1events & fastevents))
-
+figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0001.abf', events_to_mark=(figure1events & fastevents))
+axes[0].set_xlim(168000, 218000)
+axes[0].set_ylim(-60, -40)
+axes[0].vlines(x=214900, ymin=-60, ymax=-40)
+axes[0].vlines(x=215400, ymin=-60, ymax=-40)
+# %%
 singleneuron_data.plot_depolevents((fastevents & figure1events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plotwindow_inms=15,
-                                   plt_title=' neat fast events'
+                                   plt_title=' 50s trace fast events'
                                    )
 singleneuron_data.plot_depolevents((fastevents & figure1events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    do_normalizing=True,
                                    plotwindow_inms=15,
-                                   plt_title=' neat fast events'
+                                   plt_title=' 50s trace fast events'
                                    )
+singleneuron_data.plot_depoleventsgroups_overlayed((amp2mV_group & figure1events),
+                                                   (amp4mV_group & figure1events),
+                                                   (amp9mV_group & figure1events),
+                                                   group_labels=['group1', 'group2', 'group3',],
+                                                   plotwindow_inms=20,
+                                                   do_normalizing=True,
+                                                   plot_dvdt=True
+                                                   )
+
 singleneuron_data.plot_depoleventsgroups_averages((fastevents & figure1events),
                                                   do_normalizing=True,
                                                   plotwindow_inms=15)
 
-singleneuron_data.plot_depolevents((compound_events & figure1events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
+# singleneuron_data.plot_depolevents((compound_events & figure1events),
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' neat compound events'
+#                                    )
 
 

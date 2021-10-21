@@ -113,10 +113,12 @@ des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
 plt.suptitle('aps, neat ones only')
 # %% plots: subtracting single events from compound ones
 events_4mVgroup = (neat_events & fastevents & (des_df.amplitude > 3.8) & (des_df.amplitude < 4.8))
-compoundevents_group = (compound_events & (des_df.amplitude > 10) & (des_df.baselinev < -50))
+compoundevents_group = (compound_events & (des_df.amplitude > 8) & (des_df.amplitude < 9.25))
 singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4mVgroup,
+                                                  group_labels=['compound', 'single'],
                                                   subtract_traces=True,
-                                                  delta_t=0.5)
+                                                  # delta_t=0.5
+                                                  )
 
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
@@ -732,28 +734,19 @@ singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4
 # there are some more also in the events not marked 'neat', but I can't seem to grab them easily by any parameter so
 # leaving them be for now.
 ### -- this concludes finding fast-events for this neuron -- ###
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
 #                                      events_to_mark=(fastevents | compound_events),
 #                                      segments_overlayed=False)
 # this neuron's fast-events are very infrequent at first, becoming more frequent in the first 5 min. or so of recording
 # and then decreasing in frequency again after about an hour of recording (neuron also stops firing APs at this point).
-# The last 5 min. of gapFree_0004 should do perfectly, it looks to contain many examples of all amplitude groups
-# block_name = 'gapFree_0004.abf'
-# window_end_t = float(singleneuron_data.blocks[1].segments[0].t_stop)
-# window_start_t = window_end_t - 300
-# sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
-# if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
-#     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
-# else:
-#     trace_start_t = 0
-# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx >= neat5min_start_idx)
-#                        & (des_df.peakv_idx < neat5min_end_idx)
-#                        )
+# Up to and uncluding gapFree_0005 recording is very nice and stable (slight decrease in AP amp, goes to +50mV initially
+# and to +40mV by the end of gapFree_0005). After that there are some drift-events, so I'll stick to the time before that.
+
+# probably_neatevents = (des_df.file_origin.str.match(pat=('gapFree|light_0')))
+# probably_neatevents = (probably_neatevents & ~(des_df.file_origin == 'gapFree_0006.abf'))
+
 # adding the neatevents-series to the depolarizing_events-df:
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
@@ -761,12 +754,31 @@ singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4
 
 
 
-
-
-
+# %% plots for publication figures --  figure 1 draft 3.2
+# !!note: smallest group may be a spikelet after all (~2mV amp)
+# make the different amplitude groups in different colors
+sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
+neatevents_50s_startidx = (906.5 * float(sampling_frequency))
+neatevents_50s_endidx = (956.5 * float(sampling_frequency))
+neatevents_50s = ((des_df.file_origin == 'gapFree_0004.abf')
+                  & (des_df.peakv_idx > neatevents_50s_startidx)
+                  & (des_df.peakv_idx < neatevents_50s_endidx))
+figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0004', events_to_mark=(fastevents & neatevents_50s))
+axes[0].set_xlim(906500, 956500)
+axes[0].set_ylim(-60, -40)
+axes[0].vlines(x=915375, ymin=-60, ymax=-40)
+axes[0].vlines(x=915575, ymin=-60, ymax=-40)
+axes[0].vlines(x=916750, ymin=-60, ymax=-40)
+axes[0].vlines(x=916950, ymin=-60, ymax=-40)
 
 # %%
-
+singleneuron_data.plot_depolevents((fastevents & neatevents_50s),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast-events'
+                                   )
 
 
 

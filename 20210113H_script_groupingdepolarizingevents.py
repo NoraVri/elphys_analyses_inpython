@@ -89,7 +89,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
-
+# %%
 # compound events
 # singleneuron_data.plot_depolevents((compound_events & neat_events),
 #                                    colorby_measure='baselinev',

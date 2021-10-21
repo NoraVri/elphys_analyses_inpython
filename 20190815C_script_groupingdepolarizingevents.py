@@ -90,7 +90,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
-
+# %%
 # compound events
 singleneuron_data.plot_depolevents((compound_events & neat_events),
                                    colorby_measure='baselinev',
@@ -237,26 +237,5 @@ plt.suptitle('compound events, neat ones only')
 
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
-# plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks('gapFree',
-#                                      events_to_mark=(fastevents | compound_events),
-#                                      segments_overlayed=False)
-
-# 5 min. of recording from the only recording file, from 1500s to 1800s (these 5 min. cover 3 different holding
-# potentials, and the only stretch of recording with the largest-amp fast-events in it).
-# block_name = 'gapFree_0000.abf'
-# window_start_t = 1500
-# window_end_t = 1800
-# sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# trace_start_t = 0
-# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx >= neat5min_start_idx)
-#                        & (des_df.peakv_idx < neat5min_end_idx)
-#                        )
-# adding the neatevents-series to the depolarizing_events-df:
-# probably_neatevents.name = 'neat_event'
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
-# singleneuron_data.write_results()
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# this neuron should not have neat-events marked, it was recorded under bad conditions throughout.

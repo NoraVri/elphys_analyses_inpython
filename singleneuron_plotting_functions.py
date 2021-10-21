@@ -66,6 +66,7 @@ def plot_block(block, depolarizingevents_df,
             axes[i].plot(time_axis, trace_forplotting)
         axes[i].set_xlabel('time  in ' + time_axis_unit)
         axes[i].set_ylabel(str(trace_unit))
+    return figure, axes
 
 # %% depolarizing events and action potentials - line plots of raw data
 

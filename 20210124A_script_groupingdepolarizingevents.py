@@ -378,6 +378,36 @@ plt.suptitle('aps, neat ones only')
 
 
 
+# %% subtracting single events from double ones
+# initially in this neuron, the compound events are frequent only where it's hyperpolarized (and not firing APs at all).
+selected_events = (des_df.file_origin == 'gapFree_0000.abf') & (des_df.baselinev < -57)
+
+singleneuron_data.plot_depolevents((fastevents & selected_events),
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   )
+
+twodoubleevents = (compound_events & selected_events
+                   & (des_df.maxdvdt > 0.8) & (des_df.maxdvdt < 0.9))
+largedoubleevents = (compound_events & selected_events & (des_df.maxdvdt > 0.9))
+
+relevant_singleevents = (fastevents & selected_events
+                         & (des_df.maxdvdt < 0.5))
+
+
+single_event_4mV = (relevant_singleevents & (des_df.maxdvdt < 0.36))
+single_events_9mV = (fastevents & selected_events & (des_df.amplitude > 8.5))
+singleneuron_data.plot_depoleventsgroups_averages(largedoubleevents, single_event_4mV, single_events_9mV,
+                                                  group_labels=['large double events',
+                                                                'single event',
+                                                                'larger single events'],
+                                                  timealignto_measure='rt20_start_idx',
+                                                  plotwindow_inms=15,
+                                                  subtract_traces=True,
+                                                  delta_t=-0.3,
+                                                  )
+
+
 # %% axonal spines paper - figure1 panels
 sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
 start_t_idx = (853 - 17) * sampling_frequency

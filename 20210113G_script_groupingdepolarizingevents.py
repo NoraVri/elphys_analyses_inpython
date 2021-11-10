@@ -13,7 +13,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 # This neuron definitely has fast-events, though only 8 of them altogether
 # and amplitude groups are not very clear (normalized decay identicalness is very nice though).
 # This neuron also has other_fastevents (3 events, 2 amplitudes) and other events that I have no idea what they are.
-
+# %%
 # summary plots:
 des_df = singleneuron_data.depolarizing_events
 fastevents = des_df.event_label == 'fastevent'

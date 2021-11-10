@@ -174,18 +174,46 @@ singleneuron_data.plot_depoleventsgroups_averages((ampgroup1 & baselinevgroup2),
 
 # %% plots: subtracting single events from compound ones
 # compound_event = (compound_events & probably_neatevents & baselinevgroup1 & (des_df.baselinev > -44))
-compound_event = (compound_events & neat_events & baselinevgroup1 & (des_df.baselinev < -44) & (des_df.baselinev > -44.9))
+compound_event = (compound_events & neat_events
+                  & (des_df.baselinev < -44) & (des_df.baselinev > -44.9))
 singleneuron_data.plot_depoleventsgroups_averages(compound_event, (ampgroup5 & baselinevgroup1),
                                                   group_labels=['compound event', 'single event'],
                                                   subtract_traces=True,
-                                                  delta_t=-0.9,
+                                                  delta_t=-0.85,
                                                   plotwindow_inms=20)
 
 # interesting - indeed it looks like the compound fast-events could be just two single events stacked, but it's
 # noteworthy that the maxdvdt of the compound events is generally much higher (mostly ~1, up to 1.7) than of the
 # single events (~0.45 on avg, pretty normal-looking distribution between 0.3 and 0.6).
+# %%
+# selecting a short piece of recording (~2min) to compare single and double events occurring there
+selected_events = ((des_df.file_origin=='gapFree_0000.abf')
+                   & (des_df.peakv_idx > (20000 * (2119 - singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices']['gapFree_0000.abf']['t_start']))))
 
+compound_event = (compound_events & selected_events
+                  & (des_df.baselinev < -36.25))
+single_events = (fastevents & selected_events
+                 & (des_df.baselinev < -36.25) & (des_df.maxdvdt > 0.4))
 
+singleneuron_data.plot_depoleventsgroups_averages(compound_event, single_events,
+                                                  group_labels=['double event', 'single events'],
+                                                  timealignto_measure='rt20_start_idx',
+                                                  plotwindow_inms=15,
+                                                  subtract_traces=True,
+                                                  delta_t=-0.25
+                                                  )
+# %%
+compound_event = (compound_events & selected_events
+                  & (des_df.baselinev > -34))
+single_event = (fastevents & selected_events
+                 & (des_df.amplitude > 8) )
+singleneuron_data.plot_depoleventsgroups_averages(compound_event, single_event,
+                                                  group_labels=['double event', 'single event'],
+                                                  timealignto_measure='rt20_start_idx',
+                                                  plotwindow_inms=15,
+                                                  subtract_traces=True,
+                                                  delta_t=-0.195
+                                                  )
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).

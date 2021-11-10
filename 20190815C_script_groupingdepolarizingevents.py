@@ -13,7 +13,8 @@ singleneuron_data = SingleNeuron(neuron_name)
 # notes summary:
 # Not a great recording at all: neuron is getting held with lots of -DC for large parts of the recording, and resting
 # at ~-20mV without it. Injection of current pulses (-1nA - +0.7nA) shows no evidence of t-type Ca or sodium channels
-# being active, yet neuron is oscillating with small amp and doing lots of fast-events throughout.
+# being active, yet neuron is oscillating with small amp and doing lots of fast-events throughout. No full APs are
+# fired anywhere, but there are a handful of double-events in the recording (only at the most hyperpolarized baselinev).
 
 des_df = singleneuron_data.depolarizing_events
 fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
@@ -75,47 +76,6 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
                                                       fast_events=fastevents)
 singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
                                                       fast_events=fastevents)
-# %% summary plots - neat events only:
-nbins = 100  #
-neat_events = singleneuron_data.depolarizing_events.neat_event
-# fast-events
-singleneuron_data.plot_depolevents((fastevents & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat fast-events'
-                                   )
-des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                        'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                        bins=nbins)
-plt.suptitle('fast-events, neat ones only')
-# %%
-# compound events
-singleneuron_data.plot_depolevents((compound_events & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
-des_df[(compound_events & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                             bins=nbins)
-plt.suptitle('compound events, neat ones only')
-
-# aps
-# singleneuron_data.plot_depolevents((aps & neat_events),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat aps'
-#                                    )
-# des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-#                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-#                                              bins=nbins)
-# plt.suptitle('aps, neat ones only')
 
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
@@ -239,3 +199,19 @@ plt.suptitle('compound events, neat ones only')
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # this neuron should not have neat-events marked, it was recorded under bad conditions throughout.
+# Setting 'neat_event' to be all False.
+
+# %% subtracting single events from compound ones
+# events averages: all the compound events (they all occur together over a relatively short period of time during the recording)
+fastevents_inrange = (fastevents & (des_df.baselinev > -59) & (des_df.baselinev < -53)
+                              & (des_df.peakv_idx > (20000 * 1433)))  # the few events occurring around the same time and at around the same baselinev as the double-events
+singleneuron_data.plot_depoleventsgroups_averages(compound_events, fastevents_inrange,
+                                                  group_labels=['double events', 'single events'],
+                                                  subtract_traces=True,
+                                                  delta_t=1)
+singleneuron_data.plot_depoleventsgroups_averages(compound_events, fastevents_inrange,
+                                                  group_labels=['double events', 'single events'],
+                                                  subtract_traces=True,
+                                                  delta_t=-0.6)
+
+

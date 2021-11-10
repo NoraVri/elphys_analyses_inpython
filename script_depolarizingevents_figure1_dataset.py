@@ -21,7 +21,7 @@ experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.
 # - selecting 5 min. of recording time that best represents the neuron's typical behavior, and marking events
 #   occurring there as 'neat'
 frequent_fastevents_neurons = [
-'20190331A1', # there's a pattern to the neat double-events (of which there are lots) and the second peak in double-events looks different from the first. Also, APs usually have a triple up-stroke.
+'20190331A1', #! there's a pattern to the neat double-events (of which there are lots) and the second peak in double-events looks different from the first. Also, APs usually have a triple up-stroke.
 '20190331A2', # very few double-events, the 4 'neat' ones that are there all look different from each other. APs all seem to have a double or triple up-stroke.
 '20190401A1', # very few double-events, the 4 'neat' ones that are there all look different from each other. APs all seem to have a triple up-stroke.
 '20190401B1', # very few double-events, only a single 'neat' one. APs all seem to have double or triple up-stroke.
@@ -29,10 +29,10 @@ frequent_fastevents_neurons = [
 '20190527A',  # a handful of double-events, all (except one) occurring late in the recording under deteriorated conditions. AP up-strokes have at least two, up to 4 or 5 phases.
 '20190805A2', # clear example of a neuron with large-amp fast-events that are seen only at more hyperpolarized baselinev, because otherwise they evoke AP. Only one compound event in the whole entire recording, and it's definitely more like a failed AP (amp 40mV, though no shoulder). AP up-strokes have all the kinds of shapes I've seen so far.
 '20190812A',  # only a single double-event in the whole recording, even then doubtful - it stands out mostly by amplitude.
-'20190815C',  # 3 amp groups
-'20200708F',  # 3 amp groups
-'20210113H',  # 4 amp groups
-'20210124A',  # 4 amp groups;
+'20190815C',  # handful of double-events occurring only during a specific time in the recording; no APs at all.
+'20200708F',  #! double-events don't start appearing until well after AP5 application; APs all have double or triple up-stroke
+'20210113H',  # no double-events really, but triple - but not until very late into recordings after axons were tortured with light a bunch. APs all have double up-stroke.
+'20210124A',  #! has double events sporadically throughout the recording, but most concentratedly during periods with -DC and no APs; for one of the more common events, double-event - single-event = single-event, it looks like. APs all have double or triple up-stroke.
 ]
 # %%
 frequent_fastevents_neurons_ampgroups = [

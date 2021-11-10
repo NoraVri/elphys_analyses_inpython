@@ -419,50 +419,80 @@ singleneuron_data.plot_depoleventsgroups_averages(amp4mV_group, amp9mV_group,
 
 # %% axonal spines paper - figure1 panels
 sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
-start_t_idx = (168 - 6) * sampling_frequency
-end_t_idx = (168 - 6 + 50) * sampling_frequency
+start_t_idx = (193 - 6) * sampling_frequency
+end_t_idx = (193 - 6 + 25) * sampling_frequency
 figure1events = ((des_df.file_origin == 'gapFree_0001.abf')
                  & (des_df.peakv_idx > start_t_idx)
                  & (des_df.peakv_idx < end_t_idx))
 figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0001.abf', events_to_mark=(figure1events & fastevents))
-axes[0].set_xlim(168000, 218000)
+axes[0].set_xlim(193000, 218000)
 axes[0].set_ylim(-60, -40)
 axes[0].vlines(x=214900, ymin=-60, ymax=-40)
 axes[0].vlines(x=215400, ymin=-60, ymax=-40)
-# %%
+# %% fastevents occurring spontaneously at resting baselinev
 singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='amplitude',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' 25s trace fast events'
+                                   )
+singleneuron_data.plot_depolevents((fastevents & figure1events),
+                                   colorby_measure='amplitude',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' 25s trace fast events'
+                                   )
+singleneuron_data.plot_depoleventsgroups_averages((fastevents & figure1events),
+                                                  group_labels=['fastevents'],
+                                                  do_normalizing=True,
+                                                  plotwindow_inms=15)
+# %%
+singleneuron_data.plot_depolevents((fastevents & neat_events),
+                                   colorby_measure='amplitude',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' 550s trace fast events'
+                                   )
+singleneuron_data.plot_depolevents((fastevents & neat_events),
+                                   colorby_measure='amplitude',
+                                   do_baselining=True,
+                                   do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' 550s trace fast events'
+                                   )
+
+singleneuron_data.plot_depoleventsgroups_averages((fastevents & neat_events),
+                                                  group_labels=['fastevents'],
+                                                  do_normalizing=True,
+                                                  plotwindow_inms=15)
+
+# %% APs are preceded by fast-events (whose dynamics look different from AIS activation)
+# let's restrict baselinev so as get two APs: one with and one without spikeshoulderpeak
+baselinev_events = (des_df.baselinev > -55.25) & (des_df.baselinev < -55.175)
+singleneuron_data.plot_depolevents((aps & neat_events & baselinev_events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plotwindow_inms=15,
-                                   plt_title=' 50s trace fast events'
+                                   plt_title=' neat aps within baselinerange -55.5 - -55mV'
                                    )
-singleneuron_data.plot_depolevents((fastevents & figure1events),
+
+# subtracting APs with and without spikeshoulderpeak to see AIS-spike shape
+ap_withpeak = (aps & neat_events & baselinev_events & (des_df.n_spikeshoulderpeaks > 0))
+ap_withoutpeak = (aps & neat_events & baselinev_events & (des_df.n_spikeshoulderpeaks == 0))
+singleneuron_data.plot_depoleventsgroups_averages(ap_withpeak, ap_withoutpeak,
+                                                  group_labels=['with shoulderpeak', 'without peak'],
+                                                  plotwindow_inms=15,
+                                                  subtract_traces=True)
+# %%
+singleneuron_data.plot_depolevents((aps & neat_events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
-                                   do_normalizing=True,
+                                   # do_normalizing=True,
                                    plotwindow_inms=15,
-                                   plt_title=' 50s trace fast events'
+                                   plt_title=' neat aps'
                                    )
-singleneuron_data.plot_depoleventsgroups_overlayed((amp2mV_group & figure1events),
-                                                   (amp4mV_group & figure1events),
-                                                   (amp9mV_group & figure1events),
-                                                   group_labels=['group1', 'group2', 'group3',],
-                                                   plotwindow_inms=20,
-                                                   do_normalizing=True,
-                                                   plot_dvdt=True
-                                                   )
-
-singleneuron_data.plot_depoleventsgroups_averages((fastevents & figure1events),
-                                                  do_normalizing=True,
-                                                  plotwindow_inms=15)
-
-# singleneuron_data.plot_depolevents((compound_events & figure1events),
-#                                    colorby_measure='baselinev',
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plotwindow_inms=15,
-#                                    plt_title=' neat compound events'
-#                                    )
-
 

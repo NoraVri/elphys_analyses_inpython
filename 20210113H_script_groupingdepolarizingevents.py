@@ -89,7 +89,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
-# %%
+
 # compound events
 # singleneuron_data.plot_depolevents((compound_events & neat_events),
 #                                    colorby_measure='baselinev',
@@ -258,10 +258,17 @@ plt.suptitle('aps, neat ones only')
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 ## Note: may want to revise by labeling more of the small events as fast-events.
 # %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# TODO: review neat events
+# the whole recording is neat really, with cell holding a very steady resting baselinev even after getting held with
+# DC for prolonged periods of time. Yet there is a stretch (not the final one) where fast events reach only half of
+# their usual maxdvdt despite being of good amplitude and shape.
+
 # plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks('gapFree',
-#                                      events_to_mark=(fastevents | compound_events),
-#                                      segments_overlayed=False)
+
+slow_fastevents = (fastevents & (des_df.amplitude > 4) & (des_df.maxdvdt < 0.3))
+singleneuron_data.plot_rawdatablocks(
+                                     events_to_mark=(slow_fastevents),
+                                     segments_overlayed=False)
 
 # 5 min. of recording from file gapFree_0002, from 200s to 500s - neuron is getting held with -DC for parts of the time
 # there to change baselinev and see its effect on fast-events; APs occur only at the neuron's natural resting baselinev.

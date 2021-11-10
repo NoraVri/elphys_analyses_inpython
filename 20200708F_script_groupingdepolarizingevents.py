@@ -95,7 +95,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                                         'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
-# %%
+
 # compound events
 singleneuron_data.plot_depolevents((compound_events & neat_events),
                                    colorby_measure='baselinev',
@@ -430,7 +430,11 @@ plt.suptitle('aps, neat ones only')
 
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# TODO: review neat events
+# looks like those 5 minutes really are pretty much the best this neuron's got, but can contemplate whether we really
+# want to include its data with 'neat' events given how much noisiness it undergoes before fast-events eventually get
+# turned on halfway through the recording (after the neuron stops oscillating so vigorously).
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
 #                                      events_to_mark=(fastevents | compound_events),
@@ -453,3 +457,45 @@ plt.suptitle('aps, neat ones only')
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
+
+# %% subtracting single events from compound ones
+# 'nicer' compound events occur in two specific short stretches of the recording (others during more deteriorated neuron behavior);
+# in one of those stretches there's also single ones
+t400s_idx = 20000 * 400
+t450_idx = 20000 * 450
+selected_events = ((des_df.peakv_idx > t400s_idx) & (des_df.peakv_idx < t450_idx))  # there's just one block on this neuron
+# 2 compound events and 2 single events in this stretch of recording in gapFre_withBlockers_0006
+
+selected_doubleevents = (compound_events & selected_events)
+selected_singleevents = (fastevents & selected_events)
+# seeing the events individually
+singleneuron_data.plot_depolevents(selected_singleevents,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15)
+singleneuron_data.plot_depolevents(selected_doubleevents,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15)
+# events averaged per group (single or double)
+singleneuron_data.plot_depoleventsgroups_averages(selected_doubleevents, selected_singleevents,
+                                                  group_labels=['double events', 'single events'],
+                                                  plotwindow_inms=15)
+
+selected_doubleevent = (selected_doubleevents & (des_df.baselinev > -49.7))
+# subtracting the first up-stroke of the double event
+singleneuron_data.plot_depoleventsgroups_averages(selected_doubleevent, selected_singleevents,
+                                                  group_labels=['double event', 'single events'],
+                                                  plotwindow_inms=15,
+                                                  timealignto_measure='rt20_start_idx',
+                                                  subtract_traces=True,
+                                                  delta_t=-0.1,
+                                                  )
+
+# subtracting the second up-stroke of the double event
+singleneuron_data.plot_depoleventsgroups_averages(selected_doubleevent, selected_singleevents,
+                                                  group_labels=['double event', 'single events'],
+                                                  plotwindow_inms=15,
+                                                  timealignto_measure='rt20_start_idx',
+                                                  subtract_traces=True,
+                                                  delta_t=0.8,
+                                                  )
+

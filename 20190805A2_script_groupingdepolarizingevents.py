@@ -90,18 +90,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
                                         bins=nbins)
 plt.suptitle('fast-events, neat ones only')
 
-# compound events
-singleneuron_data.plot_depolevents((compound_events & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
-des_df[(compound_events & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                             bins=nbins)
-plt.suptitle('compound events, neat ones only')
+# compound events - no 'neat' ones in this neuron
 
 # aps
 singleneuron_data.plot_depolevents((aps & neat_events),
@@ -690,5 +679,5 @@ plt.suptitle('aps, neat ones only')
 #                                    plt_title='events on osc downslope'
 #                                    )
 
-
+# %%
 

@@ -25,6 +25,11 @@ spont_events = ~des_df.applied_ttlpulse  #
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
+
+# %% plots: light-evoked activity
+singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
+
+
 # %%
 # summary plots - old:
 des_df = singleneuron_data.depolarizing_events

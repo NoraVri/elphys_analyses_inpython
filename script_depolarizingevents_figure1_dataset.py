@@ -68,9 +68,6 @@ parameters_forplotting = {'amplitude': [-1, 25, 100],  #binlims min, binlims max
 binsize = 0.1
 plot_smallslowevents = False
 
-# %% one plot for all neurons: histograms of averaged events' parameters
-for neuron in frequent_fastevents_neurons:
-    des_df = pd.read_csv()
 
 # %% three figures for each neuron: line plot of neat events, histograms of neat events and histograms of all events
 for neuron in frequent_fastevents_neurons:

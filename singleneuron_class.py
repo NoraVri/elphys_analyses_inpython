@@ -446,29 +446,55 @@ class SingleNeuron:
         if len(blocknames_list) == 1:
             return figure, axes
 
-    # def plot_rawdatatraces_ttlaligned(self, *block_identifiers, ch_idxs=None, time_slice=None, newplot_per_block=False):
-    #     # by default this function will plot all ttl-applied traces, in a window of -50 - 200ms from ttl onset.
-    #     allblocknames_list = self.get_blocknames(printing='off')
-    #     if not block_identifiers:
-    #         blocknames_list = [block.file_origin for block in self.blocks if (len(block.channel_indexes) == 3)]
-    #     else:
-    #         blocknames_list = []
-    #         for identifier in block_identifiers:
-    #             blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
-    #             for block in blocks:
-    #                 blocknames_list.append(block)
-    #
-    #     if time_slice is None:
-    #         time_slice = [-50, 200]
-    #     if ch_idxs is None:
-    #         ch_idxs = [1, 3]
-    #
-    #     if not newplot_per_block:
-    #         figure, axes = plt.subplots(len(ch_idxs), 1, sharex='all')
+    def plot_rawdatatraces_ttlaligned(self, *block_identifiers,
+                                      newplot_per_block=False,
+                                      newplot_per_ttlduration=False,
+                                      newplot_per_ttlintensity=False,
+                                      **kwargs):
 
-        
+        """
+        This function plots raw data aligned to ttl onset, baselined to V in the ms before,
+        color-coded by baseline V.
+        kwargs:
+        - prettl_t_inms, postttl_t_inms: time before and after ttl-onset-time to be plotted.
+            default: 2, 30
+        - do_baselining: default True, plots traces zeroed in V to baselinev (meanV in ms before ttl on)
+        - plotdvdt: default True, plots dVdt vs V in a second subplot.
+        - colorby_measure: default 'baselinev', values to use for distributing line colors.
+        - baseline-lims: [min max] baselinev of colorbar/traces to be plotted (traces falling outside are omitted).
+            default: None - uses min and max baselinev values for colorbar
+        - plotlims: [minv maxv mindvdt maxdvdt] values for axes limits settings.
+            default: None - default axes limits of matplotlib are used.
+        - skip_vtraces: can be a list of ints - segments with those indices will be skipped.
+            default: None - all traces of the block are plotted.
+        - noisefilter_hpfreq: int - high-pass value for the filter getting the noise off the raw vtrace.
+            default: 3000 Hz
+        """
+        if not hasattr(self, 'ttlon_measures'):
+            self.get_ttlonmeasures_fromrawdata()
 
+        # getting the list of blocks to plot
+        allblocksnames_list = self.get_blocknames(printing='off')
+        ttlblocksnames_list = self.ttlon_measures['file_origin'].unique()
+        blocks_list = []
+        if not block_identifiers:
+            for blockname in ttlblocksnames_list:
+                blocks_list.append(self.blocks[allblocksnames_list.index(blockname)])
+        else:
+            for identifier in block_identifiers:
+                blocknames = [block for block in ttlblocksnames_list if identifier in block]
+                for blockname in blocknames:
+                    blocks_list.append(self.blocks[allblocksnames_list.index(blockname)])
 
+        # plotting
+        if newplot_per_block:
+            for block in blocks_list:
+                figure, _ = plots.plot_ttlaligned([block], self.ttlon_measures, **kwargs)
+                figure.suptitle(self.name + ' block ' + block.file_origin)
+        else:
+            figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, **kwargs)
+            figure.suptitle(str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)
+            return figure, axes
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents(self, events_to_plot=pd.Series(), blocknames_list=None,
@@ -933,7 +959,7 @@ class SingleNeuron:
         all_eventsmeasures_dictionary = snafs.make_eventsmeasures_dictionary()
         # getting all events: looping over each block, and each trace within each block
         for block in self.blocks:
-            if 'Vclamp' in block.file_origin:
+            if ('Vclamp' or 'vclamp') in block.file_origin:
                 continue  # skip blocks recorded in Vclamp mode
 
             for i, segment in enumerate(block.segments):
@@ -952,6 +978,22 @@ class SingleNeuron:
                 dtypes_dict[key] = 'Int64'
         self.depolarizing_events.astype(dtypes_dict)
 
+    def get_ttlonmeasures_fromrawdata(self, **kwargs):
+        all_ttlonmeasures_dictionary = snafs.make_ttlonmeasures_dictionary()
+        for block in self.blocks:
+            ttlon_measures_dictionary = snafs.get_ttlresponse_measures(block, **kwargs)
+            if ttlon_measures_dictionary is not None:
+                for key in all_ttlonmeasures_dictionary.keys():
+                    all_ttlonmeasures_dictionary[key] += ttlon_measures_dictionary[key]
+        # converting the results to a DataFrame and attaching to the class instance
+        ttlon_measures = pd.DataFrame(all_ttlonmeasures_dictionary).round(decimals=2)
+        dtypes_dict = {}
+        for key in ttlon_measures.keys():  # converting columns containing idcs and missing values
+            if 'idx' in key:                         # to bypass their being cast to float
+                dtypes_dict[key] = 'Int64'
+        self.ttlon_measures = ttlon_measures.astype(dtypes_dict)
+
+    # getting long-pulse measures (unfinished)
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):
         all_longpulsesmeasures = snafs.make_longpulsesmeasures_dictionary()
 

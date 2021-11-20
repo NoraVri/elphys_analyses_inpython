@@ -68,6 +68,95 @@ def plot_block(block, depolarizingevents_df,
         axes[i].set_ylabel(str(trace_unit))
     return figure, axes
 
+# plotting traces aligned to TTL, in neat windows (including options for setting scales to be identical across neurons)
+def plot_ttlaligned(blockslist, ttlmeasures_df,
+                    prettl_t_inms=2, postttl_t_inms=30,
+                    do_baselining=True, plotdvdt=True,
+                    colorby_measure='baselinev',
+                    baseline_lims=None, plotlims=None,
+                    skip_vtraces=None,
+                    noisefilter_hpfreq=3000,):
+    """
+    This function takes a list of blocks, and plots vtraces aligned to ttl-onset (for those blocks that have ttl).
+    Time axis is re-aligned so that ttl onset = 0ms.
+    Skip_vtraces can be an int; if it is, every non-multiple vtrace will be omitted from the plot.
+    !Note: all blocks passed to this function should have 3 channels: voltage, current and TTL.
+    """
+    # getting figure and axes to plot on
+    if plotdvdt:
+        figure, axes = plt.subplots(1, 2)
+    else:
+        figure, axes = plt.subplots(1, 1)
+    # getting only the relevant ttl measures
+    blocknames_list = [block.file_origin for block in blockslist]
+    blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list)
+                                            & (~ttlmeasures_df.baselinev.isna()))]  # by skipping traces where no baselinev value was calculated, we skip vclamp-recordings and traces where ttl wasn't actually on (even though 3rd channel was recorded)
+    # return ttlmeasures_df, blocks_ttlmeasures_df
+    if baseline_lims is not None:
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df.baselinev >= baseline_lims[0])
+                                                    & (blocks_ttlmeasures_df.baselinev <= baseline_lims[1])]
+    if skip_vtraces is not None and isinstance(skip_vtraces, list):
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces)]
+    # getting colors for line plots
+    if isinstance(baseline_lims, list) and (len(baseline_lims) == 2):
+        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=None, data=baseline_lims)
+    else:
+        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=colorby_measure,
+                                                          data=blocks_ttlmeasures_df)
+
+    for block in blockslist:
+        block_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df.file_origin == block.file_origin)]
+        if block_ttlmeasures_df.empty:
+            continue
+        else:
+            for _, ttlmeasures_series in block_ttlmeasures_df.iterrows():
+                # getting a de-noised vtrace for plotting:
+                vtrace = block.channel_indexes[0].analogsignals[ttlmeasures_series['segment_idx']]
+                sampling_frequency = float(vtrace.sampling_rate.rescale('Hz'))
+                time_axis = vtrace.times
+                vtrace = np.squeeze(np.array(vtrace))
+                _, voltage_noisetrace = snafs.apply_filters_to_vtrace(vtrace, 5, noisefilter_hpfreq, float(sampling_frequency))
+                vtrace = vtrace - voltage_noisetrace
+                # getting ttl on and off time
+                ttlfirston_idx = ttlmeasures_series['ttlon_idx']
+                ttllaston_idx = ttlmeasures_series['ttloff_idx']
+                time_axis = time_axis.rescale('ms')
+                ttlfirston_time = time_axis[ttlfirston_idx]
+                ttllaston_time = time_axis[ttllaston_idx]
+                # plotting vlines for ttl on and off (re-aligned so that ttlon = 0ms)
+                ttllaston_time = ttllaston_time - ttlfirston_time
+                axes[0].axvline(0, linewidth=2, color='b')  # ttl on
+                axes[0].axvline(ttllaston_time, linewidth=2, color='k')
+                # grabbing the snippet for plotting, with time axis re-aligned to ttlon = 0
+                onems_insamples = int(sampling_frequency / 1000)
+                time_axis = time_axis - ttlfirston_time
+                plotwindow_startidx = ttlfirston_idx - (onems_insamples * prettl_t_inms)
+                plotwindow_endidx = ttlfirston_idx + (onems_insamples * postttl_t_inms)
+                vtrace = vtrace[plotwindow_startidx:plotwindow_endidx]
+                if do_baselining:  # make baselinev = 0 for plotted line, if requested
+                    vtrace = vtrace - ttlmeasures_series['baselinev']
+                axes[0].plot(time_axis[plotwindow_startidx:plotwindow_endidx],
+                             vtrace,
+                             color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
+                if plotdvdt:  # make dvdt vs V plot, if requested
+                    vtrace_diff = np.diff(vtrace)
+                    axes[1].plot(vtrace[:-1:], vtrace_diff,
+                                 color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
+    # adding axes labels
+    axes[0].set_xlabel('time (ms)')
+    axes[0].set_ylabel('voltage (baselined), mV')
+    axes[1].set_xlabel('voltage (baselined), mV')
+    axes[1].set_ylabel('dV/dt, mV/ms')
+    # setting axes lims
+    axes[0].set_xlim((-1*prettl_t_inms, postttl_t_inms))
+    if plotlims is not None and (len(plotlims) == 4):
+        axes[0].set_ylim(plotlims[0], plotlims[1])
+        axes[1].set_xlim(plotlims[0], plotlims[1])
+        axes[1].set_ylim(plotlims[2], plotlims[3])
+    figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap))
+    return figure, axes
+
+
 # %% depolarizing events and action potentials - line plots of raw data
 
 

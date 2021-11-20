@@ -17,7 +17,15 @@ singleneuron_data = SingleNeuron(neuron_name)
 # Its evoked events are worth taking a closer look at though: at first look they behave rather like fast-events would.
 # Evoked APs especially are a mess of all sorts of depolarizations happening...
 
-
+# %% plots: light-evoked activity
+# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
+# light 19: the same fast event is triggered also at hyperpolarized baselinev, but also t-type Ca is activated
+# and that's why it looks like it has a larger amplitude
+blocknames_list = singleneuron_data.get_blocknames(printing='off')
+blocknames = []
+for i in range(15,20):
+    blocknames += [name for name in blocknames_list if str(i) in name]
+singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
 # %%
 # summary plots - old:
 des_df = singleneuron_data.depolarizing_events
@@ -28,7 +36,7 @@ spikeshoulderpeaks = des_df.event_label == 'spikeshoulderpeak'
 currentpulsechanges = des_df.event_label == 'currentpulsechange'
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
-
+# %%
 nbins = 60
 plt.figure(), des_df.loc[possibly_spontfastevents,'amplitude'].plot.hist(bins=nbins) # 60bins to start with
 plt.title('spont. events, amplitude')

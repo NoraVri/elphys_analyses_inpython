@@ -20,7 +20,7 @@ import quantities as pq
 
 # the main function:
 # return all depolarizing events and action potentials for a single segment,
-# with measures, in two dictionaries (one for subtheshold events and one for APs).
+# with measures, in one dictionary (for both subtheshold events and APs).
 def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                            min_depolspeed=0.1, min_depolamp=0.2,
                            depol_to_peak_window=5, event_width_window=40, ahp_width_window=150,
@@ -812,6 +812,87 @@ def descend_trace_until(tracesnippet, stop_value):
     else:
         return float('nan')
 
+# %% ttl-evoked activity
+
+
+# function for calculating measures related to ttl-evoked activity:
+# return a dictionary with information related to TTL-evoked activity.
+def get_ttlresponse_measures(block, ttlhigh_value=1):
+    """
+    This function takes as input a single block; it checks whether the block has a ttl-recording,
+    and if so it will determine where ttl is high, and add start_idx, end_idx and duration into a dictionary.
+    If it is a current-clamp recording, this function will also calculate baselinev in the ms before ttlon, and applied current parameters.
+    """
+    if (len(block.channel_indexes) < 3) or (not (block.segments[0].analogsignals[2].units == pq.V)):
+        return None
+    else:
+        ttlon_measures_dict = make_ttlonmeasures_dictionary()
+        for idx, segment in enumerate(block.segments):
+            ttl_recording = np.array(np.squeeze(segment.analogsignals[2]))
+            ttlon_idcs = np.where((np.squeeze(ttl_recording > ttlhigh_value)) == True)[0]
+            if len(ttlon_idcs) > 1:
+                ttlon_idx = ttlon_idcs[0]
+                ttloff_idx = ttlon_idcs[-1]
+                ms_in_samples = int(1 / segment.analogsignals[0].sampling_period.rescale('ms'))
+                ttl_duration_inms = (ttloff_idx - ttlon_idx) / ms_in_samples
+                # if it's a current-clamp recording, get also other measures surrounding ttl
+                if segment.analogsignals[0].units == pq.mV:
+                    voltage_recording = np.array(np.squeeze(segment.analogsignals[0]))
+                    current_recording = np.array(np.squeeze(segment.analogsignals[1]))
+                    # getting baselinev: mean v in the ms before ttl on
+                    baselinev = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
+                    # getting applied current: mean, and max-min in [ms before ttl on : ttl off]
+                    applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
+                    if applied_current < 10:
+                        applied_current = 0
+                    applied_current_range = np.max(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx]) \
+                                            - np.min(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
+                    if applied_current_range < 10:
+                        applied_current_range = 0
+                else:
+                    baselinev = None
+                    applied_current = None
+                    applied_current_range = None
+            else:
+                ttlon_idx = None
+                ttloff_idx = None
+                ttl_duration_inms = None
+                baselinev = None
+                applied_current = None
+                applied_current_range = None
+
+            ttlon_measures_dict['file_origin'].append(block.file_origin)
+            ttlon_measures_dict['segment_idx'].append(idx)
+            ttlon_measures_dict['ttlon_idx'].append(ttlon_idx)
+            ttlon_measures_dict['ttloff_idx'].append(ttloff_idx)
+            ttlon_measures_dict['ttlon_duration_inms'].append(ttl_duration_inms)
+            ttlon_measures_dict['baselinev'].append(baselinev)
+            ttlon_measures_dict['applied_current'].append(applied_current)
+            ttlon_measures_dict['applied_current_range'].append(applied_current_range)
+        return ttlon_measures_dict
+
+
+# helper functions:
+
+# making an empty dictionary with keys for all ttl-evoked-activity-related measures
+def make_ttlonmeasures_dictionary():
+    """This function creates an 'empty' dictionary with
+    a key for each measure that will be taken for each ttlon-trace. """
+    ttlon_measures = {
+        'file_origin': [],
+        'segment_idx': [],
+
+        'ttlon_duration_inms': [],
+
+        'ttlon_idx': [],
+        'ttloff_idx': [],
+        'applied_current': [],
+        'applied_current_range': [],
+
+        'baselinev': [],
+
+    }
+    return ttlon_measures
 
 # %% long-pulse response properties
 

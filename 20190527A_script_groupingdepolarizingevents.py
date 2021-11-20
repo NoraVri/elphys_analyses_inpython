@@ -19,7 +19,7 @@ fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section
 spont_events = ~des_df.applied_ttlpulse
 smallslowevents = (des_df.event_label.isna() & spont_events)  # see plots and analyses section2,
 
-# %% summary plots - all events:
+# %% summary plots - all spontaneous events:
 # histogram of baselinev in the entire recording:
 # singleneuron_data.get_timespentrecording(make_baselinev_hist=True)
 # histograms of events parameters
@@ -70,7 +70,7 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
                                                       fast_events=fastevents)
 singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
                                                       fast_events=fastevents)
-# %% summary plots - neat events only:
+# %% summary plots - neat spontaneous events only:
 nbins = 100  #
 neat_events = singleneuron_data.depolarizing_events.neat_event
 # fast-events
@@ -120,7 +120,25 @@ singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4
                                                   # delta_t=0.5
                                                   )
 
+# %% plots: light-evoked activity
+# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
 
+# blocks that are identical in light intensity & spot size:
+# 2-3% - _1 and _5
+# 5% - _0
+# 10% - _2 and _3
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0002', 'light_0003')
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000')
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001', 'light_0005')
+# %%
+#wholefield:
+# variable - _0 - _12
+# 10% - _15 - 21
+blocknames_list = singleneuron_data.get_blocknames(printing='off')
+blocknames = []
+for i in range(15,21):
+    blocknames += [name for name in blocknames_list if str(i) in name]
+singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -757,32 +775,27 @@ singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4
 # %% plots for publication figures --  figure 1 draft 3.2
 # !!note: smallest group may be a spikelet after all (~2mV amp)
 # make the different amplitude groups in different colors
-sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
-neatevents_50s_startidx = (906.5 * float(sampling_frequency))
-neatevents_50s_endidx = (956.5 * float(sampling_frequency))
-neatevents_50s = ((des_df.file_origin == 'gapFree_0004.abf')
-                  & (des_df.peakv_idx > neatevents_50s_startidx)
-                  & (des_df.peakv_idx < neatevents_50s_endidx))
-figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0004', events_to_mark=(fastevents & neatevents_50s))
-axes[0].set_xlim(906500, 956500)
-axes[0].set_ylim(-60, -40)
-axes[0].vlines(x=915375, ymin=-60, ymax=-40)
-axes[0].vlines(x=915575, ymin=-60, ymax=-40)
-axes[0].vlines(x=916750, ymin=-60, ymax=-40)
-axes[0].vlines(x=916950, ymin=-60, ymax=-40)
-
-# %%
-singleneuron_data.plot_depolevents((fastevents & neatevents_50s),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat fast-events'
-                                   )
-
-
-
-
+# sampling_frequency = singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate
+# neatevents_50s_startidx = (906.5 * float(sampling_frequency))
+# neatevents_50s_endidx = (956.5 * float(sampling_frequency))
+# neatevents_50s = ((des_df.file_origin == 'gapFree_0004.abf')
+#                   & (des_df.peakv_idx > neatevents_50s_startidx)
+#                   & (des_df.peakv_idx < neatevents_50s_endidx))
+# figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0004', events_to_mark=(fastevents & neatevents_50s))
+# axes[0].set_xlim(906500, 956500)
+# axes[0].set_ylim(-60, -40)
+# axes[0].vlines(x=915375, ymin=-60, ymax=-40)
+# axes[0].vlines(x=915575, ymin=-60, ymax=-40)
+# axes[0].vlines(x=916750, ymin=-60, ymax=-40)
+# axes[0].vlines(x=916950, ymin=-60, ymax=-40)
+#
+# singleneuron_data.plot_depolevents((fastevents & neatevents_50s),
+#                                    colorby_measure='baselinev',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plotwindow_inms=15,
+#                                    plt_title=' neat fast-events'
+#                                    )
 
 # %% plots for publication figures -- figure1 draft1
 # ## selecting events to plot
@@ -928,3 +941,4 @@ singleneuron_data.plot_depolevents((fastevents & neatevents_50s),
 #                                                       spikelets=probably_spikelets,
 #                                                       # aps=aps,
 #                                                       plt_title='all spikelets and fast-events')
+# %%

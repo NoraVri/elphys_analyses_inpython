@@ -18,14 +18,6 @@ Thy1_mice_neuronrecordings_names = Thy1_mice_neuronrecordings.name.dropna()
 
 
 # %%
-neuron_data = SingleNeuron('20200701D')
-df1, df2 = neuron_data.plot_rawdatatraces_ttlaligned()
-
-# %%
-neuron_data2 = SingleNeuron('20190527A')
-
-
-# %%
 for neuron in Thy1_mice_neuronrecordings_names:
     neuron_data = SingleNeuron(neuron)
     neuron_data.plot_rawdatatraces_ttlaligned(baseline_lims=[-90, -30])

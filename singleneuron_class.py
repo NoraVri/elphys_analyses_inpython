@@ -491,6 +491,17 @@ class SingleNeuron:
             for block in blocks_list:
                 figure, _ = plots.plot_ttlaligned([block], self.ttlon_measures, **kwargs)
                 figure.suptitle(self.name + ' block ' + block.file_origin)
+        if newplot_per_ttlduration:
+            ttldurations = self.ttlon_measures.ttlon_duration_inms.unique()
+            for duration in ttldurations:
+                identicaldurationblocks_names = self.ttlon_measures[
+                    (self.ttlon_measures.ttlon_duration_inms == duration)].file_origin.unique()
+                identicalduration_blocks = [block for block in blocks_list
+                                            if block.file_origin in identicaldurationblocks_names]
+                figure, axes = plots.plot_ttlaligned(identicalduration_blocks, self.ttlon_measures, **kwargs)
+                figure.suptitle(str(len(identicalduration_blocks)) + ' blocks with identical ttl-on time, cell ' + self.name)
+                print(identicaldurationblocks_names)
+                print('ttl on duration: ' + str(duration) + ' ms')
         else:
             figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, **kwargs)
             figure.suptitle(str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)

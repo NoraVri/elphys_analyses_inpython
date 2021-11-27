@@ -450,6 +450,7 @@ class SingleNeuron:
                                       newplot_per_block=False,
                                       newplot_per_ttlduration=False,
                                       newplot_per_ttlintensity=False,
+                                      plt_title='',
                                       **kwargs):
 
         """
@@ -461,12 +462,13 @@ class SingleNeuron:
         - do_baselining: default True, plots traces zeroed in V to baselinev (meanV in ms before ttl on)
         - plotdvdt: default True, plots dVdt vs V in a second subplot.
         - colorby_measure: default 'baselinev', values to use for distributing line colors.
-        - baseline-lims: [min max] baselinev of colorbar/traces to be plotted (traces falling outside are omitted).
+        - color_lims: [min max] of colorbar/traces to be plotted (traces falling outside are omitted).
             default: None - uses min and max baselinev values for colorbar
         - plotlims: [minv maxv mindvdt maxdvdt] values for axes limits settings.
             default: None - default axes limits of matplotlib are used.
-        - skip_vtraces: can be a list of ints - segments with those indices will be skipped.
+        - skip_vtraces_idcs: can be a list of ints - segments with those indices will be skipped.
             default: None - all traces of the block are plotted.
+        - skip_vtraces_block: can be a list of block identifiers - if skip_vtraces is a list of ints, traces will be skipped only in the identified blocks.
         - noisefilter_hpfreq: int - high-pass value for the filter getting the noise off the raw vtrace.
             default: 3000 Hz
         """
@@ -504,7 +506,7 @@ class SingleNeuron:
                 print('ttl on duration: ' + str(duration) + ' ms')
         else:
             figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, **kwargs)
-            figure.suptitle(str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)
+            figure.suptitle(plt_title + '; ' + str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)
             return figure, axes
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed

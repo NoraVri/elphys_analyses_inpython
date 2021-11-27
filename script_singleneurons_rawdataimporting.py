@@ -5,6 +5,194 @@ import quantities as pq
 import pandas as pd
 
 # %%
+cell20160606B = SingleNeuron('20160606B')
+cell20160606B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# nothing to do - cell is basically a passively oscillating bag of membrane voltage
+
+# %%
+cell20160606C = SingleNeuron('20160606C')
+cell20160606C.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# looks like spont.break-in; not so great recording at first, but it improves to be quite nice.
+
+# %%
+cell20160712B = SingleNeuron('20160712B')
+cell20160712B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing the end of recordings, where cell died already:
+cell20160712B.rawdata_remove_nonrecordingblock(cell20160712B.blocks[5].file_origin)
+cell20160712B.rawdata_remove_nonrecordingsection(cell20160712B.blocks[4].file_origin,
+                                                 trace_end_t=100)
+cell20160712B.write_results()
+
+# %%
+cell20160713B = SingleNeuron('20160713B')
+cell20160713B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing the last two recording files, where cell is totally dead already:
+cell20160713B.rawdata_remove_nonrecordingblock(cell20160713B.blocks[7].file_origin)
+cell20160713B.rawdata_remove_nonrecordingblock(cell20160713B.blocks[3].file_origin)
+cell20160713B.write_results()
+
+# %%
+cell20160720D = SingleNeuron('20160720D')
+cell20160720D.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# seems no data was actually recorded
+
+
+# %%
+cell20160720E = SingleNeuron('20160720E')
+cell20160720E.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160720E.rawdata_remove_nonrecordingsection(cell20160720E.blocks[3].file_origin,
+                                                 trace_start_t=6)
+# possibly some data from the end of recordings should be removed as well
+cell20160720E.write_results()
+
+# %%
+cell20160721B = SingleNeuron('20160721B')
+cell20160721B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160721B.rawdata_remove_nonrecordingsection(cell20160721B.blocks[11].file_origin,
+                                                 trace_start_t=20)
+# removing pipette exiting the cell:
+cell20160721B.rawdata_remove_nonrecordingsection(cell20160721B.blocks[13].file_origin,
+                                                 trace_end_t=47)
+cell20160721B.write_results()
+
+# %%
+cell20160721C = SingleNeuron('20160721C')
+cell20160721C.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160721C.rawdata_remove_nonrecordingsection(cell20160721C.blocks[16].file_origin,
+                                                 trace_start_t=10)
+# removing pipette exiting the cell:
+cell20160721C.rawdata_remove_nonrecordingsection(cell20160721C.blocks[18].file_origin,
+                                                 trace_end_t=177)
+cell20160721C.write_results()
+
+# %%
+cell20160721F = SingleNeuron('20160721F')
+cell20160721F.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing final part of the last recording trace, where cell totally dies:
+cell20160721F.rawdata_remove_nonrecordingsection(cell20160721F.blocks[8].file_origin,
+                                                 trace_end_t=33)
+cell20160721F.write_results()
+
+# %%
+cell20160725A = SingleNeuron('20160725A')
+cell20160725A.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160725A.rawdata_remove_nonrecordingsection(cell20160725A.blocks[12].file_origin,
+                                                 trace_start_t=4.5)
+cell20160725A.write_results()
+
+# %%
+cell20160726A = SingleNeuron('20160726A')
+cell20160726A.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160726A.rawdata_remove_nonrecordingsection(cell20160726A.blocks[12].file_origin,
+                                                 trace_start_t=9)
+cell20160726A.write_results()
+
+# %%
+cell20160726E = SingleNeuron('20160726E')
+cell20160726E.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160726E.rawdata_remove_nonrecordingsection(cell20160726E.blocks[10].file_origin,
+                                                 trace_start_t=8.5)
+# removing the last part of the last recording, where electrode gets pulled out
+cell20160726E.rawdata_remove_nonrecordingsection(cell20160726E.blocks[13].file_origin,
+                                                 trace_end_t=34)
+cell20160726E.write_results()
+
+# %%
+cell20160728A = SingleNeuron('20160728A')
+cell20160728A.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160728A.rawdata_remove_nonrecordingsection(cell20160728A.blocks[1].file_origin,
+                                                 trace_start_t=8.5)
+# removing the last two blocks, where neuron is entirely dead already:
+cell20160728A.rawdata_remove_nonrecordingblock(cell20160728A.blocks[4].file_origin)
+cell20160728A.rawdata_remove_nonrecordingblock(cell20160728A.blocks[3].file_origin)
+cell20160728A.write_results()
+
+# %%
+cell20160728B = SingleNeuron('20160728B')
+cell20160728B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# ~30min of spont.activity recorded and nothing else; cell is spiking a lot and going through
+# various modes of oscillating
+
+# %%
+cell20160731A = SingleNeuron('20160731A')
+cell20160731A.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160731A.rawdata_remove_nonrecordingsection(cell20160731A.blocks[9].file_origin,
+                                                 trace_start_t=8)
+cell20160731A.write_results()
+# %%
+cell20160731B = SingleNeuron('20160731B')
+cell20160731B.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160731B.rawdata_remove_nonrecordingsection(cell20160731B.blocks[6].file_origin,
+                                                 trace_start_t=7.5)
+# removing the last part of the recording where cell is thoroughly dead (it's doing funny things also before but not so as to warrant scrapping the data):
+cell20160731B.rawdata_remove_nonrecordingsection(cell20160731B.blocks[12].file_origin,
+                                                 trace_end_t=195)
+cell20160731B.write_results()
+
+# %%
+cell20160802A = SingleNeuron('20160802A')
+cell20160802A.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160802A.rawdata_remove_nonrecordingsection(cell20160802A.blocks[0].file_origin,
+                                                 trace_start_t=6)
+cell20160802A.write_results()
+
+# %%
+cell20160802C = SingleNeuron('20160802C')
+cell20160802C.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160802C.rawdata_remove_nonrecordingsection(cell20160802C.blocks[0].file_origin,
+                                                 trace_start_t=9)
+# removing the final trace, where cell dies:
+cell20160802C.rawdata_remove_nonrecordingsection(cell20160802C.blocks[-1].file_origin,
+                                                 remove_segments=[-1])
+cell20160802C.write_results()
+
+# %%
+cell20160802D = SingleNeuron('20160802D')
+cell20160802D.plot_rawdatablocks(time_axis_unit='s')
+# raw data cleanup:
+# removing seal formation:
+cell20160802D.rawdata_remove_nonrecordingsection(cell20160802D.blocks[0].file_origin,
+                                                 trace_start_t=8)
+cell20160802D.write_results()
+
+# %%
+cell20160802E = SingleNeuron('20160802E')
+cell20160802E.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation:
+cell20160802E.rawdata_remove_nonrecordingsection(cell20160802E.blocks[0].file_origin,
+                                                 trace_start_t=7.5)
+cell20160802E.write_results()
+# %%
 cell20190131B1 = SingleNeuron('20190131B1')
 cell20190131B1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # raw data cleanup:
@@ -1186,25 +1374,28 @@ cell20200310G.write_results()
 #     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
 # cell20200630A.write_results()
 # %%
-# cell20200630B1 = SingleNeuron('20200630B1')
+cell20200630B1 = SingleNeuron('20200630B1')
 # some spont.activity and light pulses; cell stops responding in light_0006 (probably pretty dead but still has a Vrest)
 # there's pretty bad 50Hz noise throughout (not very large amp (~1/4mV) but very visible) and
 # nothing much of spontaneously occurring events
 # light responses look like they're mostly synapses, though a couple of them may have (several) fast-events riding them.
-# fileslist = cell20200630B1.get_blocknames(printing='off')
-# for file in fileslist:
-#     cell20200630B1.rawdata_remove_nonrecordingchannel(file, 2, pairedrecording=True)
-# cell20200630B1.write_results()
+# removing channel that this neuron is not being recorded on:
+fileslist = cell20200630B1.get_blocknames(printing='off')
+for file in fileslist:
+    cell20200630B1.rawdata_remove_nonrecordingchannel(file, 2, pairedrecording=True)
+cell20200630B1.write_results()
 # %%
-# cell20200630B2 = SingleNeuron('20200630B2')
+cell20200630B2 = SingleNeuron('20200630B2')
 # some spont.activity and light pulses
 # nothing much of spontaneously occurring events going on, but cell responds to light very consistently;
 # it often fires an AP, but wherever it doesn't the fast-event(s) riding the synaptic potential look pretty clear
-# fileslist = cell20200630B2.get_blocknames(printing='off')
-# for file in fileslist:
-#     cell20200630B2.rawdata_remove_nonrecordingchannel(file, 1, pairedrecording=True)
-# cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
-# cell20200630B2.write_results()
+# removing channel that this neuron is not being recorded on:
+fileslist = cell20200630B2.get_blocknames(printing='off')
+for file in fileslist:
+    cell20200630B2.rawdata_remove_nonrecordingchannel(file, 1, pairedrecording=True)
+# removing time where this neuron is not yet being recorded:
+cell20200630B2.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=642)
+cell20200630B2.write_results()
 # %%
 cell20200630C = SingleNeuron('20200630C')
 cell20200630C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
@@ -1330,11 +1521,12 @@ cell20200630C.write_results()
 # cell20200708C.rawdata_remove_nonrecordingblock('gapFree_0002.abf')
 # cell20200708C.write_results()
 # %%
-# cell20200708D = SingleNeuron('20200708D')
+cell20200708D = SingleNeuron('20200708D')
 # spont.activity and light pulses; oscillating vigorously and has tons of spont. fast-events and APs.
 # light-evoked activity is usually an AP but there may be some fast-events in there
-# cell20200708D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=28)
-# cell20200708D.write_results()
+# removing seal formation
+cell20200708D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=28)
+cell20200708D.write_results()
 # %%
 # cell20200708E = SingleNeuron('20200708E')
 # just a single trace of spont.activity with one AP and a few fast-events
@@ -1434,6 +1626,13 @@ cell20210105B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # but getting held with a lot of -DC for quite a lot of the time.
 cell20210105B.rawdata_remove_nonrecordingblock('gapFree_0003.abf')
 cell20210105B.write_results()
+
+# %%
+cell20210105D = SingleNeuron('20210105D')
+cell20210105D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# nothing to clean up really; it was a spont.break-in (from just G seal, according to notes) and cell is basically
+# OK until the end of recordings (although it does visibly deteriorate towards the end).
 
 # %%
 cell20210110A = SingleNeuron('20210110A')

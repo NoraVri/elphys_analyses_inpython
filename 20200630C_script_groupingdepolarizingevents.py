@@ -21,6 +21,15 @@ spont_events = ~des_df.applied_ttlpulse  #
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
 unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
+
+# %% plotting light-evoked activity
+# three different light intensities for this neuron:
+# 30%
+singleneuron_data.plot_rawdatatraces_ttlaligned('0000', '01', '02', '03', '04')
+# 10%
+singleneuron_data.plot_rawdatatraces_ttlaligned('05', '06', '07')
+# 3%
+singleneuron_data.plot_rawdatatraces_ttlaligned('08', '09')
 # %%
 # summary plots - old:
 # des_df = singleneuron_data.depolarizing_events
@@ -45,7 +54,7 @@ smallslowevents = unlabeled_spontevents  # unless seen otherwise
 # singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=10)
 # singleneuron_data.write_results()
 
-# %% plots: seeing that depolarizing events got extracted nicely
+# %% plots: seeing and labeling depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 
 # 1. seeing that light/puff-evoked things all got labeled as such
@@ -104,7 +113,7 @@ smallslowevents = unlabeled_spontevents  # unless seen otherwise
 #                                    plot_dvdt=True,
 #                                    )
 # OK that's very clear: these are all fast-events (no further grouping by rise-time or width, amplitude grouping
-# pretty clear (though a bit confusing: the smallest and largest events are all persent at more depolarized baselinev,
+# pretty clear (though a bit confusing: the smallest and largest events are all present at more depolarized baselinev,
 # and at hyperpolarized baselinev we get an amplitude group of ~5mV that is not seen elsewhere).
 # labeling them as such:
 # singleneuron_data.depolarizing_events.loc[possibly_spontfastevents, 'event_label'] = 'fastevent'

@@ -18,9 +18,12 @@ singleneuron_data = SingleNeuron(neuron_name)
 # Evoked APs especially are a mess of all sorts of depolarizations happening...
 
 # %% plots: light-evoked activity
-# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
-# light 19: the same fast event is triggered also at hyperpolarized baselinev, but also t-type Ca is activated
-# and that's why it looks like it has a larger amplitude
+singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_ttlduration=True)
+# reducing light duration decreases P(ap triggered), as does hyperpolarizing;
+# but the initial response is always ~20mV.
+# neuron has no spont. fast-events recorded.
+
+# %%
 blocknames_list = singleneuron_data.get_blocknames(printing='off')
 blocknames = []
 for i in range(15,20):

@@ -27,11 +27,20 @@ unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
 # %% plots: light-evoked activity
-singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
+# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_ttlduration=True)
+# looks like during the first light file the light wasn't actually on - there's TTL high but no response whatsoever.
+# last file: skip traces 14 - 24 - cell depolarizes suddenly and then stops responding altogether.
+singleneuron_data.plot_rawdatatraces_ttlaligned('1', '2', postttl_t_inms=20,
+                                                skip_vtraces_block=['light_0002.abf'],
+                                                skip_vtraces_idcs=[14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 
+# spont. aps and fast-events, for comparison
+singleneuron_data.plot_depolevents(spont_events & (fastevents | aps) & (des_df.baselinev < -47),
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=30,
+                                   plt_title='spont. fast-events and APs')
 
-# %%
-# summary plots - old:
+# %% summary plots - old:
 des_df = singleneuron_data.depolarizing_events
 fastevents = des_df.event_label == 'fastevent'
 other_events = des_df.event_label == 'other_event'  # just one of those:

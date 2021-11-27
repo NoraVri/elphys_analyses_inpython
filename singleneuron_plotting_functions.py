@@ -73,8 +73,9 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                     prettl_t_inms=2, postttl_t_inms=30,
                     do_baselining=True, plotdvdt=True,
                     colorby_measure='baselinev',
-                    baseline_lims=None, plotlims=None,
-                    skip_vtraces=None,
+                    color_lims=None, plotlims=None,
+                    skip_vtraces_block=None,
+                    skip_vtraces_idcs=None,
                     noisefilter_hpfreq=3000,):
     """
     This function takes a list of blocks, and plots vtraces aligned to ttl-onset (for those blocks that have ttl).
@@ -87,19 +88,25 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
         figure, axes = plt.subplots(1, 2)
     else:
         figure, axes = plt.subplots(1, 1)
+    vaxis_label = 'voltage (mV)'
+    if do_baselining:
+        vaxis_label = vaxis_label + ' (baselined)'
     # getting only the relevant ttl measures
     blocknames_list = [block.file_origin for block in blockslist]
     blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list)
                                             & (~ttlmeasures_df.baselinev.isna()))]  # by skipping traces where no baselinev value was calculated, we skip vclamp-recordings and traces where ttl wasn't actually on (even though 3rd channel was recorded)
     # return ttlmeasures_df, blocks_ttlmeasures_df
-    if baseline_lims is not None:
-        blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df.baselinev >= baseline_lims[0])
-                                                    & (blocks_ttlmeasures_df.baselinev <= baseline_lims[1])]
-    if skip_vtraces is not None and isinstance(skip_vtraces, list):
-        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces)]
+    if color_lims is not None and colorby_measure is not None:
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df[colorby_measure] >= color_lims[0])
+                                                    & (blocks_ttlmeasures_df[colorby_measure] <= color_lims[1])]
+    if skip_vtraces_block is None and isinstance(skip_vtraces_idcs, list):
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces_idcs)]
+    if skip_vtraces_block is not None and isinstance(skip_vtraces_idcs, list):
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~(blocks_ttlmeasures_df.file_origin.isin(skip_vtraces_block)
+                                                        & blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces_idcs))]
     # getting colors for line plots
-    if isinstance(baseline_lims, list) and (len(baseline_lims) == 2):
-        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=None, data=baseline_lims)
+    if isinstance(color_lims, list) and (len(color_lims) == 2):
+        colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=None, data=color_lims)
     else:
         colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=colorby_measure,
                                                           data=blocks_ttlmeasures_df)
@@ -144,8 +151,8 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                                  color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
     # adding axes labels
     axes[0].set_xlabel('time (ms)')
-    axes[0].set_ylabel('voltage (baselined), mV')
-    axes[1].set_xlabel('voltage (baselined), mV')
+    axes[0].set_ylabel(vaxis_label)
+    axes[1].set_xlabel(vaxis_label)
     axes[1].set_ylabel('dV/dt, mV/ms')
     # setting axes lims
     axes[0].set_xlim((-1*prettl_t_inms, postttl_t_inms))

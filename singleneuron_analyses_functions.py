@@ -834,7 +834,7 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                 ttlon_idx = ttlon_idcs[0]
                 ttloff_idx = ttlon_idcs[-1]
                 ms_in_samples = int(1 / segment.analogsignals[0].sampling_period.rescale('ms'))
-                ttl_duration_inms = (ttloff_idx - ttlon_idx) / ms_in_samples
+                ttl_duration_inms = (ttloff_idx - ttlon_idx + 1) / ms_in_samples
                 # if it's a current-clamp recording, get also other measures surrounding ttl
                 if segment.analogsignals[0].units == pq.mV:
                     voltage_recording = np.array(np.squeeze(segment.analogsignals[0]))
@@ -843,11 +843,11 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                     baselinev = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
                     # getting applied current: mean, and max-min in [ms before ttl on : ttl off]
                     applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
-                    if applied_current < 10:
+                    if abs(applied_current) < 10:
                         applied_current = 0
                     applied_current_range = np.max(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx]) \
                                             - np.min(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
-                    if applied_current_range < 10:
+                    if abs(applied_current_range) < 10:
                         applied_current_range = 0
                 else:
                     baselinev = None

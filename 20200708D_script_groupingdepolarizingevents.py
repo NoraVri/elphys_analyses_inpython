@@ -25,8 +25,8 @@ unlabeled_spontevents = (spont_events & unlabeled_events)
 # 30%
 singleneuron_data.plot_rawdatatraces_ttlaligned('0000', plt_title='light intensity = 30%',
                                                 # color_lims=[-80, -45],
-                                                colorby_measure='applied_current',
-                                                color_lims=[-700, 0],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
                                                 prettl_t_inms=1,
                                                 postttl_t_inms=20,
                                                 plotlims=[-5, 102, -5.2, 15],
@@ -35,17 +35,58 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('0000', plt_title='light intensi
 # 3% - except in sweep2 where 2%=no light on at all
 singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
                                                 # color_lims=[-80, -45],
-                                                colorby_measure='applied_current',
-                                                color_lims=[-700, 0],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
                                                 prettl_t_inms=1,
                                                 postttl_t_inms=20,
                                                 plotlims=[-5, 102, -5.2, 15],
                                                 # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
                                                 )
 
+# %% split out by baselinev
+singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
+                                                color_lims=[-80, -72],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                plotlims=[-5, 102, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
+                                                )
+
+singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
+                                                color_lims=[-72, -65],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                plotlims=[-5, 102, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
+                                                )
+
+singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
+                                                color_lims=[-65, -58],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                plotlims=[-5, 102, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
+                                                )
+
+singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
+                                                color_lims=[-58, -48],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                plotlims=[-5, 102, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
+                                                )
 # %% plotting spont.APs and depolarizing events:
 # they all got picked up nicely by the algorithm; the last one (occurring during light protocol) should be excluded
 # though, as it occurs due to the neuron severely depolarizing and then dying.
+spont_aps = (aps & spont_events & ~(des_df.file_origin == 'light_0001.abf'))
 # singleneuron_data.plot_depolevents((aps & spont_events & ~(des_df.file_origin == 'light_0001.abf')),
 #                                    colorby_measure='baselinev',
 #                                    prealignpoint_window_inms=7,
@@ -69,11 +110,18 @@ for idx in des_df[(aps & (des_df.file_origin == 'gapFree_0000.abf'))].index:
 fastevents_idcs = list(set(fastevents_idcs))
 fastevents_forplotting = pd.Series(des_df.index.isin(fastevents_idcs))
 
-singleneuron_data.plot_depolevents(fastevents_forplotting | (aps & spont_events & ~(des_df.file_origin == 'light_0001.abf')),
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=7,
-                                   plotwindow_inms=22)
+# OK that looks better, now let's see how it looks when we add in events occurring at lower baselinev
+lowbaselinev_fastevents = fastevents & (des_df.baselinev < -46)
+fastevents_forplotting = (fastevents_forplotting | lowbaselinev_fastevents)
 
+singleneuron_data.plot_depolevents((fastevents_forplotting | spont_aps),
+                                   colorby_measure='baselinev',
+                                   # color_lims=[-700, 0],
+                                   # colormap='cividis',
+                                   do_baselining=False,
+                                   prealignpoint_window_inms=4.5,
+                                   plotwindow_inms=20,
+                                   timealignto_measure='rt20_start_idx')
 
 # %% extracting depolarizing events
 # notes:

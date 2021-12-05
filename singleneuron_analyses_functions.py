@@ -841,6 +841,9 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                     current_recording = np.array(np.squeeze(segment.analogsignals[1]))
                     # getting baselinev: mean v in the ms before ttl on
                     baselinev = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
+                    # getting response max amp: max v (until ttloff+20ms) - baselinev
+                    maxv = np.max(voltage_recording[ttlon_idx:(ttlon_idx + (20*ms_in_samples))])
+                    response_maxamp = maxv - baselinev
                     # getting applied current: mean, and max-min in [ms before ttl on : ttl off]
                     applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
                     if abs(applied_current) < 10:
@@ -851,6 +854,7 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                         applied_current_range = 0
                 else:
                     baselinev = None
+                    response_maxamp = None
                     applied_current = None
                     applied_current_range = None
             else:
@@ -858,6 +862,7 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                 ttloff_idx = None
                 ttl_duration_inms = None
                 baselinev = None
+                response_maxamp = None
                 applied_current = None
                 applied_current_range = None
 
@@ -867,6 +872,7 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
             ttlon_measures_dict['ttloff_idx'].append(ttloff_idx)
             ttlon_measures_dict['ttlon_duration_inms'].append(ttl_duration_inms)
             ttlon_measures_dict['baselinev'].append(baselinev)
+            ttlon_measures_dict['response_maxamp'].append(response_maxamp)
             ttlon_measures_dict['applied_current'].append(applied_current)
             ttlon_measures_dict['applied_current_range'].append(applied_current_range)
         return ttlon_measures_dict
@@ -890,6 +896,7 @@ def make_ttlonmeasures_dictionary():
         'applied_current_range': [],
 
         'baselinev': [],
+        'response_maxamp': [],
 
     }
     return ttlon_measures

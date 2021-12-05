@@ -512,7 +512,7 @@ class SingleNeuron:
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents(self, events_to_plot=pd.Series(), blocknames_list=None,
                          newplot_per_block=False, newplot_per_event=False,
-                         colorby_measure='', color_lims=None,
+                         colorby_measure='', color_lims=None, colormap='viridis',
                          plt_title='',
                          plot_dvdt=True,
                          **kwargs):
@@ -528,6 +528,7 @@ class SingleNeuron:
         newplot_per_block: if True, a new figure will be drawn for each rawdata_block.
         newplot_per_event: if True, a new figure will be drawn for each individual event (as well).
         'colorby_measure': key of a depolarizingevents-measure to color-code the lines by.
+        colormap: viridis by default, changes to cividis if something else is put there
         [color_lims]: [minvalue, maxvalue] of the colorbar. If not provided, min and max will be inferred from the data.
         'plt_title': default='', string giving the title of the plot(s).
         Other kwargs (passed through to plots.plot_single_event):
@@ -589,6 +590,7 @@ class SingleNeuron:
                     self.rawdata_readingnotes['getdepolarizingevents_settings'],
                     colorby_measure=colorby_measure,
                     color_lims=color_lims,
+                    colormap=colormap,
                     axis_object=axis,
                     dvdt_axis_object=dvdt_axis,
                     **kwargs)
@@ -610,9 +612,10 @@ class SingleNeuron:
                 elif not len(color_lims) == 2:
                     print('please input valid colorbar limits')
                     return
-                colormap, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
-                                                                            color_lims)
-                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                color_map, cm_normalizer = plots.get_colors_forlineplots(colorby_measure,
+                                                                         color_lims,
+                                                                         colormap=colormap)
+                figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=color_map),
                                 label=colorby_measure)
             # plotting
             for block_name in blocks_for_plotting:
@@ -624,6 +627,7 @@ class SingleNeuron:
                                               dvdt_axis_object=dvdt_axis,
                                               colorby_measure=colorby_measure,
                                               color_lims=color_lims,
+                                              colormap=colormap,
                                               **kwargs)
             axis.set_title(axis_title)
 

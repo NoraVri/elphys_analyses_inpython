@@ -254,7 +254,7 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
 # plotting all/selected events of a rawdata_block, overlayed or individually (through plot_single_event)
 def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizingevents_settings,
                             timealignto_measure='peakv_idx',
-                            colorby_measure='', color_lims=None,
+                            colorby_measure='', color_lims=None, colormap='viridis',
                             prealignpoint_window_inms=5,
                             axis_object=None, newplot_per_event=False,
                             plot_dvdt=False, dvdt_axis_object=None,
@@ -292,9 +292,9 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 
     # optional: setting the color mapping
     if colorby_measure and (color_lims is not None) and (len(color_lims) == 2):
-        color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, color_lims)
+        color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, color_lims, colormap=colormap)
     elif colorby_measure:
-        color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures)
+        color_map, cm_normalizer = get_colors_forlineplots(colorby_measure, block_eventsmeasures, colormap=colormap)
         # print('colorbar automatically generated from single-block data')
     else:
         color_map = []
@@ -357,8 +357,11 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
 
 # %% helper functions:
 # getting colormap information
-def get_colors_forlineplots(colorby_measure, data):
-    colormap = mpl.cm.viridis  # cividis
+def get_colors_forlineplots(colorby_measure, data, colormap='viridis'):
+    if colormap == 'viridis':
+        colormap = mpl.cm.viridis  # cividis
+    else:
+        colormap = mpl.cm.cividis
     if isinstance(data, list) and len(data) == 2:
         cm_normalizer = mpl.colors.Normalize(vmin=data[0],
                                              vmax=data[1])

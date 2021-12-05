@@ -46,6 +46,18 @@ singleneuron_data.plot_depoleventsgroups_overlayed(other_events, aps, other_fast
                                                                  'other-fastevents','fastevents'],
                                                    do_baselining=True,
                                                    )
+
+# %%
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000', '0001', '0002',
+    newplot_per_ttlduration=True,
+                                                # skip_vtraces_idcs=skip_vtraces,
+                                                colorby_measure='applied_current',
+                                                color_lims=[-700, 100],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                # plotlims=[-5, 102, -5.2, 15],
+                                                do_baselining=False, plotlims=[-95, 45, -5.2, 15],
+                                                )
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).

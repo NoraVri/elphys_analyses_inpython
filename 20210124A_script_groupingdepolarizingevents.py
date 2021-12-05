@@ -119,6 +119,19 @@ des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
                                              bins=nbins)
 plt.suptitle('aps, neat ones only')
 
+# %%
+singleneuron_data.plot_rawdatatraces_ttlaligned('light',
+                                                newplot_per_ttlduration=True,
+                                                # plt_title='light intensity = 30%',
+                                                # color_lims=[-80, -45],
+                                                colorby_measure='baselinev',
+                                                # color_lims=[-700, 0],
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=20,
+                                                # plotlims=[-5, 102, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-80, 45, -5.2, 15],
+                                                )
+
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).

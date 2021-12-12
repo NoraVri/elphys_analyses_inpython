@@ -34,10 +34,12 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001',
                                                 prettl_t_inms=1,
                                                 postttl_t_inms=20,
                                                 # plotlims=[-5, 102, -5.2, 15],
-                                                do_baselining=False, plotlims=[-95, 45, -5.2, 15],
+                                                # do_baselining=False, plotlims=[-95, 45, -5.2, 15],
                                                 )
-
-
+# %%
+singleneuron_data.plot_rawdatatraces_ttlaligned('light',
+                                                newplot_per_ttlduration=True,
+                                                postttl_t_inms=20)
 
 
 

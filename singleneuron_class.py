@@ -995,6 +995,24 @@ class SingleNeuron:
                 dtypes_dict[key] = 'Int64'
         self.depolarizing_events.astype(dtypes_dict)
 
+    def get_eventsgroups_averages(self, *events_groups, **kwargs):
+        """
+        This function gets averages (mean +/- std) of selected groups of events (as indexed into the
+        depolarizingevents-dataframe through Series of booleans).
+        optional kwargs that are passed on to get_events_average:
+        timealignto_measure='peakv_idx',
+        prealignpoint_window_inms=5,
+        plotwindow_inms=40,
+        do_normalizing=False,
+        get_measures_type='raw',
+        """
+        averages = []
+        averages_stds = []
+        for i, events_group in enumerate(events_groups):
+            events_group_avg, events_group_std, time_axis = snafs.get_events_average(self.blocks, self.depolarizing_events,
+                                                        self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                                        events_group, **kwargs)
+
     def get_ttlonmeasures_fromrawdata(self, **kwargs):
         all_ttlonmeasures_dictionary = snafs.make_ttlonmeasures_dictionary()
         for block in self.blocks:

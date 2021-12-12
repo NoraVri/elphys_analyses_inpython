@@ -23,6 +23,10 @@ unlabeled_events = des_df.event_label.isna()  # all events that were not given a
 unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
+# %% plotting light-evoked activity
+
+
+
 # %% summary plots - all events:
 # histogram of baselinev in the entire recording:
 # singleneuron_data.get_timespentrecording(make_baselinev_hist=True)

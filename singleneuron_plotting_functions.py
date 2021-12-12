@@ -87,7 +87,8 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     if plotdvdt:
         figure, axes = plt.subplots(1, 2)
     else:
-        figure, axes = plt.subplots(1, 1)
+        figure, axes = plt.subplots(1, 1, squeeze=False)
+        axes = axes.squeeze(axis=1)
     vaxis_label = 'voltage (mV)'
     if do_baselining:
         vaxis_label = vaxis_label + ' (baselined)'
@@ -137,8 +138,8 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                 # grabbing the snippet for plotting, with time axis re-aligned to ttlon = 0
                 onems_insamples = int(sampling_frequency / 1000)
                 time_axis = time_axis - ttlfirston_time
-                plotwindow_startidx = ttlfirston_idx - (onems_insamples * prettl_t_inms)
-                plotwindow_endidx = ttlfirston_idx + (onems_insamples * postttl_t_inms)
+                plotwindow_startidx = ttlfirston_idx - int(onems_insamples * prettl_t_inms)
+                plotwindow_endidx = ttlfirston_idx + int(onems_insamples * postttl_t_inms)
                 vtrace = vtrace[plotwindow_startidx:plotwindow_endidx]
                 if do_baselining:  # make baselinev = 0 for plotted line, if requested
                     vtrace = vtrace - ttlmeasures_series['baselinev']
@@ -149,17 +150,21 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                     vtrace_diff = np.diff(vtrace)
                     axes[1].plot(vtrace[:-1:], vtrace_diff,
                                  color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
+                    axes[1].set_xlabel(vaxis_label)
+                    axes[1].set_ylabel('dV/dt, mV/ms')
     # adding axes labels
     axes[0].set_xlabel('time (ms)')
     axes[0].set_ylabel(vaxis_label)
-    axes[1].set_xlabel(vaxis_label)
-    axes[1].set_ylabel('dV/dt, mV/ms')
+
     # setting axes lims
     axes[0].set_xlim((-1*prettl_t_inms, postttl_t_inms))
-    if plotlims is not None and (len(plotlims) == 4):
-        axes[0].set_ylim(plotlims[0], plotlims[1])
-        axes[1].set_xlim(plotlims[0], plotlims[1])
-        axes[1].set_ylim(plotlims[2], plotlims[3])
+    if plotlims is not None:
+        if plotdvdt and (len(plotlims) == 4):
+            axes[0].set_ylim(plotlims[0], plotlims[1])
+            axes[1].set_xlim(plotlims[0], plotlims[1])
+            axes[1].set_ylim(plotlims[2], plotlims[3])
+        if not plotdvdt and (len(plotlims) == 2):
+            axes[0].set_ylim(plotlims[0], plotlims[1])
     figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap))
     return figure, axes
 

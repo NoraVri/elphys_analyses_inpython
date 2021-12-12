@@ -1717,15 +1717,24 @@ cell20210216A.rawdata_remove_nonrecordingblock('gapFree_0006.abf')
 cell20210216A.write_results()
 
 # %%
-# cell20210411A = SingleNeuron('20210411A')
-# applying light just seems to turn on an oscillation (very wackily oscillating neuron)
-# cell20210411A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+cell20210411A = SingleNeuron('20210411A')
+# quite nice recording: good baselinev (~-50mV) throughout, and neuron oscillating with large amp (20mV) and wackily.
+# Initial break-in from >10G seal, but then seal is formed again.
+cell20210411A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing trace before the second break-in:
+cell20210411A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=400)
+cell20210411A.write_results()
 
 # %%
-# cell20210411F = SingleNeuron('20210411F')
-# cell20210411F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
-
-
+cell20210411F = SingleNeuron('20210411F')
+# not a great recording: -30 < baselinev < -20 is held with -2nA -DC. But it's responding to the light with
+# individual fast-events, so very interesting recording in that sense.
+cell20210411F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# removing seal formation and break-in:
+cell20210411F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=21)
+cell20210411F.write_results()
 # %%
 # cell20210413A = SingleNeuron('20210413A')
 # cell20210413A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)

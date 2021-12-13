@@ -55,10 +55,9 @@ neuron_data_Thy1.plot_rawdatatraces_ttlaligned('01',
                                                )
 # RBP activations
 # Using light 01 and 2: light2 has more with APs (more +DC)
-# skip_vtraces = list(np.arange(1,len(neuron_data_RBP.blocks[3].segments)/2)) \
-#                + list(np.arange(len(neuron_data_RBP.blocks[3].segments)/2, len(neuron_data_RBP.blocks[3].segments), 2))
+# picking just some example traces to show (there are many repetitions):
 full_set = set(np.arange(0, len(neuron_data_RBP.blocks[3].segments)))
-keep_set = {0, 1, 3, 4, 26, 27, 65, 66, 72, 73}
+keep_set = {0, 1, 3, 4, 26, 27, 65, 66, 72, 73}  # could spend some more time finding the most picture-perfect example set
 skip_vtraces = list((full_set - keep_set))
 neuron_data_RBP.plot_rawdatatraces_ttlaligned('light_0001', 'light_0002',
                                               # skip_vtraces_block=['light_0001'],

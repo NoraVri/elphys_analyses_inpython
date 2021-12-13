@@ -20,6 +20,12 @@ midbrain_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',]
 midbrain_mice_experiments_dates = experimentdays_metadata[experimentdays_metadata.virusinjection_ID.isin(midbrain_mice)].date
 midbrain_mice_recordings_names = recordings_metadata[recordings_metadata.date.isin(midbrain_mice_experiments_dates)].name.dropna()
 
+Thy1_mice = ['Thy1', 'thy1']
+Thy1_mice_condition = experimentdays_metadata.genetics.isin(Thy1_mice)
+Thy1_mice_experiments_dates = experimentdays_metadata[Thy1_mice_condition].date
+Thy1_mice_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(Thy1_mice_experiments_dates)]
+Thy1_mice_neuronrecordings_names = Thy1_mice_neuronrecordings.name.dropna()
+
 RBP_mice = ['RBP', 'RBP4-cre/Ai32']
 RBP_mice_experiments_dates = experimentdays_metadata[experimentdays_metadata.genetics.isin(RBP_mice)].date
 RBP_mice_recordings_names = recordings_metadata[recordings_metadata.date.isin(RBP_mice_experiments_dates)].name.dropna()
@@ -58,3 +64,15 @@ for neuron in midbrain_mice_recordings_names:
         if neuron_data.ttlon_measures.response_maxamp.max() > 40:
             midbrain_lightevokedAPs_recordings.append(neuron)
             neuron_data.plot_rawdatatraces_ttlaligned()
+# recordings of particular interest:
+
+# %%
+Thy1_lightevokedAPs_recordings = []
+for neuron in Thy1_mice_neuronrecordings_names:
+    neuron_data = SingleNeuron(neuron)
+    neuron_data.get_ttlonmeasures_fromrawdata()
+    if not neuron_data.ttlon_measures.empty:
+        if neuron_data.ttlon_measures.response_maxamp.max() > 40:
+            midbrain_lightevokedAPs_recordings.append(neuron)
+            neuron_data.plot_rawdatatraces_ttlaligned()
+# recordings of particular interest:

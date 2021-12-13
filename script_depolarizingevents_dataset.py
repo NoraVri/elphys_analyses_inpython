@@ -5,7 +5,7 @@ import quantities as pq
 import pandas as pd
 
 # metadata imports
-path="D:\\hujigoogledrive\\research_YaromLabWork\\data_elphys_andDirectlyRelatedThings\\recorded_by_me"
+path="D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
 # %%

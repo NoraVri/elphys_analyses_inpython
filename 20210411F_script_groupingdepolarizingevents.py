@@ -26,6 +26,19 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000', '5', '8',
                                                 plt_title='large field, high intensity',
                                                 postttl_t_inms=20)
 
+# %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
+#   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
+#   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
+# exttracting with standard parameters, min_depolamp 1mV (from seeing the raw data there's a spikelet of ~1mV, and nothing smaller)
+singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=1)
+singleneuron_data.write_results()
 
+# %% plots and analyses: seeing and labeling depolarizing events
+# des_df = singleneuron_data.depolarizing_events
+# nbins = 100
+# Seeing that light/puff-evoked things all got labeled as such:
+# evoked_events = des_df.applied_ttlpulse
+# singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
+# notes:
 

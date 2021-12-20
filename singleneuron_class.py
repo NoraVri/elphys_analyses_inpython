@@ -630,6 +630,10 @@ class SingleNeuron:
                                               colormap=colormap,
                                               **kwargs)
             axis.set_title(axis_title)
+            if dvdt_axis:
+                return axis, dvdt_axis
+            else:
+                return axis
 
     # plotting groups of depolarizing events overlayed, one color per group
     def plot_depoleventsgroups_overlayed(self, *events_groups, group_labels=None,

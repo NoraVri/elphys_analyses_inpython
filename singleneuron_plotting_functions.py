@@ -70,7 +70,7 @@ def plot_block(block, depolarizingevents_df,
 
 # plotting traces aligned to TTL, in neat windows (including options for setting scales to be identical across neurons)
 def plot_ttlaligned(blockslist, ttlmeasures_df,
-                    prettl_t_inms=2, postttl_t_inms=30,
+                    prettl_t_inms=2, postttl_t_inms=20,
                     do_baselining=True, plotdvdt=True,
                     colorby_measure='baselinev',
                     color_lims=None, plotlims=None,

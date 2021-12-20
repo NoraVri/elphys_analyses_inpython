@@ -13,20 +13,16 @@ singleneuron_data = SingleNeuron(neuron_name)
 # notes summary:
 # has some nice fast-events, but also clearly deteriorating APs (their amp goes gradually down, and pretty soon they barely reach 0mV at their peak)
 
-# summary plots:
-# des_df = singleneuron_data.depolarizing_events
-# aps = des_df.event_label == 'actionpotential'
-# fast_events = des_df.event_label == 'fastevent'
-# fast_events_df = des_df[fast_events]
-# fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
+# %% plotting light-evoked activity
+# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_ttlduration=True, postttl_t_inms=20)
+# separately by conditions: low/high light intensity, small/large light spot
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000',
+                                                plt_title='low light intensity, large field')
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001', 'light_0002',
+                                                newplot_per_ttlduration=True,
+                                                plt_title='high light intensity, large field')
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',
+                                                plt_title='high light intensity, small field')
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -52,7 +48,7 @@ des_df = singleneuron_data.depolarizing_events
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 possibly_spontfastevents = (spont_events & unlabeled_events)
-singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, segments_overlayed=False)
 # notes:
 
 # Let's filter down, and see amplitude and rise-time to narrow down from there:

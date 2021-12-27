@@ -1616,6 +1616,8 @@ cell20200818C.write_results()
 # cell20200909A = SingleNeuron('20200909A')
 #
 # cell20200909A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
 # %% experiments with glutamate puff
 # cell20201116A = SingleNeuron('20201116A')
 
@@ -1806,19 +1808,22 @@ cell20210113C.rawdata_remove_nonrecordingsection('light_0006.abf', remove_segmen
 cell20210113C.write_results()
 # %%
 cell20210113D = SingleNeuron('20210113D')
-cell20210113D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
-# extremely boring-looking neuron in terms of spontaneous activity, but responding to light big time.
+cell20210113D.plot_rawdatablocks(segments_overlayed=False, time_axis_unit='s')
+# not the nicest recording: baselinev slowly deteriorating (from -50 to ~-25mV), and neuron is really not doing
+# anything at all spontaneously; still, evoked activity often includes APs and what looks like fast things.
 # raw data cleanup:
-# nothing to remove.
+# seal formation not recorded; no other cleanups to apply.
 
 # %%
 cell20210113F = SingleNeuron('20210113F')
-cell20210113F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
-# looks like a bad break-in into a not-so-great cell, but it's responding to light with something fast most of the time
-# and APs some of the time.
+cell20210113F.plot_rawdatablocks(segments_overlayed=False, time_axis_unit='s')
+# not the nicest recording: not really a proper seal/patch, baselinev ~-35 on break-in but holding mostly steady until
+# the last recording file (where it deteriorates further to -15mV). Has a lot of light responses recorded that look to
+# include fast things.
 # raw data cleanup:
-# nothing to remove.
-
+# removing first part of the recording where seal was very much not properly broken into yet:
+cell20210113F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=173)
+cell20210113F.write_results()
 # %%
 cell20210113G = SingleNeuron('20210113G')
 cell20210113G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)

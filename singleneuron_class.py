@@ -474,6 +474,8 @@ class SingleNeuron:
         """
         if not hasattr(self, 'ttlon_measures'):
             self.get_ttlonmeasures_fromrawdata()
+        if self.ttlon_measures.empty:
+            return
 
         # getting the list of blocks to plot
         allblocksnames_list = self.get_blocknames(printing='off')

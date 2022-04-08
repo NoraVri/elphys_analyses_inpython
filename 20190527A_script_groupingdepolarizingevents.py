@@ -73,6 +73,7 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', c
 # %% summary plots - neat spontaneous events only:
 nbins = 100  #
 neat_events = singleneuron_data.depolarizing_events.neat_event
+# %%
 # fast-events
 singleneuron_data.plot_depolevents((fastevents & neat_events),
                                    colorby_measure='baselinev',
@@ -759,7 +760,7 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 #                                      segments_overlayed=False)
 # this neuron's fast-events are very infrequent at first, becoming more frequent in the first 5 min. or so of recording
 # and then decreasing in frequency again after about an hour of recording (neuron also stops firing APs at this point).
-# Up to and uncluding gapFree_0005 recording is very nice and stable (slight decrease in AP amp, goes to +50mV initially
+# Up to and including gapFree_0005 recording is very nice and stable (slight decrease in AP amp, goes to +50mV initially
 # and to +40mV by the end of gapFree_0005). After that there are some drift-events, so I'll stick to the time before that.
 
 # probably_neatevents = (des_df.file_origin.str.match(pat=('gapFree|light_0')))
@@ -941,4 +942,56 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 #                                                       spikelets=probably_spikelets,
 #                                                       # aps=aps,
 #                                                       plt_title='all spikelets and fast-events')
+# %% plots for publication figures -- MSdraft version3 (APs first), figure 1
+# selecting ~5min. of recording to show events from, so as not to have too many traces in the plot
+samplingrate = float(singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate)
+selection_startidx = samplingrate * 350
+selection_endidx = samplingrate * 650
+selected_events = ((des_df.file_origin == 'gapFree_0004.abf')
+                   & (des_df.peakv_idx > selection_startidx)
+                   & (des_df.peakv_idx < selection_endidx)
+                   )
+aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents((aps & selected_events
+                                    ),
+                                   colorby_measure='baselinev',
+                                   # timealignto_measure='rt20_start_idx',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   prealignpoint_window_inms=4,
+                                   plotwindow_inms=12,
+                                   )
+
+fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
+    (fastevents & selected_events & (des_df.amplitude > 3)
+                                    ),
+                                   colorby_measure='baselinev',
+                                   # timealignto_measure='rt20_start_idx',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   prealignpoint_window_inms=4,
+                                   plotwindow_inms=12,
+                                   )
+
+# saving the figures, then re-scaling axes:
+aps_axis.set_xlim([0, 6])
+aps_axis.set_ylim([-1, 12])
+aps_dvdt_axis.set_ylim([-0.15, 0.8])
+aps_dvdt_axis.set_xlim([-1, 12])
+
+fastevents_axis.set_xlim([0, 6])
+fastevents_axis.set_ylim([-1, 12])
+fastevents_dvdt_axis.set_ylim([-0.15, 0.8])
+fastevents_dvdt_axis.set_xlim([-1, 12])
+
 # %%
+# plotting light-evoked activity: first 10 traces of the nicest-looking file (and leaving out traces where fast response starts too late to see in zoomed-in view)
+figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',
+                                                skip_vtraces_idcs=[2, 4, 8,
+                                                                   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
+# save figure, then re-scaling axes:
+# axes[0].set_xlim([5, 11])
+# axes[0].set_ylim([-1, 12])
+# axes[1].set_ylim([-0.15, 0.8])
+# axes[1].set_xlim([-1, 12])
+
+

@@ -152,3 +152,14 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', c
 # adding the neatevents-series to the depolarizing_events-df:
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
 # singleneuron_data.write_results()
+
+# %% making manuscript figures
+
+aps_axis, aps_dvdtaxis = singleneuron_data.plot_depolevents(((aps | fastevents) & spont_events),
+                                   colorby_measure='baselinev',
+                                   # color_lims=[-80, -35],
+                                   prealignpoint_window_inms=7,
+                                   plotwindow_inms=22)
+# aps_axis.set_ylim([-5, 102])
+# aps_dvdtaxis.set_xlim([-5, 102])
+

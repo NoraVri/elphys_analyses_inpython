@@ -24,7 +24,7 @@ unlabeled_spontevents = (spont_events & unlabeled_events)
 # two files at different light intensities
 # 30%
 singleneuron_data.plot_rawdatatraces_ttlaligned('0000', plt_title='light intensity = 30%',
-                                                # color_lims=[-80, -45],
+                                                color_lims=[-80, -35],
                                                 colorby_measure='baselinev',
                                                 # color_lims=[-700, 0],
                                                 prettl_t_inms=1,
@@ -34,7 +34,7 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('0000', plt_title='light intensi
                                                 )
 # 3% - except in sweep2 where 2%=no light on at all
 singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt_title='light intensity = 3%',
-                                                # color_lims=[-80, -45],
+                                                color_lims=[-80, -35],
                                                 colorby_measure='baselinev',
                                                 # color_lims=[-700, 0],
                                                 prettl_t_inms=1,
@@ -87,17 +87,21 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('01', skip_vtraces_idcs=[1], plt
 # they all got picked up nicely by the algorithm; the last one (occurring during light protocol) should be excluded
 # though, as it occurs due to the neuron severely depolarizing and then dying.
 spont_aps = (aps & spont_events & ~(des_df.file_origin == 'light_0001.abf'))
-# singleneuron_data.plot_depolevents((aps & spont_events & ~(des_df.file_origin == 'light_0001.abf')),
-#                                    colorby_measure='baselinev',
-#                                    prealignpoint_window_inms=7,
-#                                    plotwindow_inms=22)
-
+aps_axis, aps_dvdtaxis = singleneuron_data.plot_depolevents(((aps | fastevents) & spont_events & ~(des_df.file_origin == 'light_0001.abf')),
+                                   colorby_measure='baselinev',
+                                   color_lims=[-80, -35],
+                                   prealignpoint_window_inms=7,
+                                   plotwindow_inms=22)
+aps_axis.set_ylim([-5, 102])
+aps_dvdtaxis.set_xlim([-5, 102])
 # finding the right depolarizing events to go along with the APs:
-# singleneuron_data.plot_depolevents(fastevents,
+# fastevents_axis, fastevents_dvdtaxis = singleneuron_data.plot_depolevents(fastevents,
 #                                    colorby_measure='baselinev',
+#                                    color_lims=[-80, -35],
 #                                    prealignpoint_window_inms=7,
 #                                    plotwindow_inms=22
 #                                    )
+# %%
 # that's not so neat; let's try and take only fastevents immediately preceding or following APs
 fastevents_idcs = []
 for idx in des_df[(aps & (des_df.file_origin == 'gapFree_0000.abf'))].index:

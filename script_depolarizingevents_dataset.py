@@ -288,3 +288,13 @@ frequent_fastevents_neurons = [
 frequent_fastevents_neurons_df = recordings_metadata.loc[
                                     recordings_metadata.name.isin(frequent_fastevents_neurons)]
 
+# %%
+relevantneuronrecordings_names = RBP_mice_neuronrecordings_names[-2:]
+
+for neuron in relevantneuronrecordings_names:
+    print('importing ' + neuron)
+    neuron_data = SingleNeuron(neuron)
+    neuron_data.plot_rawdatatraces_ttlaligned(newplot_per_ttlduration=True)
+
+
+

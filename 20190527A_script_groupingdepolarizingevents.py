@@ -72,7 +72,7 @@ singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', c
                                                       fast_events=fastevents)
 # %% summary plots - neat spontaneous events only:
 nbins = 100  #
-neat_events = singleneuron_data.depolarizing_events.neat_event
+neat_events = singleneuron_data.depolarizing_events.neat_event & (des_df.amplitude > 3)
 # fast-events
 singleneuron_data.plot_depolevents((fastevents & neat_events),
                                    colorby_measure='baselinev',

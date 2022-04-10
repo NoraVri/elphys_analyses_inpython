@@ -817,7 +817,7 @@ def descend_trace_until(tracesnippet, stop_value):
 
 # function for calculating measures related to ttl-evoked activity:
 # return a dictionary with information related to TTL-evoked activity.
-def get_ttlresponse_measures(block, ttlhigh_value=1):
+def get_ttlresponse_measures(block, ttlhigh_value=1, response_window_inms=20):
     """
     This function takes as input a single block; it checks whether the block has a ttl-recording,
     and if so it will determine where ttl is high, and add start_idx, end_idx and duration into a dictionary.
@@ -842,7 +842,7 @@ def get_ttlresponse_measures(block, ttlhigh_value=1):
                     # getting baselinev: mean v in the ms before ttl on
                     baselinev = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
                     # getting response max amp: max v (until ttloff+20ms) - baselinev
-                    maxv = np.max(voltage_recording[ttlon_idx:(ttlon_idx + (20*ms_in_samples))])
+                    maxv = np.max(voltage_recording[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
                     response_maxamp = maxv - baselinev
                     # getting applied current: mean, and max-min in [ms before ttl on : ttl off]
                     applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])

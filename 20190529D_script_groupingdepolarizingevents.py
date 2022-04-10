@@ -29,12 +29,13 @@ fast_events_df = des_df[fast_events]
 fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=15)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
-singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-                                                      fast_events=fast_events)
+singleneuron_data.plot_depolevents(aps, colorby_measure='baselinev', do_baselining=True)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fast_events)
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fast_events)
+# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
+#                                                       fast_events=fast_events)
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -138,4 +139,4 @@ singleneuron_data.plot_depolevents((aps & ~spont_events),
                                    prealignpoint_window_inms=30,
                                    plotwindow_inms = 100,
                                    plt_title='light-evoked APs')
-singleneuron_data.plot_rawdatablocks(events_to_mark=(aps & spont_events))
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(aps & spont_events))

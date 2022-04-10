@@ -1020,6 +1020,9 @@ class SingleNeuron:
                                                         events_group, **kwargs)
 
     def get_ttlonmeasures_fromrawdata(self, **kwargs):
+        # kwargs:
+        # ttlhigh_value=1; sets the binary cutoff value for measuring ttl low/high
+        # response_window_inms=20; time window since ttl on in which response max amp is calculated
         all_ttlonmeasures_dictionary = snafs.make_ttlonmeasures_dictionary()
         for block in self.blocks:
             ttlon_measures_dictionary = snafs.get_ttlresponse_measures(block, **kwargs)

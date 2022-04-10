@@ -46,5 +46,17 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light',
 # %% extracting depolarizing events
 # notes:
 # Using default parameter settings for extracting depolarizing events:
-singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=20)
-singleneuron_data.write_results()
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=20)
+# singleneuron_data.write_results()
+# %% seeing spont.APs
+des_df = singleneuron_data.depolarizing_events
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  #
+
+singleneuron_data.plot_depolevents((aps & spont_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' spont aps'
+                                   )

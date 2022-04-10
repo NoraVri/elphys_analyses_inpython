@@ -58,8 +58,7 @@ IOslices_neuronrecordings = recordings_metadata[recordings_metadata.date.isin(IO
 IOslices_neuronrecordings_names = IOslices_neuronrecordings.name.dropna()
 smithlabrecordings_names = IOslices_neuronrecordings_names.loc[~IOslices_neuronrecordings_names.str.startswith('2016')]
 
-# %%
-# 2. selecting only neuron recordings where manipulations were actually applied, and that were recorded
+# %% selecting only neuron recordings where manipulations were actually applied, and that were recorded
 # for at least 10min/30min (in case of blockers applied, this requires that the raw data has been annotated appropriately;
 # in case of light-evoked excitation we can rely on 'light' appearing in the block name).
 relevantneuronrecordings_names = smithlabrecordings_names

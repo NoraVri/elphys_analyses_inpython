@@ -943,10 +943,10 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 #                                                       # aps=aps,
 #                                                       plt_title='all spikelets and fast-events')
 # %% plots for publication figures -- MSdraft version3 (APs first), figure 1
-# selecting ~5min. of recording to show events from, so as not to have too many traces in the plot
+# selecting ~15min. of recording to show events from, so as not to have too many traces in the plot
 samplingrate = float(singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate)
-selection_startidx = samplingrate * 350
-selection_endidx = samplingrate * 650
+selection_startidx = samplingrate * 70
+selection_endidx = samplingrate * 970
 selected_events = ((des_df.file_origin == 'gapFree_0004.abf')
                    & (des_df.peakv_idx > selection_startidx)
                    & (des_df.peakv_idx < selection_endidx)
@@ -973,16 +973,19 @@ fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
                                    )
 
 # saving the figures, then re-scaling axes:
-aps_axis.set_xlim([0, 6])
-aps_axis.set_ylim([-1, 12])
-aps_dvdt_axis.set_ylim([-0.15, 0.8])
-aps_dvdt_axis.set_xlim([-1, 12])
+# aps_axis.set_xlim([0, 6])
+# aps_axis.set_ylim([-1, 12])
+# aps_dvdt_axis.set_ylim([-0.15, 0.8])
+# aps_dvdt_axis.set_xlim([-1, 12])
+#
+# fastevents_axis.set_xlim([0, 6])
+# fastevents_axis.set_ylim([-1, 12])
+# fastevents_dvdt_axis.set_ylim([-0.15, 0.8])
+# fastevents_dvdt_axis.set_xlim([-1, 12])
 
-fastevents_axis.set_xlim([0, 6])
-fastevents_axis.set_ylim([-1, 12])
-fastevents_dvdt_axis.set_ylim([-0.15, 0.8])
-fastevents_dvdt_axis.set_xlim([-1, 12])
-
+singleneuron_data.plot_depoleventsgroups_overlayed((fastevents & selected_events & (des_df.amplitude > 3)), (aps & selected_events),
+                                                   group_labels=['fastevents', 'aps'],
+                                                   plot_dvdt=True)
 # %%
 # plotting light-evoked activity: first 10 traces of the nicest-looking file (and leaving out traces where fast response starts too late to see in zoomed-in view)
 figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',

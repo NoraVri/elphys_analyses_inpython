@@ -182,8 +182,22 @@ fastevents_dvdt_axis.set_xlim([-1, 15])
 # there are different TTL durations, however, only with the longest one does the recording also cover the
 # full dynamic range of the neuron.
 
-figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0002',
-                                                skip_vtraces_idcs=[9, 10, 11, 12, 13,])
+figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001',
+                                                               skip_vtraces_idcs=[2, 3, 4, 5, 7,
+                                                                                  8, 9, 10,
+                                                                                  12, 13, 14,
+                                                                                  17, 18, 19,
+                                                                                  21, 22, 23, 24, 25, 26,
+                                                                                  28, 29, 30, 31, 32, 33, 34, 35,
+                                                                                  38, 39, 40, 41, 42, 43, 44, 45, 46,
+                                                                                  48, 49, 50, 51,
+                                                                                  53, 54, 55, 56, 57, 58, 59,
+                                                                                  61, 62, 63, 64, 65, 66, 67, 68, 69,
+                                                                                  71, 72, 73, 74, 75, 76, 77, 78, 79,
+                                                                                  81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96
+                                                                                  ],
+                                                               do_baselining=False,
+                                                               colorby_measure='applied_current')
 # save figure, then re-scaling axes:
 axes[0].set_xlim([-0.5, 11.5])
 axes[0].set_ylim([-1, 15])
@@ -207,4 +221,8 @@ singleneuron_data.plot_depolevents((aps & spont_events),
                                    plotwindow_inms=15,
                                    plt_title=' spont aps'
                                    )
+# axes[0].set_xlim([-0.5, 11.5])
+# axes[0].set_ylim([-1, 15])
+# axes[1].set_ylim([-0.15, 1.15])
+# axes[1].set_xlim([-1, 15])
 

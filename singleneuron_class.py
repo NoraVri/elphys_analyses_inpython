@@ -69,30 +69,44 @@ class SingleNeuron:
         """
         this function saves all analysis results belonging to the singleneuron instance
         to a folder on path labeled 'myResults'.
+        It also updates the 'total_t_recorded'-column in the recordings_metadata table, based on the blocks that are on the singleneuron instance at the time of calling this function.
         !! There should be only one folder with a name starting with 'myResults' on the path !!
         Each results-table is stored in a separate .csv file, and the parameter values
         used to get them (as well as all other notes needed to exactly recreate the class instance
         stored in self.rawdata_readingnotes) are saved as a .json.
         """
+        # saving total time recorded to recordings_metadata:
+        recordings_metadata = pd.read_csv(self.path + '\\myData_recordings_metadata.csv')
+        self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        if self.recording_metadata.empty:
+            print('no metadata for the recording were found; table not updated.')
+        else:
+            time_recorded_ins = float(self.get_timespentrecording(unit='second'))
+            recordings_metadata.loc[recordings_metadata.name == self.name, 'total_t_recorded_in_s'] = time_recorded_ins
+            os.chdir(self.path)
+            recordings_metadata.to_csv('myData_recordings_metadata.csv')
+            print(self.name + ' total t recorded updated')
+
+
+        # saving to myResults folder
         results_folder = [folder for folder in os.listdir(self.path)
                           if folder.startswith('myResults')]
-
         if results_folder:
             results_path = self.path + '\\' + results_folder[0]
             os.chdir(results_path)
-
+            # saving raw data readingnotes:
             if len(self.rawdata_readingnotes) > 0:
                 with open(results_path + '\\' + self.name +
                           '_rawdata_readingnotes.json', 'w') as file:
                     file.write(json.dumps(self.rawdata_readingnotes))
-
+            # saving depolarizingevents table:
             if len(self.depolarizing_events) > 0:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
 
             print(self.name + ' results have been saved.')
 
         else:
-            print('no results folder found')
+            print('no results folder found; results not saved')
 
     # get all raw electrophysiology recordings associated with singleneuron
     def get_singleneuron_rawdata(self):
@@ -100,7 +114,8 @@ class SingleNeuron:
         raw data file(s) recorded from singleneuron.
         Once the right path is found, it calls on the relevant files_reader (defined further below)
         to import the raw data in my standardized format using the Python/Neo framework.
-        This function also imports any notes found for singleneuron and attaches these to the class instance.
+        This function also imports any metadata found for singleneuron (in experiments_ and recordings_metadata tables)
+        and attaches these to the class instance.
 
         This function currently works for:
         - abf-files (one folder per singleneuron(/pair))
@@ -387,7 +402,8 @@ class SingleNeuron:
             return blocks_list
 
     # get the total length (in s) of recordings for the singleneuron, optinally for a subset of blocks
-    def get_timespentrecording(self, *block_identifiers, make_baselinev_hist=False, axis=None):
+    def get_timespentrecording(self, *block_identifiers, unit='minute',
+                               make_baselinev_hist=False, axis=None):
         blocknames_list = self.get_blocknames(printing='off')
         time_count = 0 * pq.s
         # if a histogram of baselinev is to be made and no axis is passed, create a figure:
@@ -418,7 +434,7 @@ class SingleNeuron:
         if make_baselinev_hist:
             nbins = int((np.max(baselinevs_array) - np.min(baselinevs_array)) * 10)
             ax.hist(baselinevs_array, bins=nbins)
-        return time_count.rescale('minute')
+        return time_count.rescale(unit)
 
     # plotting raw data blocks, optionally with (a subset of) depolarizing events marked
     def plot_rawdatablocks(self, *block_identifiers, **kwargs):

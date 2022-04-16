@@ -75,47 +75,7 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplit
                                                       fast_events=fastevents)
 singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
                                                       fast_events=fastevents)
-# %% summary plots - neat events only:
-nbins = 100  #
-neat_events = singleneuron_data.depolarizing_events.neat_event
-# fast-events
-singleneuron_data.plot_depolevents((fastevents & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat fast-events'
-                                   )
-des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                        'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                        bins=nbins)
-plt.suptitle('fast-events, neat ones only')
 
-# compound events
-singleneuron_data.plot_depolevents((compound_events & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat compound events'
-                                   )
-des_df[(compound_events & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                             bins=nbins)
-plt.suptitle('compound events, neat ones only')
-
-# aps
-singleneuron_data.plot_depolevents((aps & neat_events),
-                                   colorby_measure='baselinev',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plotwindow_inms=15,
-                                   plt_title=' neat aps'
-                                   )
-des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
-                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
-                                             bins=nbins)
-plt.suptitle('aps, neat ones only')
 
 # %% plots: fast-events normalized and averaged
 
@@ -245,4 +205,10 @@ neatevents.name = 'n_neat_fastevents'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
 # singleneuron_data.write_results()
 # %% plots and analyses: seeing APs and labeling fast-event triggered ones
-
+singleneuron_data.plot_depolevents((aps & spont_events),
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )

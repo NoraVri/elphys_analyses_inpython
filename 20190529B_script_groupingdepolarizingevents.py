@@ -21,7 +21,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_ttlduration=True)
 # reducing light duration decreases P(ap triggered), as does hyperpolarizing;
 # but the initial response is always ~20mV.
-# neuron has no spont. fast-events recorded.
+# neuron has no spont. fast-events or APs recorded.
 
 # %%
 blocknames_list = singleneuron_data.get_blocknames(printing='off')

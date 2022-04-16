@@ -5,8 +5,7 @@ import quantities as pq
 import pandas as pd
 
 # In this script: analysis of APs as triggered from fast-events.
-# Dataset: neurons recorded on days with optogenetic activation of inputs to IO;
-# starting from neurons that have both spontaneous and evoked APs
+# Dataset: neurons recorded on days with optogenetic activation of inputs to IO.
 
 # metadata imports
 path="D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
@@ -27,6 +26,11 @@ lightevokedexcitations_experiments_dates = experimentdays_metadata[
 lightevokedexcitations_experimentdays_recordings = recordings_metadata[
     recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)]
 lightevokedneuronrecordings_names = lightevokedexcitations_experimentdays_recordings.name.dropna()
+
+# analyses step0: go to script_rawdata_importing and go over raw data for each neuron in the dataset.
+
+
+
 
 # %% making lists:
 # - neurons with light-evoked activity;

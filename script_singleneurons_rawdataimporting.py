@@ -718,21 +718,27 @@ cell20190527A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
                                                  trace_start_t=21.5)
 cell20190527A.write_results()
 
-# %% no light-evoked activity recorded
-# cell20190527B = SingleNeuron('20190527B')
-# just a single long trace of spont.activity: some depolarizing events and spikes, no oscillations.
-# cell20190527B.rawdata_remove_nonrecordingsection('gapFree_0001.abf',
-#                                                  trace_start_t=20)
-# cell20190527B.rawdata_remove_nonrecordingblock('light_wholeField_0000.abf')
-# cell20190527B.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
-# cell20190527B.write_results()
 # %%
-# cell20190527C = SingleNeuron('20190527C')
+cell20190527B = SingleNeuron('20190527B')
+cell20190527B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# just a single long trace of spont.activity: some depolarizing events and spikes, no oscillations.
+# raw data cleanup:
+# removing seal formation:
+cell20190527B.rawdata_remove_nonrecordingsection('gapFree_0001.abf',
+                                                 trace_start_t=20)
+# removing bad traces (baselinev >-30mV throughout, even with -DC)
+cell20190527B.rawdata_remove_nonrecordingblock('light_wholeField_0000.abf')
+cell20190527B.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20190527B.write_results()
+# %%
+cell20190527C = SingleNeuron('20190527C')
 # spont. activity (with fast-events) and light pulses
 # in the spont. activity there's depolarizing events of ~7mV amp that seem to have a bit of a 'shoulder'
 # tuning pulses can drive the voltage to +50, yet no AP is evoked ever
 # activating inputs often evokes a giant (25 mV) fast-event, and in the seconds after that there's
 # some oscillations and tons of spikelets (otherwise nothing much of oscillations to be seen).
+# raw data cleanup:
+# nothing to remove; seal formation and cell death not recorded.
 # %%
 cell20190529A1 = SingleNeuron('20190529A1')
 cell20190529A1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
@@ -783,7 +789,7 @@ cell20190529C = SingleNeuron('20190529C')
 # removing seal formation:
 cell20190529C.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
                                                  trace_start_t=28)
-# removing part of a recording where the cell is dying/dead:
+# removing part of a recording where the cell is really quite dead (Vrest held with -DC before, but now really depolarizing):
 cell20190529C.rawdata_remove_nonrecordingsection('gapFree_0001.abf',
                                                  trace_end_t=101.5)
 cell20190529C.write_results()
@@ -793,7 +799,7 @@ cell20190529D = SingleNeuron('20190529D')
 # nice-looking recording, spont.activity and lots of light pulses
 # not oscillating, just constantly being bombarded with depolarizations
 # raw data cleanup:
-# removing part of a recording where the cell is dying/dead:
+# removing part of a recording where the cell is dying/dead (neuron depolarizes suddenly):
 cell20190529D.rawdata_remove_nonrecordingsection('gapFree_0001.abf',
                                                  trace_end_t=395)
 cell20190529D.write_results()
@@ -1371,18 +1377,21 @@ cell20200310G.write_results()
 
 
 
-# %% experiment: ChR activation in Thy1 mouse
 # %%
-# cell20200630A = SingleNeuron('20200630A')
+cell20200630A = SingleNeuron('20200630A')
+cell20200630A.plot_rawdatablocks(segments_overlayed=False, time_axis_unit='s')
 # some spont.activity and light pulses, then cell dies
 # there's some real bad noise events in there, including periods with bad 50Hz noise
 # the evoked events look more like giant synapses, sometimes with a spike without shoulder riding them
-# cell20200630A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
-#                                                  trace_start_t=14)
-# cell20200630A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
-# for i in reversed(range(7, 11)):
-#     cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', segment_idx=i)
-# cell20200630A.write_results()
+# raw data cleanup:
+# removing seal formation:
+cell20200630A.rawdata_remove_nonrecordingsection('gapFree_0000.abf',
+                                                 trace_start_t=14)
+# removing block where baselinev > -20mV:
+cell20200630A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# removing segments where neuron can be seen to depolarize suddenly and not respond to -DC:
+cell20200630A.rawdata_remove_nonrecordingsection('light_0001.abf', remove_segments=[7, 8, 9, 10])
+cell20200630A.write_results()
 # %%
 cell20200630B1 = SingleNeuron('20200630B1')
 # some spont.activity and light pulses; cell stops responding in light_0006 (probably pretty dead but still has a Vrest)

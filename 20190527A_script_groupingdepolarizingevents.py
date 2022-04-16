@@ -971,6 +971,10 @@ fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
                                    prealignpoint_window_inms=4,
                                    plotwindow_inms=12,
                                    )
+# averaged per amplitude group:
+# singleneuron_data.depolarizing_events[fastevents & selected_events].amplitude.plot.hist(bins=40)
+# groups are: 1.5 - 2.5mV; 2.5 - 3.5mV; 3.5 - 5mV; 5 - 7.5mV; 8 - 10mV
+
 
 # saving the figures, then re-scaling axes:
 # aps_axis.set_xlim([0, 6])
@@ -983,9 +987,9 @@ fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
 # fastevents_dvdt_axis.set_ylim([-0.15, 0.8])
 # fastevents_dvdt_axis.set_xlim([-1, 12])
 
-singleneuron_data.plot_depoleventsgroups_overlayed((fastevents & selected_events & (des_df.amplitude > 3)), (aps & selected_events),
-                                                   group_labels=['fastevents', 'aps'],
-                                                   plot_dvdt=True)
+# singleneuron_data.plot_depoleventsgroups_overlayed((fastevents & selected_events & (des_df.amplitude > 3)), (aps & selected_events),
+#                                                    group_labels=['fastevents', 'aps'],
+#                                                    plot_dvdt=True)
 # %%
 # plotting light-evoked activity: first 10 traces of the nicest-looking file (and leaving out traces where fast response starts too late to see in zoomed-in view)
 figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',

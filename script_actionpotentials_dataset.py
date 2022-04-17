@@ -23,13 +23,24 @@ Thy1_mice_condition = experimentdays_metadata.genetics.isin(Thy1_mice)
 
 lightevokedexcitations_experiments_dates = experimentdays_metadata[
     (injected_mice_condition | RBP_mice_condition | Thy1_mice_condition)].date
-lightevokedexcitations_experimentdays_recordings = recordings_metadata[
-    recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)]
-lightevokedneuronrecordings_names = lightevokedexcitations_experimentdays_recordings.name.dropna()
+lightevokedexcitations_experimentdays_IOneuronrecordings = recordings_metadata[
+    recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)
+    & (recordings_metadata.anatomical_location == 'inferior_olive')
+    ]
 
-# analyses step0: go to script_rawdata_importing and go over raw data for each neuron in the dataset.
+
+# IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_IOneuronrecordings.name.dropna()
+
+# analyses step0: go to script_rawdata_importing and go over raw data for each neuron in the dataset (N=99).
+# step0.1: get list of neurons again, but without those whose total_t_recorded_in_s = 0 (neuron data excluded)
+IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_IOneuronrecordings[
+    (lightevokedexcitations_experimentdays_IOneuronrecordings.total_t_recorded_in_s > 0)].name.dropna()
+# Total number of neurons in the dataset: N = 77.
 
 
+
+
+# particularly nice neurons to look into: 20210124A,
 
 
 # %% making lists:

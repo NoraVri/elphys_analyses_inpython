@@ -84,7 +84,7 @@ class SingleNeuron:
             time_recorded_ins = float(self.get_timespentrecording(unit='second'))
             recordings_metadata.loc[recordings_metadata.name == self.name, 'total_t_recorded_in_s'] = time_recorded_ins
             os.chdir(self.path)
-            recordings_metadata.to_csv('myData_recordings_metadata.csv')
+            recordings_metadata.to_csv('myData_recordings_metadata.csv', index=False)
             print(self.name + ' total t recorded updated')
 
 
@@ -101,7 +101,7 @@ class SingleNeuron:
                     file.write(json.dumps(self.rawdata_readingnotes))
             # saving depolarizingevents table:
             if len(self.depolarizing_events) > 0:
-                self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
+                self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv', index=False)
 
             print(self.name + ' results have been saved.')
 

@@ -27,12 +27,10 @@ lightevokedexcitations_experimentdays_IOneuronrecordings = recordings_metadata[
     recordings_metadata.date.isin(lightevokedexcitations_experiments_dates)
     & (recordings_metadata.anatomical_location == 'inferior_olive')
     ]
-
-
 # IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_IOneuronrecordings.name.dropna()
 
 # analyses step0: go to script_rawdata_importing and go over raw data for each neuron in the dataset (N=99).
-# step0.1: get list of neurons again, but without those whose total_t_recorded_in_s = 0 (neuron data excluded)
+# analyses step0.1: get list of neurons again, but without those whose total_t_recorded_in_s = 0 (neuron data excluded)
 IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_IOneuronrecordings[
     (lightevokedexcitations_experimentdays_IOneuronrecordings.total_t_recorded_in_s > 0)].name.dropna()
 # Total number of neurons in the dataset: N = 77.

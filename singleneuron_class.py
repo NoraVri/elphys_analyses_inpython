@@ -101,7 +101,7 @@ class SingleNeuron:
                     file.write(json.dumps(self.rawdata_readingnotes))
             # saving depolarizingevents table:
             if len(self.depolarizing_events) > 0:
-                self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv', index=False)
+                self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
 
             print(self.name + ' results have been saved.')
 

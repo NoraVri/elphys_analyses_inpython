@@ -104,6 +104,43 @@ spontandevokedaps_neurons_list = list(set(has_spontAPsextracted_list) & set(has_
 # ['20190527A', '20190529A1', '20190529D', '20200630C', '20200708D', '20200708F', '20201125D', '20210105D', '20210113G', '20210113H', '20210413B', '20210426B']
 # none are from MDJ-labeled experiments (some are from midbrain-labeled experiments)
 
+# resulting lists:
+# evoked APs AND spont.APs extracted (N=32):
+# evoked_and_spont_APs = list(set(evokedAPs_singleneurons) & set(spontAPsextracted_singleneurons))
+# evoked_and_spont_APs.sort()
+evoked_and_spont_APs = ['20190527A',  # our all-time favorite example; spont.AP pre-potentials are 6-10mV, and there are also many fast-events in that range. Light-evoked includes APs with pre-potential and fast-event alone.
+                        '20190527C',  # light doesn't evoke APs so much as giant (up to 50mV) fast events; no spont. APs recorded (did see some small fast-events). Not a great recording, and mostly not analyzed yet.
+                        '20190529A1', # amplitude grouping not amazingly clear but definitely there, and evoked and spont. look quite identical; very nice example all in all
+                        '20190529B',  #*could be an example of evoked APs starting as AIS spikes: pre-potential is always 20mV (and AP very narrow for IO neuron). No spont. APs or fastevents recorded.
+                        '20190529D',  # low freq spont events and APs; spont.APs come from an 8mV fast-event, evoked ones from a 20mV one
+                        '20200630B2',
+                        '20200630C',  # response to light always seems to have fast component (and often leads to AP); does have spont.fastevents (in amplitude groups) but spont.APs don't have a clear pre-potential (though it's probably there)
+                        '20200630D',
+                        '20200701A',  # of 4 spont.APs 3 have the same pre-potential amplitude (grouping very clear); *needs more analysis to find fast-events
+                        '20200706E',  # most APs seem to have compound pre-potential; *needs more analysis to find fast-events
+                        '20200707E',
+                        '20200708B',  # just two spont.APs, one clearly from pre-potential; *needs more analysis to find fastevents
+                        '20200708C',  # just one spont.AP, not from pre-potential (high baselinev)
+                        '20200708D',  # all spont.APs start from largest-amp fast-event except for one (which starts from a smaller-amp one); lots of spont.fastevents (amplitude grouping not very clear). Evoked is practically always AP, with decreased light fast-event that goes away with hyperpolarization but lots of compoundness going on.
+                        '20200708F',  # not a very nice example, lots of compoundness going on
+                        '20201125B',  # loads of spont.APs, but looks like badly deteriorating recoring; *needs more analysis to find fastevents
+                        '20201125C',  # just one spont.AP, not from pre-potential (high baselinev)
+                        '20201125D',  #*has some spont.APs from pre-potential, largest fast-event matches amplitude; very clear difference with APs evoked from synaptic potential
+                        '20210105B',  # just one spont.AP, possibly from pre-potential; *needs more analysis for fast-events
+                        '20210105D',  # terrible baselinev for the two spont.APs (>-20)
+                        '20210110A',  #*APs all seem to start from compound pre-potential; *needs more analysis
+                        '20210110D',  # only two spont.APs, one clearly from pre-potential; *needs more analysis
+                        '20210110E',  # four spont.APs none from pre-potential (baselinev ~-24mV)
+                        '20210110F',
+                        '20210113D',  # spont.APs seem to have mostly compound pre-potentials; *needs more analysis
+                        '20210113G',  # possibly all spont.APs from pre-potential; looks like a badly deteriorating recording though; has spont.events to match
+                        '20210113H',  # practically all spont.APs from the largest-amp fastevent (~10mV)
+                        '20210123B',  # bad baselinev, total mess
+                        '20210124B', '20210124C', '20210124D',
+                        '20210413B',  # noisy recording with bad baselinev
+                        '20210426B'   # most APs from pre-potential, no spont.fast events (pretty bad Vrest throughout recording)
+                        ]
+
 
 # %% split out by where the optogenetically activated innervation is coming from
 # %%

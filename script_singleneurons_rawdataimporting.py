@@ -747,6 +747,7 @@ cell20190527C = SingleNeuron('20190527C')
 # some oscillations and tons of spikelets (otherwise nothing much of oscillations to be seen).
 # raw data cleanup:
 # nothing to remove; seal formation and cell death not recorded.
+cell20190527C.write_results()
 # %%
 cell20190529A1 = SingleNeuron('20190529A1')
 cell20190529A1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)

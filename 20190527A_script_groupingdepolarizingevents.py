@@ -112,34 +112,8 @@ des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
                                                              'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
                                              bins=nbins)
 plt.suptitle('aps, neat ones only')
-# %% plots: subtracting single events from compound ones
-events_4mVgroup = (neat_events & fastevents & (des_df.amplitude > 3.8) & (des_df.amplitude < 4.8))
-compoundevents_group = (compound_events & (des_df.amplitude > 8) & (des_df.amplitude < 9.25))
-singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4mVgroup,
-                                                  group_labels=['compound', 'single'],
-                                                  subtract_traces=True,
-                                                  # delta_t=0.5
-                                                  )
 
-# %% plots: light-evoked activity
-# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
 
-# blocks that are identical in light intensity & spot size:
-# 2-3% - _1 and _5
-# 5% - _0
-# 10% - _2 and _3
-singleneuron_data.plot_rawdatatraces_ttlaligned('light_0002', 'light_0003')
-singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000')
-singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001', 'light_0005')
-# %%
-#wholefield:
-# variable - _0 - _12
-# 10% - _15 - 21
-blocknames_list = singleneuron_data.get_blocknames(printing='off')
-blocknames = []
-for i in range(15,21):
-    blocknames += [name for name in blocknames_list if str(i) in name]
-singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -180,7 +154,19 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 #                                     oscfilter_lpfreq=7,)
 # singleneuron_data.write_results()
 
-# %% plots and analyses: labeling depolarizing events categories
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_oncurrentpulsechange #aps_evokedbylight  #aps_spont
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+# all looking good.
+# %% plots and analyses: labeling subthreshold depolarizing events categories
 # des_df = singleneuron_data.depolarizing_events
 
 # 1. seeing light/puff-evoked things (mostly to be sure that they're not accidentally contaminating spont.events)
@@ -752,7 +738,7 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 # singleneuron_data.write_results()
 # there are some more also in the events not marked 'neat', but I can't seem to grab them easily by any parameter so
 # leaving them be for now.
-### -- this concludes finding fast-events for this neuron -- ###
+### -- this concludes finding and labeling fast-events for this neuron -- ###
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
@@ -770,7 +756,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
-
 
 
 # %% plots for publication figures --  figure 1 draft 3.2
@@ -942,6 +927,35 @@ singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'ligh
 #                                                       spikelets=probably_spikelets,
 #                                                       # aps=aps,
 #                                                       plt_title='all spikelets and fast-events')
+# %% plots: subtracting single events from compound ones
+# events_4mVgroup = (neat_events & fastevents & (des_df.amplitude > 3.8) & (des_df.amplitude < 4.8))
+# compoundevents_group = (compound_events & (des_df.amplitude > 8) & (des_df.amplitude < 9.25))
+# singleneuron_data.plot_depoleventsgroups_averages(compoundevents_group, events_4mVgroup,
+#                                                   group_labels=['compound', 'single'],
+#                                                   subtract_traces=True,
+#                                                   # delta_t=0.5
+#                                                   )
+
+# %% plots: light-evoked activity
+# singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
+
+# # blocks that are identical in light intensity & spot size:
+# # 2-3% - _1 and _5
+# # 5% - _0
+# # 10% - _2 and _3
+# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0002', 'light_0003')
+# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000')
+# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001', 'light_0005')
+#
+# #wholefield:
+# # variable - _0 - _12
+# # 10% - _15 - 21
+# blocknames_list = singleneuron_data.get_blocknames(printing='off')
+# blocknames = []
+# for i in range(15,21):
+#     blocknames += [name for name in blocknames_list if str(i) in name]
+# singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
+
 # %% plots for publication figures -- MSdraft version3 (APs first), figure 1
 # selecting ~15min. of recording to show events from, so as not to have too many traces in the plot
 samplingrate = float(singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate)

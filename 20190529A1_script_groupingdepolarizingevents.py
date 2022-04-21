@@ -40,46 +40,7 @@ singleneuron_data.plot_depolevents(spont_events & (fastevents | aps) & (des_df.b
                                    plotwindow_inms=30,
                                    plt_title='spont. fast-events and APs')
 
-# %% summary plots - old:
-des_df = singleneuron_data.depolarizing_events
-fastevents = des_df.event_label == 'fastevent'
-other_events = des_df.event_label == 'other_event'  # just one of those:
-aps = des_df.event_label == 'actionpotential'
 
-# fast-events, amp and rise-time as histograms and scatters
-plt.figure(), des_df.loc[fastevents,'amplitude'].plot.hist(bins=25)
-plt.title('all spont. events >2mV, amplitude')
-plt.figure(), des_df.loc[fastevents,'rise_time_20_80'].plot.hist(bins=25)
-plt.title('all spont. events >2mV, rise-time')
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      fast_events=fastevents,
-                                                      )
-# fast-events, baselined /baselined and normalized
-singleneuron_data.plot_depolevents(fastevents,
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   plt_title='fast-events')
-singleneuron_data.plot_depolevents(fastevents,
-                                   do_baselining=True,
-                                   do_normalizing=True,
-                                   colorby_measure='baselinev',
-                                   plt_title='fast-events')
-
-# other interesting events (if any)
-singleneuron_data.plot_depolevents((aps & ~des_df.applied_ttlpulse),
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=30,
-                                   plotwindow_inms = 100,
-                                   plt_title='spontaneous APs')
-
-singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=30,
-                                   plotwindow_inms = 100,
-                                   plt_title='light-evoked APs')
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
@@ -90,8 +51,24 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 # using saved parameter settings to re-create depolarizing-events data table:
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_oncurrentpulsechange  #aps_evokedbylight  #aps_spont
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+# # the first ap_oncurrentpulsechange is in fact spont - it's sitting in the middle of a small -DC pulse. Re-labeling it appropriately:
+# spont_ap = (aps_oncurrentpulsechange & (des_df.file_origin == 'gapFree_0000.abf') & (des_df.peakv_idx < (20000 * (487.5 - 285))))
+# singleneuron_data.depolarizing_events.loc[spont_ap, 'event_label'] = 'actionpotential'
+# singleneuron_data.write_results()
+# # no other fixes to apply.
 
-# %% plots and analyses: seeing and labeling depolarizing events
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events categories
 # des_df = singleneuron_data.depolarizing_events
 # fastevents = des_df.event_label == 'fastevent'
 
@@ -234,7 +211,7 @@ singleneuron_data.plot_depolevents((aps & des_df.applied_ttlpulse),
 # spont.APs often seem to have a 'foot' made by a fast-event, will be interesting to look into.
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% selecting 5 minutes of best typical behavior and marking 'neat' events
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # For this neuron, the light files are the neatest (until the neuron suddenly depolarizes and dies) - there's exactly
 # 5 minutes of consecutive neat recording time in those files.
 # probably_neatevents = ((des_df.file_origin == 'light_0000.abf')

@@ -148,7 +148,6 @@ plt.suptitle('aps, neat ones only')
 #                                                   plotwindow_inms=20,
 #                                                   plt_title='baselinev > mV'
 #                                                   )
-# %% plots: subtracting single events from compound ones
 
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
@@ -172,7 +171,19 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 # singleneuron_data.write_results()
 
-# %% plots and analyses: seeing and labeling depolarizing events
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_oncurrentpulsechange #aps_evokedbylight  #aps_spont
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events categories
 # des_df = singleneuron_data.depolarizing_events
 # nbins = 100
 # Seeing that light/puff-evoked things all got labeled as such:

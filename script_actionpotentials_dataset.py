@@ -12,6 +12,7 @@ path="D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
 recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
 experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
 
+# getting all IO neuron recordings performed on days that optogenetically activatable inputs were in the slice:
 MDJ_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046',
                     'HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
 RBP_mice = ['RBP', 'RBP4-cre/Ai32']
@@ -38,7 +39,6 @@ IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_
 
 
 
-# particularly nice neurons to look into: 20210124A,
 
 
 # %% making lists:

@@ -13,7 +13,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 # notes summary:
 # This neuron is from before the datacollection used for the morphologies paper; in the latest picture Yoe took of it
 # it's very clear what's the axon and that it has at least one big complex spine there.
-
+# Unfortunately, it doesn't seem to have any spontaneously occurring fastevents (or APs, for that matter)
 
 # summary plots:
 des_df = singleneuron_data.depolarizing_events

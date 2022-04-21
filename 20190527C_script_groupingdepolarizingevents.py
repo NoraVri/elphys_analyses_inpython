@@ -11,7 +11,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# Not really a great recording: not a proper patch, cannot evoke APs at all (through Vrest is OK).
+# Not really a great recording: not a proper patch, cannot evoke APs at all (though Vrest is OK).
 # Doesn't really have any spontaneous fast-events - maybe two altogether.
 # Does seem to respond to light with fast-event occasionally.
 # %%

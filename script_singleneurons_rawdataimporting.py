@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
+# criteria for excluding data:
+# - bad baseline voltage (> -30mV without DC injection)
+# - bad AP amplitude (peakV < -10 mV)
+# - bad seal quality/bridge balance issues
+# Some neurons die quickly and suddenly, others can hold on for quite a while even though recording conditions
+# are not optimal; and there will always be some level of subjectivity to deciding whether recorded data should
+# be admitted for analyses. Therefore, any time recorded data is excluded, there should be a comment line
+# explaining why this was decided.
 # %%
 cell20160606B = SingleNeuron('20160606B')
 cell20160606B.plot_rawdatablocks(time_axis_unit='s')

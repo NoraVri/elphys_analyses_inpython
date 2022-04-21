@@ -31,8 +31,8 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000', '5', '8',
 #   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
 # exttracting with standard parameters, min_depolamp 1mV (from seeing the raw data there's a spikelet of ~1mV, and nothing smaller)
-singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=1)
-singleneuron_data.write_results()
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=1)
+# singleneuron_data.write_results()
 
 # %% plots and analyses: seeing and labeling depolarizing events
 # des_df = singleneuron_data.depolarizing_events

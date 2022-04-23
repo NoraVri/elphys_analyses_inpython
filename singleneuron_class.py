@@ -819,6 +819,7 @@ class SingleNeuron:
                                        )
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
+        return axis, dvdt_axis
 
     # plotting the event-detect trace that was used to find depolarizing events
     def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,

@@ -166,7 +166,7 @@ plt.suptitle('aps, neat ones only')
 #                                      events_to_mark=events,
 #                                      segments_overlayed=False)
 # all looking good.
-# %% plots and analyses: labeling subthreshold depolarizing events categories
+# %% plots and analyses: labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 
 # 1. seeing light/puff-evoked things (mostly to be sure that they're not accidentally contaminating spont.events)
@@ -757,6 +757,13 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
 
+# Having taken another very close look at neat events (doing publication figure plotting), it is clear that recording
+# conditions do change a bit after the first 5 minutes or so - the effect is particularly visible in AP amplitude,
+# which drops rather suddenly by ~7mV. So, I will exclude the first three recording files from neat_events for consistency.
+# probably_neatevents = (probably_neatevents & ~(des_df.file_origin == 'gapFree_0000.abf')
+#                        & ~(des_df.file_origin == 'light_0000.abf') & ~(des_df.file_origin == 'light_0001.abf'))
+# singleneuron_data.depolarizing_events.neat_event = probably_neatevents
+# singleneuron_data.write_results()
 
 # %% plots for publication figures --  figure 1 draft 3.2
 # !!note: smallest group may be a spikelet after all (~2mV amp)
@@ -956,35 +963,35 @@ plt.suptitle('aps, neat ones only')
 #     blocknames += [name for name in blocknames_list if str(i) in name]
 # singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
 
-# %% plots for publication figures -- MSdraft version3 (APs first), figure 1
+# %% plots for publication figures -- MSdraft version3 (APs first), figure 1 draft1
 # selecting ~15min. of recording to show events from, so as not to have too many traces in the plot
-samplingrate = float(singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate)
-selection_startidx = samplingrate * 70
-selection_endidx = samplingrate * 970
-selected_events = ((des_df.file_origin == 'gapFree_0004.abf')
-                   & (des_df.peakv_idx > selection_startidx)
-                   & (des_df.peakv_idx < selection_endidx)
-                   )
-aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents((aps & selected_events
-                                    ),
-                                   colorby_measure='baselinev',
-                                   # timealignto_measure='rt20_start_idx',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   prealignpoint_window_inms=4,
-                                   plotwindow_inms=12,
-                                   )
+# samplingrate = float(singleneuron_data.blocks[1].channel_indexes[0].analogsignals[0].sampling_rate)
+# selection_startidx = samplingrate * 70
+# selection_endidx = samplingrate * 970
+# selected_events = ((des_df.file_origin == 'gapFree_0004.abf')
+#                    & (des_df.peakv_idx > selection_startidx)
+#                    & (des_df.peakv_idx < selection_endidx)
+#                    )
+# aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents((aps & selected_events
+#                                     ),
+#                                    colorby_measure='baselinev',
+#                                    # timealignto_measure='rt20_start_idx',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    prealignpoint_window_inms=4,
+#                                    plotwindow_inms=12,
+#                                    )
 
-fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
-    (fastevents & selected_events & (des_df.amplitude > 3)
-                                    ),
-                                   colorby_measure='baselinev',
-                                   # timealignto_measure='rt20_start_idx',
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   prealignpoint_window_inms=4,
-                                   plotwindow_inms=12,
-                                   )
+# fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
+#     (fastevents & selected_events & (des_df.amplitude > 3)
+#                                     ),
+#                                    colorby_measure='baselinev',
+#                                    # timealignto_measure='rt20_start_idx',
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    prealignpoint_window_inms=4,
+#                                    plotwindow_inms=12,
+#                                    )
 # averaged per amplitude group:
 # singleneuron_data.depolarizing_events[fastevents & selected_events].amplitude.plot.hist(bins=40)
 # groups are: 1.5 - 2.5mV; 2.5 - 3.5mV; 3.5 - 5mV; 5 - 7.5mV; 8 - 10mV
@@ -1004,15 +1011,112 @@ fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(
 # singleneuron_data.plot_depoleventsgroups_overlayed((fastevents & selected_events & (des_df.amplitude > 3)), (aps & selected_events),
 #                                                    group_labels=['fastevents', 'aps'],
 #                                                    plot_dvdt=True)
-# %%
+
 # plotting light-evoked activity: first 10 traces of the nicest-looking file (and leaving out traces where fast response starts too late to see in zoomed-in view)
-figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',
-                                                skip_vtraces_idcs=[2, 4, 8,
-                                                                   10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
+# figure, axes = singleneuron_data.plot_rawdatatraces_ttlaligned('light_0003',
+#                                                 skip_vtraces_idcs=[2, 4, 8,
+#                                                                    10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
 # save figure, then re-scaling axes:
 # axes[0].set_xlim([5, 11])
 # axes[0].set_ylim([-1, 12])
 # axes[1].set_ylim([-0.15, 0.8])
 # axes[1].set_xlim([-1, 12])
+# %% plots for publication figures -- MSdraft version3 (APs first), figure 1 draft2 - spont.APs and fastevents
+# Let's use neat_events to select all events occurring during good, stable recording conditions.
+neat_events = des_df.neat_event
+# APs plots:
+aps_toplot = aps & spont_events & neat_events
+aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(aps_toplot,
+                                   colorby_measure='peakv_idx',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   prealignpoint_window_inms=6,
+                                   plotwindow_inms=13,
+                                   )
+# for inset: rescale axes
+aps_axis.set_xlim([2, 5.5])
+aps_axis.set_ylim([-1, 12])
+aps_dvdt_axis.set_ylim([-0.15, 0.8])
+aps_dvdt_axis.set_xlim([-1, 12])
+
+# fastevents plots:
+# all fastevents
+fastevents_toplot = fastevents & neat_events & (des_df.amplitude >= 3)
+fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(fastevents_toplot,
+                                                                           do_baselining=True,
+                                                                           # timealignto_measure='rt20_start_idx',
+                                                                           prealignpoint_window_inms=2,
+                                                                           plotwindow_inms=10)
+# set axes to be the same as the averages plot:
+fastevents_axis.set_xlim([0, 10])
+fastevents_axis.set_ylim([-0.2, 10])
+fastevents_dvdt_axis.set_xlim([-0.2, 10])
+fastevents_dvdt_axis.set_ylim([-0.2, 0.65])
+# averaged per amplitude group: 3.0 - 3.7mV; 3.7 - 5.2mV; 5.2 - 8mV; 8 - 10mV
+# des_df[fastevents_toplot].amplitude.plot.hist(bins=100)
+ampgroup1 = (des_df.amplitude > 3) & (des_df.amplitude < 3.7) & fastevents_toplot
+ampgroup2 = (des_df.amplitude > 3.7) & (des_df.amplitude < 5.2) & fastevents_toplot
+ampgroup3 = (des_df.amplitude > 5.2) & (des_df.amplitude < 8) & fastevents_toplot
+ampgroup4 = (des_df.amplitude > 8) & fastevents_toplot
+fastevents_avgd_axis, fastevents_avgd_dvdt_axis = singleneuron_data.plot_depoleventsgroups_averages(ampgroup1, ampgroup2, ampgroup3, ampgroup4,
+                                                  group_labels=['1', '2', '3', '4',],
+                                                  # timealignto_measure='rt20_start_idx',
+                                                  prealignpoint_window_inms=2,
+                                                  plotwindow_inms=10)
+# set axes to be the same as the all-events plot:
+# fastevents_avgd_axis.set_xlim([0, 10])
+# fastevents_avgd_axis.set_ylim([-0.2, 10])
+# fastevents_avgd_dvdt_axis.set_xlim([-0.2, 10])
+# fastevents_avgd_dvdt_axis.set_ylim([-0.2, 0.65])
+# set axes to be the same as the APs plot:
+fastevents_avgd_axis.set_xlim([0, 3.5])
+fastevents_avgd_axis.set_ylim([-1, 12])
+fastevents_avgd_dvdt_axis.set_ylim([-0.15, 0.8])
+fastevents_avgd_dvdt_axis.set_xlim([-1, 12])
+
+# again, but normalized:
+fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(fastevents_toplot,
+                                                                           do_baselining=True,
+                                                                           do_normalizing=True,
+                                                                           prealignpoint_window_inms=2,
+                                                                           plotwindow_inms=10)
+# set axes to be the same as the averages plot:
+fastevents_axis.set_xlim([0, 10])
+fastevents_axis.set_ylim([-0.2, 1.1])
+fastevents_dvdt_axis.set_xlim([-0.2, 1.1])
+fastevents_dvdt_axis.set_ylim([-0.025, 0.085])
+
+fastevents_avgd_axis, fastevents_avgd_dvdt_axis = singleneuron_data.plot_depoleventsgroups_averages(
+    ampgroup1, ampgroup2, ampgroup3, ampgroup4,
+    group_labels=['1', '2', '3', '4', ],
+    do_normalizing=True,
+    prealignpoint_window_inms=2,
+    plotwindow_inms=10)
+fastevents_avgd_axis.set_xlim([0, 10])
+fastevents_avgd_axis.set_ylim([-0.2, 1.1])
+fastevents_avgd_dvdt_axis.set_xlim([-0.2, 1.1])
+fastevents_avgd_dvdt_axis.set_ylim([-0.025, 0.085])
+
+# %% plots for publication figures -- MSdraft version3 (APs first), figure1 supplment1 draft1 - different modes of AP activation
+neat_events = des_df.neat_event
+# APs groups to plot:
+aps_spont = aps & spont_events & neat_events
+aps_lightevoked = aps & ~spont_events & neat_events
+aps_currentevoked = (des_df.event_label == 'actionpotential_on_currentpulsechange')
+aps_groups = [aps_spont, aps_lightevoked, aps_currentevoked]
+aps_grouplabels = ['spont', 'lightevoked', 'currentevoked']
+for group, label in zip(aps_groups, aps_grouplabels):
+    aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(group,
+                                       # colorby_measure='baselinev',
+                                       do_baselining=False,
+                                       # do_normalizing=True,
+                                       prealignpoint_window_inms=10,
+                                       plotwindow_inms=35,
+                                       plt_title=label,
+                                       )
+    aps_axis.set_xlim([0, 35])
+    aps_axis.set_ylim([-75, 50])
+    aps_dvdt_axis.set_xlim([-75, 50])
+    aps_dvdt_axis.set_ylim([-6, 12.5])
 
 

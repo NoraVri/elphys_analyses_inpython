@@ -183,7 +183,7 @@ plt.suptitle('aps, neat ones only')
 #                                      events_to_mark=events,
 #                                      segments_overlayed=False)
 
-# %% plots and analyses: seeing and labeling subthreshold depolarizing events categories
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 # nbins = 100
 # Seeing that light/puff-evoked things all got labeled as such:

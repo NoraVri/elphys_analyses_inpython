@@ -1096,7 +1096,22 @@ fastevents_avgd_axis.set_xlim([0, 10])
 fastevents_avgd_axis.set_ylim([-0.2, 1.1])
 fastevents_avgd_dvdt_axis.set_xlim([-0.2, 1.1])
 fastevents_avgd_dvdt_axis.set_ylim([-0.025, 0.085])
-
+# %%
+# light response
+# light_wholeField_ #19 & 20 have -DC to keep baselineV ~-75 (all other blocks at resting baselineV)
+# light_wholeField_ #0 - 7 APs don't seem to have the 'second kink' at ~3mV/ms - what's up with that? And with it coming back?
+# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0', 'light_wholeField_0019', '0020',
+#                                                 colorby_measure='response_maxamp',
+#                                                 color_lims=[2.5, 110])
+singleneuron_data.plot_rawdatatraces_ttlaligned('0011', '0012', '0013',
+                                                colorby_measure='response_maxamp',
+                                                color_lims=[2.5, 110])
+evokedevents_toplot = ~spont_events & ((des_df.file_origin.str.contains('011')
+                                        | des_df.file_origin.str.contains('012')
+                                        | des_df.file_origin.str.contains('013')))
+singleneuron_data.plot_depolevents(evokedevents_toplot,
+                                   colorby_measure='baselinev',
+                                   prealignpoint_window_inms=15)
 # %% plots for publication figures -- MSdraft version3 (APs first), figure1 supplment1 draft1 - different modes of AP activation
 neat_events = des_df.neat_event
 # APs groups to plot:
@@ -1107,16 +1122,16 @@ aps_groups = [aps_spont, aps_lightevoked, aps_currentevoked]
 aps_grouplabels = ['spont', 'lightevoked', 'currentevoked']
 for group, label in zip(aps_groups, aps_grouplabels):
     aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(group,
-                                       # colorby_measure='baselinev',
-                                       do_baselining=False,
+                                       colorby_measure='baselinev',
+                                       do_baselining=True,
                                        # do_normalizing=True,
                                        prealignpoint_window_inms=10,
                                        plotwindow_inms=35,
                                        plt_title=label,
                                        )
-    aps_axis.set_xlim([0, 35])
-    aps_axis.set_ylim([-75, 50])
-    aps_dvdt_axis.set_xlim([-75, 50])
-    aps_dvdt_axis.set_ylim([-6, 12.5])
+    # aps_axis.set_xlim([0, 35])
+    # aps_axis.set_ylim([-75, 50])
+    # aps_dvdt_axis.set_xlim([-75, 50])
+    # aps_dvdt_axis.set_ylim([-6, 12.5])
 
 

@@ -65,7 +65,7 @@ for neuron in IOneurons_recorded_onLightActivatedDays:
         aps = neuron_data.depolarizing_events.event_label.str.contains('actionpotential').dropna()  # getting both spont.APs and ones on_currentpulsechange
         if sum(aps) > 0:
             has_APs_list.append(neuron)
-
+# %%
 # resulting lists:
 has_labeled_fastevents_list = ['20190527A', # checked fastevents and neatevents
                                '20190529A1', # checked fastevents and neatevents
@@ -81,7 +81,6 @@ has_lightactivations_list = ['20190527A', '20190527C', '20190529A1', '20190529B'
 has_lightevokedAPs_list = ['20190527A', '20190527C', '20190529A1', '20190529B', '20190529D', '20200630A', '20200630B2', '20200630C', '20200630D', '20200701A', '20200706E', '20200707E', '20200708B', '20200708C', '20200708D', '20200708F', '20201124C', '20201125B', '20201125C', '20201125D', '20210105B', '20210105D', '20210110A', '20210110D', '20210110E', '20210110F', '20210113D', '20210113F', '20210113G', '20210113H', '20210123B', '20210124B', '20210124C', '20210124D', '20210413B', '20210426B']
 
 
-# %%
 
 
 

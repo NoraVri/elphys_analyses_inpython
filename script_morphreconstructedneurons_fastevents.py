@@ -27,7 +27,22 @@ import numpy as np
 # cell20160731A - saw 3 fast-events altogether, all ~5mV
 # cell20160731B -  has a dozen or so fast-events, looks like two amplitude groups (4 and 8mV). Not the greatest recording; baselinev all over the place (w/o DC injection).
 # cell20160802A - has barely a handful of fastevents early on, mostly just oscillating a lot
-# cell20160802C - quite a lot of fast-events (and tons of spont APs); mostly very similar amps though (8 - 10mV), and not the greatest recording overall. OK-looking reconstructed morph, very straight neuron
+# cell20160802C -  quite a lot of fast-events (and tons of spont APs); mostly very similar amps though (8 - 10mV), and not the greatest recording overall. OK-looking reconstructed morph, very straight neuron
 # cell20160802D - has just one or two fastevents and a single spont AP, mostly just oscillating a lot
-# cell20160802E -  saw three amplitudes (3, 8 and 10mV) of fast-events, one or two examples of each. Very nice reconstructed morph. with lots of dendrite
+# cell20160802E - saw three amplitudes (3, 8 and 10mV) of fast-events, one or two examples of each, but cell has bad baselineV throughout. Very nice reconstructed morph. with lots of dendrite
+# %%
+cell_name = '20160721C'
+neuron_data = SingleNeuron(cell_name)
+# neuron_data.plot_rawdatablocks() - looks like default parameters should be OK for extracting depol.events:
+# neuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2)
+# neuron_data.write_results()
+# %%
+des_df = neuron_data.depolarizing_events
+aps = des_df.event_label == 'actionpotential'
+events = (des_df.amplitude > 3) & ~aps
+neuron_data.plot_depolevents(aps,
+                             colorby_measure='baselinev')
+neuron_data.plot_depolevents(events,
+                             colorby_measure='baselinev')
 
+# try changing osc lp filter

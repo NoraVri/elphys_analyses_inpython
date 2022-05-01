@@ -1868,8 +1868,10 @@ cell20210105D = SingleNeuron('20210105D')
 cell20210105D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # spont.break-in (from just G seal, according to notes) and cell has some nice spont.activity and responses to light.
 # raw data cleanup:
-# seal formation not recorded, and nothing else to clean up really; cell is hanging out right around -30mV w/o DC, and
-# well below with -DC injection, so I think I'll just keep it around.
+# seal formation not recorded; cell is hanging out right around -30mV w/o DC, and well below with -DC injection, so I
+# think I'll just keep it around and remove only the last 4 segments where cell becomes visibly more leaky and stops
+# responding to light.
+cell20210105D.rawdata_remove_nonrecordingsection('light_0000.abf', remove_segments=[29, 30, 31, 32])
 cell20210105D.write_results()
 # %%
 cell20210105E = SingleNeuron('20210105E')
@@ -2259,7 +2261,7 @@ cell20210426B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # raw data cleanup:
 # removing seal formation and another minute or so of recording where seal was not properly broken all the way in
 cell20210426B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=124)
-# also removing last 3 traces where the neuron leaves suddenly and quickly
+# also removing last 4 traces where the neuron leaves suddenly and quickly
 cell20210426B.rawdata_remove_nonrecordingsection('light_0000.abf', remove_segments=[7, 8, 9, 10])
 cell20210426B.get_depolarizingevents_fromrawdata()
 cell20210426B.write_results()

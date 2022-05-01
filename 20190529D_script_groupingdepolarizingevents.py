@@ -21,6 +21,7 @@ des_df = singleneuron_data.depolarizing_events
 aps = des_df.event_label == 'actionpotential'
 spikeshoulderpeaks = des_df.event_label == 'spikeshoulderpeak'
 currentpulsechanges = des_df.event_label == 'currentpulsechange'
+spont_events = ~des_df.applied_ttlpulse
 
 # summary plots:
 des_df = singleneuron_data.depolarizing_events
@@ -29,7 +30,7 @@ fast_events_df = des_df[fast_events]
 fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=15)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
 singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
-singleneuron_data.plot_depolevents(aps, colorby_measure='baselinev', do_baselining=True)
+singleneuron_data.plot_depolevents((aps & spont_events), colorby_measure='baselinev', do_baselining=True)
 # singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
 #                                                       fast_events=fast_events)
 # singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
@@ -47,7 +48,23 @@ singleneuron_data.plot_depolevents(aps, colorby_measure='baselinev', do_baselini
 # singleneuron_data.write_results()
 
 
-# %% plots: seeing that depolarizing events got extracted nicely
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_spont  #aps_oncurrentpulsechange  #aps_evokedbylight
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+# the one that got labeled as being on currentpulsechange isn't actually; the current changes ~50ms after AP peak.
+# Re-labeling:
+# singleneuron_data.depolarizing_events.loc[aps_oncurrentpulsechange, 'event_label'] = 'actionpotential'
+# singleneuron_data.write_results()
+# for the rest all looks good.
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
 
 # 1. seeing that evoked things all got labeled as such
 # evoked_events = des_df.applied_ttlpulse
@@ -58,7 +75,6 @@ singleneuron_data.plot_depolevents(aps, colorby_measure='baselinev', do_baselini
 # getting picked up after the main peak. Also, a lot of the evoked APs have no shoulder at all (AIS spike alone?)
 
 # 2. seeing that spontaneous fast-events got picked up
-spont_events = ~des_df.applied_ttlpulse
 # unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 # possibly_spontfastevents = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=possibly_spontfastevents, time_axis_unit='s')
@@ -124,19 +140,11 @@ spont_events = ~des_df.applied_ttlpulse
 # My eye might say there's an event or two that rise faster than the others, but at this amp (<1mV) it's impossible
 # to make the case that they aren't just spikelets (which they probably are).
 # Abandoning the search for more fast-events at this point.
-
-
-# 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
-singleneuron_data.plot_depolevents((aps & spont_events),
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=30,
-                                   plotwindow_inms = 100,
-                                   plt_title='spontaneous APs')
-singleneuron_data.plot_depolevents((aps & ~spont_events),
-                                   do_baselining=True,
-                                   colorby_measure='baselinev',
-                                   prealignpoint_window_inms=30,
-                                   plotwindow_inms = 100,
-                                   plt_title='light-evoked APs')
-# singleneuron_data.plot_rawdatablocks(events_to_mark=(aps & spont_events))
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# plotting raw data with events marked:
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fast_events | aps),
+#                                      segments_overlayed=False)
+# I don't think this neuron should get neatevents labeled: even though its resting baselineV doesn't seem too bad
+# (~-40mV w/o DC) it is getting held with -DC most of the time, and by AP amp recording conditions aren't all too
+# stable. Anyway, it's a pretty boring neuron, firing just a handful of spont.fastevents in 45 minutes.

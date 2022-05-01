@@ -14,8 +14,8 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 
 des_df = singleneuron_data.depolarizing_events
-fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
-compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section...
+fastevents = des_df.event_label == 'fastevent'
+compound_events = des_df.event_label == 'compound_event'
 aps = des_df.event_label == 'actionpotential'
 spont_events = ~des_df.applied_ttlpulse  #
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
@@ -90,7 +90,7 @@ des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'w
 plt.suptitle('fast-events, neat ones only')
 
 # compound events
-singleneuron_data.plot_depolevents((compound_events & neat_events),
+singleneuron_data.plot_depolevents((compound_events & neat_events & spont_events),
                                    colorby_measure='baselinev',
                                    do_baselining=True,
                                    # do_normalizing=True,
@@ -154,6 +154,8 @@ plt.suptitle('aps, neat ones only')
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
+# OPTION1: extracting with carefully set parameter settings (mostly for capturing small events as accurately as possible)
+
 # notes:
 
 
@@ -171,6 +173,13 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 # singleneuron_data.write_results()
 
+# OPTION2: extracting with default parameters for finding large depolarizing events in light-activated neurons:
+# notes:
+# extracting with default parameter settings except min_depolamp=2 and ttleffect_window=15
+
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=15)
+# singleneuron_data.write_results()
+
 # %% plots and analyses: labeling actionpotentials
 # des_df = singleneuron_data.depolarizing_events
 # aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
@@ -179,9 +188,10 @@ plt.suptitle('aps, neat ones only')
 # # for each category of APs, see that they are indeed that:
 # events = aps_oncurrentpulsechange #aps_evokedbylight  #aps_spont
 # blocknames = des_df[events].file_origin.unique()
-# singleneuron_data.plot_rawdatablocks(*blocknames,
-#                                      events_to_mark=events,
-#                                      segments_overlayed=False)
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=events,
+#                                          segments_overlayed=False)
 
 # %% plots and analyses: seeing and labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
@@ -253,7 +263,7 @@ plt.suptitle('aps, neat ones only')
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # neurons that were recorded under bad conditions for the entire duration of recording should not get neat_events marked.
 # plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents | compound_events),
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents | (aps & spont_events)),
 #                                      segments_overlayed=False)
 # notes:
 
@@ -275,24 +285,4 @@ plt.suptitle('aps, neat ones only')
 # probably_neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
 # singleneuron_data.write_results()
-# %% marking 'n neat fast events': the first 10 - 20 events to occur during stable recording at resting baselinev
-# neurons with < 10 neat spont. fast-events should not get them marked; those with > 20 get the first 20 that occur marked, regardless of representativeness of amplitude groups etc.
-fastevents = ((des_df.event_label == 'fastevent') & (des_df.neat_event))
-neatevents = fastevents.copy()
-neatevents[neatevents] = False
-fastevents = fastevents[fastevents]
-n = 19  # N - 1 (0-based indexing)
-i = 0
-# check that these events occur during resting baselinev
-for idx, value in fastevents.iteritems():
-    if i <= 19:
-        neatevents[idx] = True
-        i += 1
-    else:
-        break
-neatevents.name = 'n_neat_fastevents'
-# adding the neatevents-series to the depolarizing_events-df:
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
-# singleneuron_data.write_results()
-# %% plots and analyses: seeing APs and labeling fast-event triggered ones
 

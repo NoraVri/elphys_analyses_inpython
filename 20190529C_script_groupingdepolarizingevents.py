@@ -35,7 +35,9 @@ singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev',
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 
 
-# %% plots: seeing that depolarizing events got extracted nicely
+# %% plots and analyses: labeling actionpotentials
+# not a single AP recorded for this neuron.
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
 
 # 1. seeing that evoked things all got labeled as such
 # evoked_events = des_df.applied_ttlpulse
@@ -112,8 +114,10 @@ singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev',
 # singleneuron_data.write_results()
 
 # Re-labeling the smallest of what I thought were fast-events; Yosi says their rise-time is too different.
-not_fastevents = (fast_events & (des_df.rise_time_20_80 > 1.1))
-singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = 'not_fastevent'
-singleneuron_data.write_results()
+# not_fastevents = (fast_events & (des_df.rise_time_20_80 > 1.1))
+# singleneuron_data.depolarizing_events.loc[not_fastevents, 'event_label'] = 'not_fastevent'
+# singleneuron_data.write_results()
 # 3. seeing that all things that got labeled as 'actionpotential' automatically are indeed that
 # no APs recorded for this neuron
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# neuron is held with a lot of -DC (1-2nA) throughout; should not be included in neat-events neurons.

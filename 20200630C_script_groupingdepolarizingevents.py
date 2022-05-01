@@ -22,38 +22,88 @@ unlabeled_events = des_df.event_label.isna()  # all events that were not given a
 unlabeled_spontevents = (spont_events & unlabeled_events)
 smallslowevents = unlabeled_spontevents  # unless seen otherwise
 
-# %% plotting light-evoked activity
+# %% plotting light-evoked activity, one plot per light intensity setting
 # three different light intensities for this neuron:
 # 30%
 singleneuron_data.plot_rawdatatraces_ttlaligned('0000', '01', '02', '03', '04')
 # 10%
-singleneuron_data.plot_rawdatatraces_ttlaligned('05', '06', '07')
-# 3%
-singleneuron_data.plot_rawdatatraces_ttlaligned('08', '09')
-# %%
-# summary plots - old:
-# des_df = singleneuron_data.depolarizing_events
-# aps = des_df.event_label == 'actionpotential'
-# fast_events = des_df.event_label == 'fastevent'
-# fast_events_df = des_df[fast_events]
-# fast_events_df.hist(column=['rise_time_10_90', 'rise_time_20_80', 'width_50', 'amplitude'], bins=20)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True, do_normalizing=True)
-# singleneuron_data.plot_depolevents(fast_events, colorby_measure='baselinev', do_baselining=True)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_10_90', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
-# singleneuron_data.scatter_depolarizingevents_measures('width_50', 'amplitude', cmeasure='baselinev',
-#                                                       fast_events=fast_events)
+singleneuron_data.plot_rawdatatraces_ttlaligned('05', '06',
+                                                # '07'  # recording quality takes a turn during the second repetition in this block, and is then continuously deteriorating from there
+                                                )
+# 3% - recording conditions badly deteriorated
+# singleneuron_data.plot_rawdatatraces_ttlaligned('08', '09')
+# %% summary plots - all events:
+# histograms of events parameters
+nbins = 100
+# fast-events
+des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('fast-events parameter distributions')
+
+singleneuron_data.plot_depolevents(fastevents,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
+singleneuron_data.plot_depolevents((aps & spont_events),
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
+# %% summary plots - neat spontaneous events only:
+nbins = 100  #
+
+neat_events = singleneuron_data.depolarizing_events.neat_event #& (des_df.amplitude > 3)
+# fast-events
+singleneuron_data.plot_depolevents((fastevents & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat fast-events'
+                                   )
+des_df[(fastevents & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                                        'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                        bins=nbins)
+plt.suptitle('fast-events, neat ones only')
+
+# aps
+singleneuron_data.plot_depolevents((aps & spont_events & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat aps'
+                                   )
+des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                                             'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                             bins=nbins)
+plt.suptitle('aps, neat ones only')
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).
 # %% extracting depolarizing events
 # notes:
-
+# extracting events > 2mV with default parameters
 # singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=10)
 # singleneuron_data.write_results()
-
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_evokedbylight  #aps_spont  #aps_oncurrentpulsechange
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+# all looks good.
 # %% plots: seeing and labeling depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 
@@ -120,21 +170,18 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('08', '09')
 # singleneuron_data.write_results()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
-# %% marking 'neat' events: the first 20 events to occur
-# fastevents = des_df.event_label == 'fastevent'
-# neatevents = fastevents.copy()
-# neatevents[neatevents] = False
-# fastevents = fastevents[fastevents]
-# n = 19  # N - 1 (0-based indexing)
-# i = 0
-# for idx, value in fastevents.iteritems():
-#     if i <= 19:
-#         neatevents[idx] = True
-#         i += 1
-#     else:
-#         break
-# neatevents.name = 'n_neat_fastevents'
-# adding the neatevents-series to the depolarizing_events-df:
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# plotting raw data with events marked:
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents | (aps & spont_events)),
+#                                      segments_overlayed=False)
+# notes:
+# recording conditions very stable from gapFree 0 all the way up to (and including) light #6; too bad neuron stops
+# displaying spont.events quite early on. Still, marking all these blocks as 'neat':
+# all_blocknames_list = singleneuron_data.get_blocknames(printing='off')
+# relevant_blocks = all_blocknames_list[2:9]
+# relevant_blocks.append(all_blocknames_list[0])
+# neatevents = des_df.file_origin.isin(relevant_blocks)
+# neatevents.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neatevents)
 # singleneuron_data.write_results()
 # %%

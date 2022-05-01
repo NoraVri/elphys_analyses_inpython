@@ -957,11 +957,11 @@ plt.suptitle('aps, neat ones only')
 # #wholefield:
 # # variable - _0 - _12
 # # 10% - _15 - 21
-# blocknames_list = singleneuron_data.get_blocknames(printing='off')
-# blocknames = []
-# for i in range(15,21):
-#     blocknames += [name for name in blocknames_list if str(i) in name]
-# singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, 'light_0002', 'light_0003', newplot_per_block=False)
+blocknames_list = singleneuron_data.get_blocknames(printing='off')
+blocknames = []
+for i in range(15,21):
+    blocknames += [name for name in blocknames_list if str(i) in name]
+singleneuron_data.plot_rawdatatraces_ttlaligned(*blocknames, newplot_per_block=False)
 
 # %% plots for publication figures -- MSdraft version3 (APs first), figure 1 draft1
 # selecting ~15min. of recording to show events from, so as not to have too many traces in the plot

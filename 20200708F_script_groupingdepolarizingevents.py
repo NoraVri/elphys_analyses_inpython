@@ -20,8 +20,8 @@ singleneuron_data = SingleNeuron(neuron_name)
 # picked up as a single event by the algorithm, should consider that when calculating frequency.
 
 des_df = singleneuron_data.depolarizing_events
-fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section...
-compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section...
+fastevents = des_df.event_label == 'fastevent'  # see plots and analyses section2-7
+compound_events = des_df.event_label == 'compound_event'  # see plots and analyses section2-7
 aps = des_df.event_label == 'actionpotential'
 spont_events = ~des_df.applied_ttlpulse  #
 unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
@@ -123,7 +123,8 @@ des_df[(aps & neat_events)].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50
 plt.suptitle('aps, neat ones only')
 
 # %% plotting light-evoked activity
-# three different light intensities for this neuron: 3%,
+# three different light intensities for this neuron (though duration maybe also different):
+# 3%,
 singleneuron_data.plot_rawdatatraces_ttlaligned('0000', '01', '03', '05', plt_title='light intensity 3%')
 # 10%
 singleneuron_data.plot_rawdatatraces_ttlaligned('02', plt_title='light intensity 10%')
@@ -138,7 +139,21 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('04', plt_title='light intensity
 # singleneuron_data.get_depolarizingevents_fromrawdata()
 # singleneuron_data.write_results()
 
-# %% plots: seeing that depolarizing events got extracted nicely
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_evokedbylight #aps_spont  #aps_oncurrentpulsechange
+# blocknames = des_df[events].file_origin.unique()
+# singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                      events_to_mark=events,
+#                                      segments_overlayed=False)
+# all looks OK - in the lightevoked responses we could debate what exactly is a full AP, there are responses there
+# that reach >0mV yet look more like a fastevent (no shoulder at all) and got labeled AP; same-looking responses that
+# reach just below 0mV did not automatically get labeled as AP.
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 
 # Seeing that light/puff-evoked things all got labeled as such
@@ -304,7 +319,8 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('04', plt_title='light intensity
 # OK, now it's starting to get clearer what are fast-events. The problem is that some of them are compound and therefore
 # have a break in the upslope, which gives them longer rise-time and width; and then the rounder events are just quite
 # variable in all of amp, rise and width so that the distributions bleed into each other really badly.
-# %% 2. starting a new run of labeling fast-events in this neuron, having worked on a bunch of other (more and less
+
+# 2. starting a new run of labeling fast-events in this neuron, having worked on a bunch of other (more and less
 # canonical) examples in between...
 
 # Finding and labeling fast-events (and other types of events encountered along the way):
@@ -433,34 +449,32 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('04', plt_title='light intensity
 # parameters all look rather normal with a long-ish tail towards higher values, as I would expect from a collection of
 # spikelets and regular synaptic depolarizations.
 
-
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# TODO: review neat events
-# looks like those 5 minutes really are pretty much the best this neuron's got, but can contemplate whether we really
-# want to include its data with 'neat' events given how much noisiness it undergoes before fast-events eventually get
-# turned on halfway through the recording (after the neuron stops oscillating so vigorously).
+# can contemplate whether we really want to include its data with 'neat' events given how much noisiness it undergoes
+# before fast-events eventually get turned on halfway through the recording (after the neuron stops oscillating so vigorously).
 # plotting raw data with events marked:
 # singleneuron_data.plot_rawdatablocks('gapFree',
-#                                      events_to_mark=(fastevents | compound_events),
+#                                      events_to_mark=(fastevents | compound_events | (aps & spont_events)),
 #                                      segments_overlayed=False)
 
-# 5 min. of recording from file gapFree_withBlocker_0006, from 150s to 450s - neuron is exhibiting nice stable behavior
-# there, and is getting held with +DC to change baselinev and see its effect on fast-events.
-# block_name = 'gapFree_withBlocker_0006.abf'  # blocker is AP5 (NMDA inputs), does not block fast-events
-# window_start_t = 150
-# window_end_t = 450
+# looks like gapFree_withBlocker_0006 is the one file where the neuron exhibits mostly stable behavior
+# possibly_neatevents = (des_df.file_origin == 'gapFree_withBlocker_0006.abf')
+# I have some doubts about events occurring in the last 100s of that recording though - there are some giant
+# (40mV amp) fastevents there that I haven't seen anywhere else (as well as some more regular ones), and the neuron is
+# depolarizing there. Let's see if they may be significantly different from other events occurring during the same file:
 # sampling_frequency = singleneuron_data.blocks[0].channel_indexes[0].analogsignals[0].sampling_rate
-# trace_start_t = 0
-# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx >= neat5min_start_idx)
-#                        & (des_df.peakv_idx < neat5min_end_idx)
-#                        )
-# adding the neatevents-series to the depolarizing_events-df:
+# possibly_nonneatevents = (possibly_neatevents & (des_df.peakv_idx > (sampling_frequency * 460)))
+# probably_neatevents = (possibly_neatevents & ~possibly_nonneatevents)
+# singleneuron_data.plot_depoleventsgroups_overlayed((possibly_neatevents & fastevents), (possibly_nonneatevents & fastevents),
+#                                                    group_labels=['neat', 'not neat'])
+# singleneuron_data.plot_depoleventsgroups_averages((possibly_neatevents & fastevents), (possibly_nonneatevents & fastevents),
+#                                                   do_normalizing=True)
+# indeed - the events occurring later on are significantly different from the earlier ones, with slower rise and decay
+# (even though we expect quite some variability in neatevents, too, because baselineV is being manipulated). So,
+# marking only events occurring before t=460 as neat:
 # probably_neatevents.name = 'neat_event'
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join((probably_neatevents))
 # singleneuron_data.write_results()
 
 # %% subtracting single events from compound ones

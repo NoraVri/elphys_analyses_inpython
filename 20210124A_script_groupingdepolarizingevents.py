@@ -160,7 +160,30 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light',
 #                                                      oscfilter_lpfreq=10)
 # singleneuron_data.write_results()
 
-# %% plots and analyses: seeing and labeling depolarizing events
+# %% plots and analyses: labeling actionpotentials
+# des_df = singleneuron_data.depolarizing_events
+# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+# aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+# aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# # for each category of APs, see that they are indeed that:
+# events = aps_spont  #aps_oncurrentpulsechange  #aps_evokedbylight
+# blocknames = des_df[events].file_origin.unique()
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=events,
+#                                          segments_overlayed=False)
+# # in aps_spont there are a bunch that are in fact on_currentpulsechange; re-labeling them accordingly:
+# additional_aps_oncurrentpulsechange = aps_spont & ((des_df.file_origin == 'gapFree_0001.abf')
+#                                                    | (des_df.file_origin == 'longPulses_0000.abf')
+#                                                    | (des_df.file_origin == 'longPulses_0001.abf')
+#                                                    | (des_df.file_origin == 'longPulses_0002.abf')
+#                                                    | (des_df.file_origin == 'longPulses_0003.abf')
+#                                                    | ((des_df.file_origin == 'longPulses_0004.abf')
+#                                                       & (des_df.applied_current < 550))  # single AP sitting towards the end of the applied current, definitely not directly evoked by it
+#                                                    )
+# singleneuron_data.depolarizing_events.loc[additional_aps_oncurrentpulsechange, 'event_label'] = 'actionpotential_on_currentpulsechange'
+# singleneuron_data.write_results()
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 # nbins = 100
 # Seeing that light/puff-evoked things all got labeled as such:
@@ -355,42 +378,20 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light',
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% selecting 5 minutes of best typical behavior and marking 'neat' events
 # plotting raw data with events marked:
-# singleneuron_data.plot_rawdatablocks('gapFree',
-#                                      events_to_mark=(fastevents | compound_events),
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents | compound_events | (aps & spont_events)),
 #                                      segments_overlayed=False)
-
-# file gapFree_0002 has nice long stretches of recording where the neuron is held with - or + DC to change baselinev;
-# picking a few stretches of 30 - 60s to catch them all.
-# block_name = 'gapFree_0002.abf'
-# sampling_frequency = singleneuron_data.blocks[2].channel_indexes[0].analogsignals[0].sampling_rate
-# window1_start = (940 * sampling_frequency)
-# window1_end = (1030 * sampling_frequency)  # 90s at baselinev
-# probably_neatevents1 = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx > window1_start)
-#                         & (des_df.peakv_idx < window1_end))
-# window2_start = (1400 * sampling_frequency)
-# window2_end = (1490 * sampling_frequency)  # 90s at depolarized v
-# probably_neatevents2 = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx > window2_start)
-#                         & (des_df.peakv_idx < window2_end))
-# window3_start = (2260 * sampling_frequency)
-# window3_end = (2320 * sampling_frequency)  # 60s at two different hyperpolarized baselinevs
-# probably_neatevents3 = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx > window3_start)
-#                         & (des_df.peakv_idx < window3_end))
-# window4_start = (2050 * sampling_frequency)
-# window4_end = (2110 * sampling_frequency)  # 60s at two different hyperpolarized baselinevs
-# probably_neatevents4 = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx > window4_start)
-#                         & (des_df.peakv_idx < window4_end))
-# probably_neatevents = (probably_neatevents1 | probably_neatevents2 | probably_neatevents3 | probably_neatevents4)
-# adding the neatevents-series to the depolarizing_events-df:
-# probably_neatevents.name = 'neat_event'
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# singleneuron_data.plot_rawdatablocks(events_to_mark=(fastevents & (des_df.amplitude > 10) & (des_df.maxdvdt < 0.4)),
+#                                      segments_overlayed=False)
+# # From the fastevents' shapes it is clear that there is some instability in recording conditions - maxdvdt for same-amp
+# # events decreases a lot, and AP amp decreases a bit over the course of recordings, too. Still, baselineV is very steady
+# # and spont.APs stop occurring at resting baselineV for a while, so it's not so easy to tell where exactly recording
+# # quality starts to decrease. Using fast-event dV/dt-shape as a criterion, only shortPulse files should be excluded
+# # (these are the only ones that contain 'slower fastevents'). Labeling everything else as 'neat':
+# neat_events = ~(des_df.file_origin.str.contains('shortPulse'))
+# # adding the neatevents-series to the depolarizing_events-df:
+# neat_events.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
 # singleneuron_data.write_results()
-
-
-
 # %% subtracting single events from double ones
 # initially in this neuron, the compound events are frequent only where it's hyperpolarized (and not firing APs at all).
 selected_events = (des_df.file_origin == 'gapFree_0000.abf') & (des_df.baselinev < -57)

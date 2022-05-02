@@ -84,14 +84,14 @@ for neuron in IOneurons_recorded_onLightActivatedDays:
 # list of all neuron recordings in the dataset:
 dataset_neuronrecordings_list = [
     '20190527A',  # checked APs; checked fastevents; checked neatevents
-    '20190527B',
-    '20190527C',
+    '20190527B',  # checked APs; checked fastevents; checked neatevents
+    '20190527C',  # no APs (!); checked fastevents; checked neatevents  - light may be evoking highly degenerate APs; APs cannot be evoked through DC
     '20190529A1', # checked APs; checked fastevents; checked neatevents
-    '20190529A2',
+    '20190529A2', # checked APs; checked fastevents; no neatevents
     '20190529B',  # checked APs; no fastevents; checked neatevents
     '20190529C',  # no APs; checked fastevents; no neatevents
     '20190529D',  # checked APs; checked fastevents; no neatevents
-    '20190529E',
+    '20190529E',  # checked APs; no fastevents; no neatevents
     '20200630A',
     '20200630B1',
     '20200630B2', #
@@ -117,7 +117,7 @@ dataset_neuronrecordings_list = [
     '20201124C',  #
     '20201125B',  #
     '20201125C',  #
-    '20201125D',  #
+    '20201125D',  # checked APs; checked fastevents; checked neatevents
     '20201125E',  #
     '20201125F',  #
     '20210105A',  #
@@ -164,7 +164,7 @@ dataset_neuronrecordings_list = [
 ]
 
 # sub-lists:
-has_labeled_fastevents_list = ['20190527A', '20190529A1', '20190529C', '20190529D', '20200630C', '20200708D', '20200708F', '20200818B', '20210110G', '20210113G', '20210113H', '20210124A', '20210124B', '20210411F', '20210413B', '20210426D']
+has_labeled_fastevents_list = ['20190527A', '20190529A1', '20190529C', '20190529D', '20200630C', '20200708D', '20200708F', '20200818B', '20201125D', '20210110G', '20210113G', '20210113H', '20210124A', '20210124B', '20210411F', '20210413B', '20210426D']
 has_APs_list = ['20190527A', '20190529A1', '20190529B', '20190529D', '20200630C', '20200708D', '20200708F', '20200818B', '20210110G', '20210113G', '20210113H', '20210124A', '20210124B', '20210413B', '20210426D']
 has_lightactivations_list = ['20190527A', '20190527C', '20190529A1', '20190529B', '20190529C', '20190529D', '20190529E', '20200630A', '20200630B1', '20200630B2', '20200630C', '20200630D', '20200701A', '20200701B', '20200701D', '20200706B', '20200706D', '20200706E', '20200707E', '20200708B', '20200708C', '20200708D', '20200708F', '20200708G', '20200818B', '20200818C', '20201124C', '20201125B', '20201125C', '20201125D', '20201125E', '20201125F', '20210105A', '20210105B', '20210105C', '20210105D', '20210105E', '20210110A', '20210110C', '20210110D', '20210110E', '20210110F', '20210110G', '20210113A', '20210113B', '20210113C', '20210113D', '20210113F', '20210113G', '20210113H', '20210123B', '20210123D', '20210124A', '20210124B', '20210124C', '20210124D', '20210203A', '20210203B', '20210203C', '20210411A', '20210411B', '20210411F', '20210413A', '20210413B', '20210426B', '20210426C', '20210426D', '20210426E', '20210429B']
 has_lightevokedAPs_list = ['20190527A', '20190527C', '20190529A1', '20190529B', '20190529D', '20200630A', '20200630B2', '20200630C', '20200630D', '20200701A', '20200706E', '20200707E', '20200708B', '20200708C', '20200708D', '20200708F', '20201124C', '20201125B', '20201125C', '20201125D', '20210105B', '20210105D', '20210110A', '20210110D', '20210110E', '20210110F', '20210113D', '20210113F', '20210113G', '20210113H', '20210123B', '20210124B', '20210124C', '20210124D', '20210413B', '20210426B']
@@ -177,7 +177,8 @@ has_lightevokedAPs_list = ['20190527A', '20190527C', '20190529A1', '20190529B', 
 
 # %% one figure for all neurons with neat fast-events: neat fast-events normalized and averaged
 from singleneuron_analyses_functions import get_events_average
-figure, axes = plt.subplots(1, 2)
+figure1, axes1 = plt.subplots(1, 2)
+figure2, axes2 = plt.subplots(1, 2)
 neuron_list = has_labeled_fastevents_list
 colormap = mpl.cm.Paired
 cmnormalizer = mpl.colors.Normalize(0, len(neuron_list))
@@ -198,15 +199,47 @@ for i, neuron in enumerate(neuron_list):
                                        plotwindow_inms=20,
                                        do_normalizing=True)
         linecolor = colormap(cmnormalizer(i))
-        axes[0].plot(time_axis, normalized_neatfastevents_avg, linewidth=2.5, color=linecolor)
-        axes[0].plot(time_axis, (normalized_neatfastevents_avg - normalized_neatfastevents_std), '--', color=linecolor)
-        axes[0].plot(time_axis, (normalized_neatfastevents_avg + normalized_neatfastevents_std), '--', color=linecolor)
-        axes[0].set_xlabel('time (ms)')
+        axes1[0].plot(time_axis, normalized_neatfastevents_avg, linewidth=2.5, color=linecolor)
+        axes1[0].plot(time_axis, (normalized_neatfastevents_avg - normalized_neatfastevents_std), '--', color=linecolor)
+        axes1[0].plot(time_axis, (normalized_neatfastevents_avg + normalized_neatfastevents_std), '--', color=linecolor)
+        axes1[0].set_xlabel('time (ms)')
         diff_events_avg = np.diff(normalized_neatfastevents_avg)
-        axes[1].plot(normalized_neatfastevents_avg[:-1:], diff_events_avg, color=linecolor, label=(neuron_data.name + ' N=' + str(n_events) + ' events averaged'))
-    axes[1].set_xlabel('V')
-    axes[1].set_ylabel('dV/dt')
-    axes[1].legend(loc='upper left')
+        axes1[1].plot(normalized_neatfastevents_avg[:-1:], diff_events_avg, color=linecolor, label=(neuron_data.name + ' N=' + str(n_events) + ' events'))
+    # figure2: fastevents within baselinerange
+        lower_lim = -55
+        upper_lim = -45
+        baselinerange_neat_fastevents = (neat_fastevents
+                                         & (neuron_depolarizingevents.baselinev > lower_lim)
+                                         & (neuron_depolarizingevents.baselinev < upper_lim))
+        n_baselinerange_events = sum(baselinerange_neat_fastevents)
+        if n_baselinerange_events > 0:
+            normalized_neatfastevents_avg, \
+            normalized_neatfastevents_std, \
+            time_axis = get_events_average(neuron_data.blocks,
+                                           neuron_data.depolarizing_events,
+                                           neuron_data.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                           baselinerange_neat_fastevents,
+                                           timealignto_measure='rt20_start_idx',
+                                           prealignpoint_window_inms=3,
+                                           plotwindow_inms=20,
+                                           do_normalizing=True)
+            linecolor = colormap(cmnormalizer(i))
+            axes2[0].plot(time_axis, normalized_neatfastevents_avg, linewidth=2.5, color=linecolor)
+            axes2[0].plot(time_axis, (normalized_neatfastevents_avg - normalized_neatfastevents_std), '--',
+                          color=linecolor)
+            axes2[0].plot(time_axis, (normalized_neatfastevents_avg + normalized_neatfastevents_std), '--',
+                          color=linecolor)
+            axes2[0].set_xlabel('time (ms)')
+            diff_events_avg = np.diff(normalized_neatfastevents_avg)
+            axes2[1].plot(normalized_neatfastevents_avg[:-1:], diff_events_avg, color=linecolor,
+                          label=(neuron_data.name + ' N=' + str(n_baselinerange_events) + ' events'))
+
+    axes1[1].set_xlabel('V')
+    axes1[1].set_ylabel('dV/dt')
+    axes1[1].legend(loc='upper left')
+    axes2[1].set_xlabel('V')
+    axes2[1].set_ylabel('dV/dt')
+    axes2[1].legend(loc='upper left')
 
 
 # %% plotting APs for neurons that have them extracted

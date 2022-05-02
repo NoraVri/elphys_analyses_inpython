@@ -277,12 +277,12 @@ plt.suptitle('aps, neat ones only')
 # else: trace_start_t = 0
 # neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
 # neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
-# probably_neatevents = ((des_df.file_origin == block_name)
+# neat_events = ((des_df.file_origin == block_name)
 #                        & (des_df.peakv_idx >= neat5min_start_idx)
 #                        & (des_df.peakv_idx < neat5min_end_idx)
 #                        )
-# adding the neatevents-series to the depolarizing_events-df:
-# probably_neatevents.name = 'neat_event'
-# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(probably_neatevents)
+# # adding the neatevents-series to the depolarizing_events-df:
+# neat_events.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
 # singleneuron_data.write_results()
 

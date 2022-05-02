@@ -85,18 +85,18 @@ for neuron in IOneurons_recorded_onLightActivatedDays:
 dataset_neuronrecordings_list = [
     '20190527A',  # checked APs; checked fastevents; checked neatevents
     '20190527B',  # checked APs; checked fastevents; checked neatevents
-    '20190527C',  # no APs (!); checked fastevents; checked neatevents  - light may be evoking highly degenerate APs; APs cannot be evoked through DC
+    '20190527C',  # no APs (!); checked fastevents; no neatevents  - !light may be evoking highly degenerate APs; APs cannot be evoked through DC
     '20190529A1', # checked APs; checked fastevents; checked neatevents
     '20190529A2', # checked APs; checked fastevents; no neatevents
     '20190529B',  # checked APs; no fastevents; checked neatevents
     '20190529C',  # no APs; checked fastevents; no neatevents
     '20190529D',  # checked APs; checked fastevents; no neatevents
     '20190529E',  # checked APs; no fastevents; no neatevents
-    '20200630A',
-    '20200630B1',
-    '20200630B2', #
+    '20200630A',  # checked APs; no fastevents; no neatevents
+    '20200630B1', # checked APs; no fastevents; no neatevents
+    '20200630B2', # checked APs; no fastevents
     '20200630C',  # checked APs; checked fastevents; checked neatevents
-    '20200630D',  #
+    '20200630D',  # checked APs; checked fastevents; checked neatevents (!)  - !about half of fastevents have an AHP that looks like it comes from the network - not sure if averaging is fair, even though they do all look 'neat'
     '20200701A',  #
     '20200701B',  #
     '20200701D',  # no APs; no fastevents; no neatevents

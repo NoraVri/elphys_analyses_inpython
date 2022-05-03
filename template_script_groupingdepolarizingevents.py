@@ -275,11 +275,11 @@ plt.suptitle('aps, neat ones only')
 # if block_name in singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'].keys():
 #     trace_start_t = singleneuron_data.rawdata_readingnotes['nonrecordingtimeslices'][block_name]['t_start']
 # else: trace_start_t = 0
-# neat5min_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
-# neat5min_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
+# neatrecording_start_idx = (window_start_t - trace_start_t) * float(sampling_frequency)
+# neatrecording_end_idx = (window_end_t - trace_start_t) * float(sampling_frequency)
 # neat_events = ((des_df.file_origin == block_name)
-#                        & (des_df.peakv_idx >= neat5min_start_idx)
-#                        & (des_df.peakv_idx < neat5min_end_idx)
+#                        & (des_df.peakv_idx >= neatrecording_start_idx)
+#                        & (des_df.peakv_idx < neatrecording_end_idx)
 #                        )
 # # adding the neatevents-series to the depolarizing_events-df:
 # neat_events.name = 'neat_event'

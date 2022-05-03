@@ -97,13 +97,13 @@ dataset_neuronrecordings_list = [
     '20200630B2', # checked APs; no fastevents
     '20200630C',  # checked APs; checked fastevents; checked neatevents
     '20200630D',  # checked APs; checked fastevents; checked neatevents (!)  - !about half of fastevents have an AHP that looks like it comes from the network - not sure if averaging is fair, even though they do all look 'neat'
-    '20200701A',  #
-    '20200701B',  #
+    '20200701A',  # checked APs; checked fastevents; checked neatevents
+    '20200701B',  # no APs; not sure about fastevents; no neatevents
     '20200701D',  # no APs; no fastevents; no neatevents
-    '20200706A',
-    '20200706B',  #
-    '20200706D',  #
-    '20200706E',  #
+    '20200706A',  # checked APs; no fastevents; no neatevents
+    '20200706B',  # undecided about APs; checked fastevents;
+    '20200706D',  # no APs; no fastevents; no neatevents
+    '20200706E',  # checked APs; checked fastevents; not sure about neatevents
     '20200707E',  #
     '20200708A',
     '20200708B',  #

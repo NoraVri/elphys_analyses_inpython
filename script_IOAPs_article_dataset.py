@@ -104,9 +104,9 @@ dataset_neuronrecordings_list = [
     '20200706B',  # undecided about APs; checked fastevents;
     '20200706D',  # no APs; no fastevents; no neatevents
     '20200706E',  # checked APs; checked fastevents; not sure about neatevents
-    '20200707E',  #
-    '20200708A',
-    '20200708B',  #
+    '20200707E',  # checked APs; no fastevents; no neatevents
+    '20200708A',  # checked APs; checked fastevents; no neatevents
+    '20200708B',  # checked APs; checked fastevents; checked neatevents
     '20200708C',  #
     '20200708D',  # checked APs; checked fastevents; checked neatevents
     '20200708E',

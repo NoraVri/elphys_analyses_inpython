@@ -54,32 +54,41 @@ IOneurons_recorded_onLightActivatedDays = lightevokedexcitations_experimentdays_
 # analyses step1.1: determining which neurons have spont. fastevents and/or APs, and light-evoked events and/or APs.
 # Some neurons have been of particular interest before and have had depolarizing events extracted and labeled, (or are in the process of getting that done - will have to check up on that)
 # but most neurons in this dataset have not yet been run through depolarizingevents-extraction.
-has_labeled_fastevents_list = []
-has_APs_list = []
 hasno_depolevents_extracted_list = []
+hasno_lightactivations_list = []
+has_spontAPs_list = []
+has_fastevents_list = []
+has_neatevents_list = []
+has_lightresponses_list = []
+has_lightevokedAPs_list = []
 # I don't have any experiments in mice with optogenetically-labeled things where TTl-on is used for anything besides
 # activating the light. So, we can use get_ttlonmeasures to identify neurons that actually had light responses recorded.
-has_lightactivations_list = []
-has_lightevokedAPs_list = []
 # filling in the lists:
 for neuron in IOneurons_recorded_onLightActivatedDays:
     neuron_data = SingleNeuron(neuron)
     neuron_data.get_ttlonmeasures_fromrawdata()
-    if not neuron_data.ttlon_measures.empty:
-        has_lightactivations_list.append(neuron)
-        if neuron_data.ttlon_measures.response_maxamp.max() > 40:
-            has_lightevokedAPs_list.append(neuron)
+    if neuron_data.ttlon_measures.empty:
+        hasno_lightactivations_list.append(neuron)
 
     if neuron_data.depolarizing_events.empty:
         hasno_depolevents_extracted_list.append(neuron)
-    else:
-        if sum(~(neuron_data.depolarizing_events.event_label.isna())) > 0:
-            labeled_fastevents = neuron_data.depolarizing_events.event_label == 'fastevent'
-            if sum(labeled_fastevents) > 0:
-                has_labeled_fastevents_list.append(neuron)
-            aps = neuron_data.depolarizing_events.event_label.str.contains('actionpotential').dropna()  # getting both spont.APs and ones on_currentpulsechange
-            if sum(aps) > 0:
-                has_APs_list.append(neuron)
+    elif sum(~(neuron_data.depolarizing_events.event_label.isna())) > 0:
+        spontAPs = ((neuron_data.depolarizing_events.event_label == 'actionpotential')
+                    & ~neuron_data.depolarizing_events.applied_ttlpulse)
+        if sum(spontAPs) > 0:
+            has_spontAPs_list.append(neuron)
+        fastevents = (neuron_data.depolarizing_events.event_label == 'fastevent')
+        if sum(fastevents) > 0:
+            has_fastevents_list.append(neuron)
+        evokedevents = (neuron_data.depolarizing_events.applied_ttlpulse)
+        if sum(evokedevents) > 0:
+            has_lightresponses_list.append(neuron)
+        lightevoked_aps = (evokedevents & (neuron_data.depolarizing_events.event_label == 'actionpotential'))
+        if sum(lightevoked_aps) > 0:
+            has_lightevokedAPs_list.append(neuron)
+        if 'neat_event' in neuron_data.depolarizing_events.columns:
+            has_neatevents_list.append(neuron)
+
 # %% neuron recordings lists
 # list of all neuron recordings in the dataset:
 dataset_neuronrecordings_list = [
@@ -107,22 +116,22 @@ dataset_neuronrecordings_list = [
     '20200707E',  # checked APs; no fastevents; no neatevents
     '20200708A',  # checked APs; checked fastevents; no neatevents
     '20200708B',  # checked APs; checked fastevents; checked neatevents
-    '20200708C',  #
+    '20200708C',  # checked APs; no fastevents; no neatevents
     '20200708D',  # checked APs; checked fastevents; checked neatevents
-    '20200708E',
+    '20200708E',  # checked APs; checked fastevents; checked neatevents (just 2 min. of recording but what there is of it is very neat and has spont.activity)
     '20200708F',  # checked APs; checked fastevents; checked neatevents
-    '20200708G',  #
-    '20200818B',  # checked APs; checked fastevents; checked neatevents (APs only current-evoked)
-    '20200818C',  #
-    '20201124C',  #
-    '20201125B',  #
-    '20201125C',  #
+    '20200708G',  # no APs; no fastevents; no neatevents
+    '20200818B',  # checked APs; checked fastevents; checked neatevents
+    '20200818C',  # checked APs; no fastevents; no neatevents
+    '20201124C',  # checked APs; checked fastevents; no neatevents
+    '20201125B',  # checked APs; checked fastevents; checked neatevents
+    '20201125C',  # checked APs; checked fastevents; checked neatevents
     '20201125D',  # checked APs; checked fastevents; checked neatevents
-    '20201125E',  #
-    '20201125F',  #
-    '20210105A',  #
-    '20210105B',
-    '20210105C',  #
+    '20201125E',  # checked APs; checked fastevents; no neatevents
+    '20201125F',  # undecided about APs and fastevents
+    '20210105A',  # checked APs; checked fastevents; no neatevents
+    '20210105B',  # checked APs; checked fastevents; no neatevents
+    '20210105C',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
     '20210105D',
     '20210105E',  #
     '20210110A',

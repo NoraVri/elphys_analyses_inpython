@@ -135,14 +135,14 @@ dataset_neuronrecordings_list = [
     '20210105D',  # checked APs; checked fastevents; no neatevents
     '20210105E',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
     '20210110A',  # checked APs; checked fastevents; checked neatevents
-    '20210110B',
-    '20210110C',  #
-    '20210110D',  #
-    '20210110E',  #
-    '20210110F',  #
+    '20210110B',  # checked APs; no fastevents; no neatevents (APs are DC-evoked or happen because neuron is depolarizing while dying slowly)
+    '20210110C',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
+    '20210110D',  # checked APs; checked fastevents; checked neatevents
+    '20210110E',  # checked APs; checked fastevents; checked neatevents
+    '20210110F',  # checked APs; checked fastevents; no neatevents
     '20210110G',  # checked APs; checked fastevents; checked neatevents (only three spont.subthreshold events; APs only current-evoked)
-    '20210113A',
-    '20210113B',  #
+    '20210113A',  # checked APs; undecided about fastevents
+    '20210113B',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
     '20210113C',  #
     '20210113D',  #
     '20210113E',

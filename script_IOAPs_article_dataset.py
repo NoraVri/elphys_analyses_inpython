@@ -143,18 +143,18 @@ dataset_neuronrecordings_list = [
     '20210110G',  # checked APs; checked fastevents; checked neatevents (only three spont.subthreshold events; APs only current-evoked)
     '20210113A',  # checked APs; undecided about fastevents
     '20210113B',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
-    '20210113C',  #
-    '20210113D',  #
-    '20210113E',
-    '20210113F',  #
+    '20210113C',  # checked APs; checked fastevents; checked neatevents
+    '20210113D',  # checked APs; checked fastevents; checked neatevents
+    '20210113E',  # checked APs; no fastevents; no neatevents (APs from pre-potential w/o fastevents alone present)
+    '20210113F',  # checked APs; no fastevents; no neatevents (APs are light-evoked)
     '20210113G',  # checked APs; checked fastevents; checked neatevents
     '20210113H',  # checked APs; checked fastevents; checked neatevents (very nice example for evoking 2 different amplitude fastevents (and an AP from the largest one))
-    '20210123B',  #
-    '20210123D',  #
+    '20210123B',  # checked APs; checked fastevents; no neatevents
+    '20210123D',  # checked APs; checked fastevents; checked neatevents
     '20210124A',  # checked APs; checked fastevents; checked neatevents
     '20210124B',  # checked APs; checked fastevents; checked neatevents
-    '20210124C',
-    '20210124D',
+    '20210124C',  # checked APs; checked fastevents; no neatevents
+    '20210124D',  # checked APs; no fastevents; no neatevents (one spont.AP occurring under leaky conditions).
     '20210203A',  #
     '20210203B',  #
     '20210203C',
@@ -173,7 +173,7 @@ dataset_neuronrecordings_list = [
 ]
 
 # lists as of Sunday morning 20220508
-hasno_depolevents_extracted_list = ['20210110B', '20210110C', '20210110D', '20210110E', '20210110F', '20210113A', '20210113B', '20210113C', '20210113D', '20210113E', '20210113F', '20210123B', '20210123D', '20210124C', '20210124D', '20210203A', '20210203B', '20210203C', '20210407C', '20210411A', '20210411B', '20210411C', '20210413A', '20210426B', '20210426C', '20210426E', '20210429B']
+hasno_depolevents_extracted_list = ['20210113D', '20210113E', '20210113F', '20210123B', '20210123D', '20210124C', '20210124D', '20210203A', '20210203B', '20210203C', '20210407C', '20210411A', '20210411B', '20210411C', '20210413A', '20210426B', '20210426C', '20210426E', '20210429B']
 hasno_lightactivations_list = ['20190527B', '20190529A2', '20200706A', '20200708A', '20200708E', '20210110B', '20210113E', '20210407C', '20210411C']
 has_spontAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529D', '20200630B1', '20200630C', '20200701A', '20200706A', '20200706B', '20200706E', '20200708A', '20200708B', '20200708C', '20200708D', '20200708E', '20200708F', '20200818C', '20201124C', '20201125B', '20201125D', '20201125F', '20210105A', '20210105B', '20210105D', '20210110A', '20210113G', '20210113H', '20210124A', '20210413B', '20210426D']
 has_fastevents_list = ['20190527A', '20190527B', '20190527C', '20190529A1', '20190529A2', '20190529C', '20190529D', '20200630C', '20200630D', '20200701A', '20200706E', '20200708A', '20200708B', '20200708D', '20200708E', '20200708F', '20200818B', '20201124C', '20201125B', '20201125C', '20201125D', '20201125E', '20210105A', '20210105B', '20210105D', '20210110A', '20210110G', '20210113G', '20210113H', '20210124A', '20210124B', '20210411F', '20210413B', '20210426D']

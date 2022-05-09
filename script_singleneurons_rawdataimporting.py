@@ -2092,7 +2092,7 @@ cell20210124C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # besides spikelets (~1mV amp) and weird noisy-looking things.
 # raw data cleanup:
 # removing seal formation:
-cell20210124C.rawdata_remove_nonrecordingsection('gapFree_0005.abf')
+cell20210124C.rawdata_remove_nonrecordingsection('gapFree_0005.abf', trace_start_t=26)
 # removing the final block where neuron is dead already (depolarized to >-30mV):
 cell20210124C.rawdata_remove_nonrecordingblock('gapFree_0007.abf')
 cell20210124C.write_results()

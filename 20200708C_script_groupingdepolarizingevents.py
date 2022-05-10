@@ -8,15 +8,23 @@ import numpy as np
 neuron_name = '20200708C'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # not too stable recording of a neuron doing nothing spontaneously except keep a wobbly baselineV and one AP;
 # light barely evokes a small (3mV) slow response except once it evokes an AP.
 
+des_df = singleneuron_data.depolarizing_events
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse
+
 # %% plotting light-evoked activity:
 singleneuron_data.plot_rawdatatraces_ttlaligned()
 
+# %% summary plots - all events:
+singleneuron_data.plot_depoleventsgroups_overlayed((aps & spont_events), (aps & ~spont_events),
+                                                   group_labels=['spont', 'light-evoked'],
+                                                   plot_dvdt=True)
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized

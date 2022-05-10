@@ -13,6 +13,19 @@ singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=Fals
 # notes summary:
 # just a single long trace of spontaneous activity with oscs and spont.APs; resting baselineV just below -30mV.
 
+des_df = singleneuron_data.depolarizing_events
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse
+
+# %% summary plots - all events:
+singleneuron_data.plot_depolevents((aps & spont_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' spont aps'
+                                   )
+
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
 #   after each call to write_results, and maybe other things).

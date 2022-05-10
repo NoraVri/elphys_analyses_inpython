@@ -2169,7 +2169,7 @@ cell20210407C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # very dead neuron from the start
 # raw data cleanup:
 # removing all data:
-cell20210407C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20210407C.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
 cell20210407C.write_results()
 # %%
 cell20210411A = SingleNeuron('20210411A')

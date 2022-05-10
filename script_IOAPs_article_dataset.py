@@ -97,38 +97,38 @@ dataset_neuronrecordings_list = [
     '20190527C',  # no APs (!); checked fastevents; no neatevents  - !light may be evoking highly degenerate APs; APs cannot be evoked through DC
     '20190529A1', # checked APs; checked fastevents; checked neatevents
     '20190529A2', # checked APs; checked fastevents; no neatevents
-    '20190529B',  # checked APs; no fastevents; checked neatevents
+    '20190529B',  # checked APs; no fastevents; checked neatevents (APs are lightevoked)
     '20190529C',  # no APs; checked fastevents; no neatevents
     '20190529D',  # checked APs; checked fastevents; no neatevents
-    '20190529E',  # checked APs; no fastevents; no neatevents
-    '20200630A',  # checked APs; no fastevents; no neatevents
-    '20200630B1', # checked APs; no fastevents; no neatevents
-    '20200630B2', # checked APs; no fastevents
+    '20190529E',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
+    '20200630A',  # checked APs; no fastevents; no neatevents (APs are light-evoked)
+    '20200630B1', # checked APs; no fastevents; no neatevents (the single spont.AP may be from pre-potential)
+    '20200630B2', # checked APs; no fastevents; no neatevents (neat recording but no events; APs are light- or DC-evoked)
     '20200630C',  # checked APs; checked fastevents; checked neatevents
     '20200630D',  # checked APs; checked fastevents; checked neatevents (!)  - !about half of fastevents have an AHP that looks like it comes from the network - not sure if averaging is fair, even though they do all look 'neat'
     '20200701A',  # checked APs; checked fastevents; checked neatevents
-    '20200701B',  # no APs; not sure about fastevents; no neatevents
+    '20200701B',  # no APs; checked fastevents; no neatevents
     '20200701D',  # no APs; no fastevents; no neatevents
-    '20200706A',  # checked APs; no fastevents; no neatevents
-    '20200706B',  # undecided about APs; checked fastevents;
+    '20200706A',  # checked APs; no fastevents; no neatevents (spont.APs all from pre-potential; resting baselineV >-40mV throughout)
+    '20200706B',  #! checked APs; checked fastevents; checked neatevents  - !may need to exclude non-neat data (including light response)
     '20200706D',  # no APs; no fastevents; no neatevents
-    '20200706E',  # checked APs; checked fastevents; not sure about neatevents
-    '20200707E',  # checked APs; no fastevents; no neatevents
+    '20200706E',  # checked APs; checked fastevents; not sure about neatevents !1mM Ca in slicing solution that day; ambiguous effect on recordings
+    '20200707E',  # checked APs; no fastevents; no neatevents (APs are light- or DC-evoked)
     '20200708A',  # checked APs; checked fastevents; no neatevents
     '20200708B',  # checked APs; checked fastevents; checked neatevents
-    '20200708C',  # checked APs; no fastevents; no neatevents
+    '20200708C',  # checked APs; no fastevents; no neatevents (one each of spont. and light-evoked AP, both without pre-potential)
     '20200708D',  # checked APs; checked fastevents; checked neatevents
     '20200708E',  # checked APs; checked fastevents; checked neatevents (just 2 min. of recording but what there is of it is very neat and has spont.activity)
     '20200708F',  # checked APs; checked fastevents; checked neatevents
     '20200708G',  # no APs; no fastevents; no neatevents
     '20200818B',  # checked APs; checked fastevents; checked neatevents
-    '20200818C',  # checked APs; no fastevents; no neatevents
+    '20200818C',  # checked APs; no fastevents; no neatevents (APs are spont and both have pre-potential)
     '20201124C',  # checked APs; checked fastevents; no neatevents
     '20201125B',  # checked APs; checked fastevents; checked neatevents
     '20201125C',  # checked APs; checked fastevents; checked neatevents
     '20201125D',  # checked APs; checked fastevents; checked neatevents
     '20201125E',  # checked APs; checked fastevents; no neatevents
-    '20201125F',  # undecided about APs and fastevents
+    '20201125F', # undecided about APs and fastevents
     '20210105A',  # checked APs; checked fastevents; no neatevents
     '20210105B',  # checked APs; checked fastevents; no neatevents
     '20210105C',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
@@ -141,7 +141,7 @@ dataset_neuronrecordings_list = [
     '20210110E',  # checked APs; checked fastevents; checked neatevents
     '20210110F',  # checked APs; checked fastevents; no neatevents
     '20210110G',  # checked APs; checked fastevents; checked neatevents (only three spont.subthreshold events; APs only current-evoked)
-    '20210113A',  # checked APs; undecided about fastevents
+    '20210113A', # checked APs; undecided about fastevents
     '20210113B',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
     '20210113C',  # checked APs; checked fastevents; checked neatevents
     '20210113D',  # checked APs; checked fastevents; checked neatevents
@@ -154,26 +154,25 @@ dataset_neuronrecordings_list = [
     '20210124A',  # checked APs; checked fastevents; checked neatevents
     '20210124B',  # checked APs; checked fastevents; checked neatevents
     '20210124C',  # checked APs; checked fastevents; no neatevents
-    '20210124D',  # checked APs; no fastevents; no neatevents (one spont.AP occurring under leaky conditions).
-    '20210203A',  #
-    '20210203B',  #
-    '20210203C',
-    '20210407C',
-    '20210411A',  #
-    '20210411B',  #
-    '20210411C',  #
+    '20210124D',  # checked APs; no fastevents; no neatevents (the one spont.AP occurs under leaky conditions).
+    '20210203A',  # checked APs; no fastevents; no neatevents (the one spont.AP doesn't seem to have a fastevent-prepotential)
+    '20210203B',  # checked APs; checked fastevents; checked neatevents
+    '20210203C',  # checked APs; checked fastevents; checked neatevents
+    '20210411A', # no APs; undecided about fastevents; no neatevents
+    '20210411B',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
+    '20210411C',  # checked APs; checked fastevents; no neatevents
     '20210411F',  # no APs; checked fastevents; no neatevents
-    '20210413A',  #
+    '20210413A',  # checked AP; checked fastevent; no neatevents
     '20210413B',  # checked APs; checked fastevents; no neatevents
-    '20210426B',  #
-    '20210426C',  #
+    '20210426B',  # checked APs; checked fastevents; no neatevents
+    '20210426C',  # checked APs; checked fastevents; no neatevents
     '20210426D',  # checked APs; checked fastevents; checked neatevents (spont.APs are very weirdly degenerate, as though no Na-component [while fastevents persist...])
-    '20210426E',  #
-    '20210429B'   #
+    '20210426E',  # checked APs; no fastevents; no neatevents (APs are DC-evoked)
+    '20210429B'   # no APs; no fastevents; no neatevents
 ]
 
 # lists as of Sunday morning 20220508
-hasno_depolevents_extracted_list = ['20210113D', '20210113E', '20210113F', '20210123B', '20210123D', '20210124C', '20210124D', '20210203A', '20210203B', '20210203C', '20210407C', '20210411A', '20210411B', '20210411C', '20210413A', '20210426B', '20210426C', '20210426E', '20210429B']
+hasno_depolevents_extracted_list = ['20210411A', '20210411B', '20210411C', '20210413A', '20210426B', '20210426C', '20210426E', '20210429B']
 hasno_lightactivations_list = ['20190527B', '20190529A2', '20200706A', '20200708A', '20200708E', '20210110B', '20210113E', '20210407C', '20210411C']
 has_spontAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529D', '20200630B1', '20200630C', '20200701A', '20200706A', '20200706B', '20200706E', '20200708A', '20200708B', '20200708C', '20200708D', '20200708E', '20200708F', '20200818C', '20201124C', '20201125B', '20201125D', '20201125F', '20210105A', '20210105B', '20210105D', '20210110A', '20210113G', '20210113H', '20210124A', '20210413B', '20210426D']
 has_fastevents_list = ['20190527A', '20190527B', '20190527C', '20190529A1', '20190529A2', '20190529C', '20190529D', '20200630C', '20200630D', '20200701A', '20200706E', '20200708A', '20200708B', '20200708D', '20200708E', '20200708F', '20200818B', '20201124C', '20201125B', '20201125C', '20201125D', '20201125E', '20210105A', '20210105B', '20210105D', '20210110A', '20210110G', '20210113G', '20210113H', '20210124A', '20210124B', '20210411F', '20210413B', '20210426D']

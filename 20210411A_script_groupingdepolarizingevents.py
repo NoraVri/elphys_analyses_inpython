@@ -5,20 +5,18 @@ import quantities as pq
 import pandas as pd
 import numpy as np
 
-neuron_name = '20201125F'
+neuron_name = '20210411A'
 singleneuron_data = SingleNeuron(neuron_name)
 
 singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# this neuron has some strange events - perhaps AIS getting activated alone? However, it doesn't ever actually fire a full AP...
-# Not a great recording, has some 50Hz and other problems.
+# neuron very steady in terms of keeping baselineV and doing wacky oscillations; not seeing much of anything else though
+# (also no response to light). Notes say had to break in with buzz because kiss wouldn't work.
+
 
 # %% plotting light-evoked activity:
-singleneuron_data.plot_rawdatatraces_ttlaligned()
-# !!notes say first few segments of light file are with continuous illumination (light accidentally turned on while changing protocols)
-
-
+singleneuron_data.plot_rawdatatraces_ttlaligned(prettl_t_inms=300, postttl_t_inms=500)
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -42,13 +40,13 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 #     singleneuron_data.plot_rawdatablocks(*blocknames,
 #                                          events_to_mark=events,
 #                                          segments_overlayed=False)
-# things that got labeled as aps_oncurrentpulsechange aren't in fact APs, just places where V gets driven >> 0mV
-# (with just 250pA +DC). Labeling them as such:
+# # none of the aps_oncurrentpulsechange are actually that: V gets driven well >0mV and there are some ap-like things
+# # riding the depolarizations occasionally, but no real APs. Labeling them all as currentpulsechange:
 # singleneuron_data.depolarizing_events.loc[aps_oncurrentpulsechange, 'event_label'] = 'currentpulsechange'
+# # also spont.APs aren't actually that, but noise-things riding the +DC pulses. Re-labeling them, too:
+# singleneuron_data.depolarizing_events.loc[aps_spont, 'event_label'] = 'currentpulsechange'
 # singleneuron_data.write_results()
-# The events that got labeled as spont.APs are indeed that, though they seem to be lacking the fast Na-peak and
-# because of that have gotten bad baseline-points. Also, not all events that could be classified as such got labeled
-# automatically (I think - we'll have to see in the rest of picked up events).
+# no light-evoked APs in this neuron.
 # %% plots and analyses: seeing and labeling subthreshold depolarizing events
 des_df = singleneuron_data.depolarizing_events
 nbins = 100
@@ -56,7 +54,7 @@ nbins = 100
 evoked_events = des_df.applied_ttlpulse
 # singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
-# far from all light responses got picked up, and those that did have bad baselineV points. I did not see anyting labeled that shouldn't be.
+# no events labeled; not surprising given that there is no response to light.
 
 # Seeing that spontaneous fast-events got picked up:
 spont_events = ~des_df.applied_ttlpulse
@@ -64,26 +62,28 @@ unlabeled_events = des_df.event_label.isna() # all events that were not automati
 unlabeled_spont_events = (spont_events & unlabeled_events)
 singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
 # notes:
-# well that's not great - as few events as there are altogether, in each file there are things to fix.
-# In gapFree_0000, the peaks that got picked up with baselineV > -20mV are APs just like the ones that got labeled
-# as such automatically; I'll apply that label to these as well:
-# aps = (unlabeled_spont_events & (des_df.baselinev > -25))
-# singleneuron_data.depolarizing_events.loc[aps, 'event_label'] = 'actionpotential'
-# and the thing that has negative amplitude is a badly picked up currentpulsechange:
-# currentpulsechange = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0000.abf') & (des_df.amplitude < 0))
-# singleneuron_data.depolarizing_events.loc[currentpulsechange, 'event_label'] = 'currentpulsechange'
-# In gapFree_0001 the event with low baselinev is a currentpulsechange:
-# currentpulsechange = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0001.abf') & (des_df.baselinev < -60))
-# singleneuron_data.depolarizing_events.loc[currentpulsechange, 'event_label'] = 'currentpulsechange'
-# In light_0000 we have another thing with negative amplitude that is a badly labeled currentpulsechange:
-# currentpulsechange = (unlabeled_spont_events & (des_df.file_origin == 'light_0000.abf') & (des_df.amplitude < 0))
-# singleneuron_data.depolarizing_events.loc[currentpulsechange, 'event_label'] = 'currentpulsechange'
-# and the two larger-amp things are in fact light responses:
-# lightresponses = (unlabeled_spont_events & (des_df.file_origin == 'light_0000.abf') & (des_df.amplitude > 5))
-# singleneuron_data.depolarizing_events.loc[lightresponses, 'applied_ttlpulse'] = True
+# lots of cleanup to do here - mostly currentpulsechanges that didn't get labeled right, occasionally
+# osc peaks that got picked up as events.
+# In gapFree_0001, towards the end of the trace currentpulsechanges didn't get labeled right:
+# currentpulse_events = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0001.abf')
+#                        & (des_df.peakv_idx > (20000 * 50)))
+# # in gapFree_0007 it's all just noise-things and osc peaks (they get real steep when neuron is far hyperpolarized)
+# noiseevents = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0007.abf'))
+# # in gapFree_0008 there's another currentpulse-change that didn't get labeled right
+# currentpulse_event2 = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0008.abf'))
+# # in file gapFree_0009 some more currentpulsechanges in the first bit of the recording
+# currentpulse_events3 = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0009.abf')
+#                         & (des_df.peakv_idx < (20000 * 60)))
+# # and in file gapFree_0000 it's all currentpulsechanges except for two events towards the middle of the recording
+# # (one of which has a bad baselineV point)
+# currentpulse_events4 = (unlabeled_spont_events & (des_df.file_origin == 'gapFree_0000.abf')
+#                         & ~((des_df.peakv_idx > (20000*145)) & (des_df.peakv_idx < (20000*165))))
+# all_currentpulse_events = (currentpulse_events | currentpulse_event2 | currentpulse_events3 | currentpulse_events4)
+# singleneuron_data.depolarizing_events.loc[all_currentpulse_events, 'event_label'] = 'currentpulsechange'
+# singleneuron_data.depolarizing_events.loc[noiseevents, 'event_label'] = 'noiseevent'
 # singleneuron_data.write_results()
 
-# Now let's see the remaining events:
+# Now let's see what we're left with:
 # plotting all as-yet unlabeled events parameters:
 des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
                                  bins=nbins,
@@ -101,10 +101,20 @@ singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvd
                                                       cmeasure='amplitude',
                                                       unlabeled_spont_events=unlabeled_spont_events,
                                                       )
-singleneuron_data.plot_depolevents(unlabeled_spont_events,
+
+events_underinvestigation = (unlabeled_spont_events) # & (des_df.))
+singleneuron_data.plot_depolevents(events_underinvestigation,
                                    colorby_measure='baselinev',
-                                   plotwindow_inms=35,
+                                   plotwindow_inms=15,
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plot_dvdt=True
                                    )
+
+# Well I'm not too sure what to do with those - they practically all look different, but they're all large amp with pretty fast rise-time.
+events = unlabeled_spont_events
+blocknames = des_df[events].file_origin.unique()
+if len(blocknames) > 0:
+    singleneuron_data.plot_rawdatablocks(*blocknames,
+                                         events_to_mark=events,
+                                         segments_overlayed=False)

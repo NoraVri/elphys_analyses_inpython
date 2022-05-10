@@ -50,12 +50,13 @@ des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
                                 bins=nbins)
 plt.suptitle('aps parameter distributions')
 
-singleneuron_data.plot_depolevents((aps & spont_events),
+singleneuron_data.plot_depolevents((aps & ~spont_events),
                                    colorby_measure='baselinev',
                                    plotwindow_inms=15,
                                    do_baselining=True,
                                    # do_normalizing=True,
-                                   plot_dvdt=True
+                                   plot_dvdt=True,
+                                   plt_title='light-evoked APs'
                                    )
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,

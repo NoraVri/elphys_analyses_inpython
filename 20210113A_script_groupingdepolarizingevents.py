@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20210113A'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # not a great recording: baselineV rather unsteady at times, kinda noisy all around, and includes some very
@@ -56,7 +56,7 @@ evoked_events = des_df.applied_ttlpulse
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 unlabeled_spont_events = (spont_events & unlabeled_events)
-# singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
+singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
 # notes:
 # some cleanup to do -
 # in gapFree_0000, the start of one of those hyperolarizing events got picked up as an event with no amplitude and
@@ -72,7 +72,8 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 events_underinvestigation = (unlabeled_spont_events ) #& (des_df.))
 singleneuron_data.plot_depolevents(events_underinvestigation,
                                    colorby_measure='baselinev',
-                                   plotwindow_inms=15,
+                                   prealignpoint_window_inms=15,
+                                   plotwindow_inms=50,
                                    do_baselining=True,
                                    # do_normalizing=True,
                                    plot_dvdt=True

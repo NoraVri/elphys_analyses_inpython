@@ -5,16 +5,30 @@ import quantities as pq
 import pandas as pd
 import numpy as np
 
-neuron_name = '20200701B'
+neuron_name = '20210426B'
 singleneuron_data = SingleNeuron(neuron_name)
 
-# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# not the greatest recording, but has some spont.fastevents and nice light responses; no APs whatsoever.
+# not the greatest recording: resting baselineV just below -30mV, and neuron dies altogether
+# after just 7 light pulses - but 6 of those evoke an AP and one a fastevent.
 
-# %% plotting light-evoked activity:
+des_df = singleneuron_data.depolarizing_events
+fastevents = des_df.event_label == 'fastevent'
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  #
+unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+
+# %% plotting light-evoked activity
 singleneuron_data.plot_rawdatatraces_ttlaligned()
+
+
+# %% summary plots - all events:
+# the main events-groups, overlayed (aps, fastevents)
+singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents,
+                                                   group_labels=['aps', 'fastevents'],
+                                                   plot_dvdt=True)
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -22,9 +36,8 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # %% extracting depolarizing events
 # notes:
 # extracting with default parameter settings except min_depolamp=2 and ttleffect_window=15
-# re-running with min_depolamp = 1, because I see a recurring spont.event of ~1mV that stands out very clearly
 
-# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=1, ttleffect_window=15)
+# singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=2, ttleffect_window=15)
 # singleneuron_data.write_results()
 
 # %% plots and analyses: labeling actionpotentials
@@ -39,7 +52,14 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 #     singleneuron_data.plot_rawdatablocks(*blocknames,
 #                                          events_to_mark=events,
 #                                          segments_overlayed=False)
-# not a single AP of any kind recorded in this neuron (no DC pulses to see spiking applied).
+# the first ap_oncurrentpulse is in fact spont, it occurs just before application of a -DC pulse
+# singleneuron_data.depolarizing_events.loc[(aps_oncurrentpulsechange & (des_df.peakv_idx < (20000*25))),
+#                                           'event_label'] = 'actionpotential'
+# and the aps_spont group contains two that are in fact very much evoked by the +DC pulse they're riding:
+# singleneuron_data.depolarizing_events.loc[(aps_spont
+#                                            & (des_df.peakv_idx > (20000*111)) & (des_df.peakv_idx < (20000*126))),
+#                                           'event_label'] = 'actionpotential_on_currentpulsechange'
+# singleneuron_data.write_results()
 # %% plots and analyses: seeing and labeling subthreshold depolarizing events
 # des_df = singleneuron_data.depolarizing_events
 # nbins = 100
@@ -47,9 +67,7 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # evoked_events = des_df.applied_ttlpulse
 # singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
-# Looks like all evoked responses got picked up as such very nicely; definitely nothing
-# that is in fact spont. got labeled as evoked.
-# (This neuron also has some blocks recorded in voltage clamp; nothing got picked up in those).
+# light-evoked events all got picked up nicely; nothing that isn't evoked got labeled
 
 # Seeing that spontaneous fast-events got picked up:
 # spont_events = ~des_df.applied_ttlpulse
@@ -57,12 +75,12 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # unlabeled_spont_events = (spont_events & unlabeled_events)
 # singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
 # notes:
-# there's definitely spont. depolarizing events in this recording, but the largest one has amp barely over 2mV; I'll
-# run the extraction again to catch also some smaller ones (I did also see a few with amp ~0.5mV, but at that amp
-# they're very likely to be too noisy to tell whether they're spikelets or fastevents so I'll leave those be for now)
-# Seems like all things that got picked up are indeed events, no noise-things seen.
+# all things that look like real events got picked up, as well as two noise-things riding the bottom
+# of hyperpolarizing current pulses. Labeling as such:
+# noiseevents = (unlabeled_spont_events & (des_df.baselinev < -70))
+# singleneuron_data.depolarizing_events.loc[noiseevents, 'event_label'] = 'noiseevent'
+# singleneuron_data.write_results()
 
-# Finding and labeling fast-events (and other types of events encountered along the way):
 # plotting all as-yet unlabeled events parameters:
 # des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
 #                                  bins=nbins,
@@ -80,24 +98,17 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 #                                                       cmeasure='amplitude',
 #                                                       unlabeled_spont_events=unlabeled_spont_events,
 #                                                       )
-
-# events_underinvestigation = (unlabeled_spont_events)
-# singleneuron_data.plot_depolevents(events_underinvestigation,
+#
+# singleneuron_data.plot_depolevents(unlabeled_spont_events,
 #                                    colorby_measure='baselinev',
 #                                    plotwindow_inms=15,
 #                                    do_baselining=True,
 #                                    # do_normalizing=True,
 #                                    plot_dvdt=True
 #                                    )
-# the spont.events all have amp <3mV, and from looking at rise-time and maxdvdt scatter I'd say there's two groups:
-# the smallest-amp events (up to 1.75mV) are single fastevents, the larger ones are compound. Labeling as such:
-# singleneuron_data.depolarizing_events.loc[(unlabeled_spont_events & (des_df.amplitude < 1.75)),
-#                                           'event_label'] = 'fastevent'
-# singleneuron_data.depolarizing_events.loc[(unlabeled_spont_events & (des_df.amplitude > 1.75)),
-#                                           'event_label'] = 'compound_event'
+# I see no reason why these wouldn't all be fastevents: amps 5 - 8mV, rise-time < 1.2ms for all.
+# singleneuron_data.depolarizing_events.loc[unlabeled_spont_events, 'event_label'] = 'fastevent'
 # singleneuron_data.write_results()
-
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# definitely not marking neat events for this neuron: has bad baselineV throughout, and I'm not even sure
-# whether events are spikelets or fastevents.
+# noisy recording with very unsteady baselineV and AP amp; I see no reason to include it in neat-events.

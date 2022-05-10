@@ -14,9 +14,22 @@ singleneuron_data = SingleNeuron(neuron_name)
 # not exactly a great recording: resting baselineV > -40mV on break-in, restores itself a little for about 5 minutes
 # but then loses potential again (as well as ability to make APs). Light elicited no response at all.
 
+des_df = singleneuron_data.depolarizing_events
+fastevents = des_df.event_label == 'fastevent'
+aps = des_df.event_label == 'actionpotential'
+aps_evokedbyDC = des_df.event_label == 'actionpotential_on_currentpulsechange'
+spont_events = ~des_df.applied_ttlpulse  #
+unlabeled_events = des_df.event_label.isna()  # all events that were not given a label
+unlabeled_spontevents = (spont_events & unlabeled_events)
 
 # %% plotting light-evoked activity
 singleneuron_data.plot_rawdatatraces_ttlaligned()
+
+# %% summary plots - all events:
+# the main events-groups, overlayed (aps, fastevents, compound events)
+singleneuron_data.plot_depoleventsgroups_overlayed(aps, aps_evokedbyDC,
+                                                   group_labels=['spont', 'DC-evoked'],
+                                                   plot_dvdt=True)
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized

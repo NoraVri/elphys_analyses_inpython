@@ -105,6 +105,9 @@ class SingleNeuron:
             # saving recordingblocks index:
             if len(self.recordingblocks_index) > 0:
                 self.recordingblocks_index.to_csv(self.name + '_recordingblocks_index.csv')
+            # saving ttlon-measures:
+            if len(self.ttlon_measures) > 0:
+                self.ttlon_measures.to_csv(self.name + '_ttlon_measures.csv')
 
             print(self.name + ' results have been saved.')
 
@@ -208,6 +211,12 @@ class SingleNeuron:
                         if 'idx' in key:                         # to bypass their being cast to float
                             dtypes_dict[key] = 'Int64'
                     self.depolarizing_events = self.depolarizing_events.astype(dtypes_dict)
+
+                if 'recordingblocks_index' in path:
+                    self.recordingblocks_index = pd.read_csv(path, index_col=0)
+
+                if 'ttlon_measures' in path:
+                    self.ttlon_measures = pd.read_csv(path, index_col=0)
 
         # applying raw data cleanup
         if self.rawdata_readingnotes.get('nonrecordingchannels'):
@@ -480,6 +489,7 @@ class SingleNeuron:
                                       newplot_per_ttlduration=False,
                                       newplot_per_ttlintensity=False,
                                       plt_title='',
+                                      noisefilter_hpfreq='default',
                                       **kwargs):
 
         """
@@ -505,6 +515,12 @@ class SingleNeuron:
             self.get_ttlonmeasures_fromrawdata()
         if self.ttlon_measures.empty:
             return
+        # updating noisefilter_hpfreq if set to 'default' but value for get_depolarizingevents is different from standard default
+        if noisefilter_hpfreq == 'default' and\
+                self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            noisefilter_hpfreq = self.rawdata_readingnotes['getdepolarizingevents_settings']['noisefilter_hpfreq']
+        elif not isinstance(noisefilter_hpfreq, int):
+            noisefilter_hpfreq = 3000
 
         # getting the list of blocks to plot
         allblocksnames_list = self.get_blocknames(printing='off')
@@ -522,7 +538,7 @@ class SingleNeuron:
         # plotting
         if newplot_per_block:
             for block in blocks_list:
-                figure, _ = plots.plot_ttlaligned([block], self.ttlon_measures, **kwargs)
+                figure, _ = plots.plot_ttlaligned([block], self.ttlon_measures, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
                 figure.suptitle(self.name + ' block ' + block.file_origin)
         if newplot_per_ttlduration:
             ttldurations = self.ttlon_measures.ttlon_duration_inms.unique()
@@ -531,12 +547,12 @@ class SingleNeuron:
                     (self.ttlon_measures.ttlon_duration_inms == duration)].file_origin.unique()
                 identicalduration_blocks = [block for block in blocks_list
                                             if block.file_origin in identicaldurationblocks_names]
-                figure, axes = plots.plot_ttlaligned(identicalduration_blocks, self.ttlon_measures, **kwargs)
+                figure, axes = plots.plot_ttlaligned(identicalduration_blocks, self.ttlon_measures, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
                 figure.suptitle(str(len(identicalduration_blocks)) + ' blocks with identical ttl-on time, cell ' + self.name)
                 print(identicaldurationblocks_names)
                 print('ttl on duration: ' + str(duration) + ' ms')
         else:
-            figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, **kwargs)
+            figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
             figure.suptitle(plt_title + '; ' + str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)
             return figure, axes
 
@@ -1053,16 +1069,20 @@ class SingleNeuron:
         # kwargs:
         # ttlhigh_value=1; sets the binary cutoff value for measuring ttl low/high
         # response_window_inms=20; time window since ttl on in which response max amp is calculated
+        if self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            noisefilter_hpfreq = self.rawdata_readingnotes['getdepolarizingevents_settings']['noisefilter_hpfreq']
+        else:
+            noisefilter_hpfreq = 3000
         all_ttlonmeasures_dictionary = snafs.make_ttlonmeasures_dictionary()
         for block in self.blocks:
-            ttlon_measures_dictionary = snafs.get_ttlresponse_measures(block, **kwargs)
+            ttlon_measures_dictionary = snafs.get_ttlresponse_measures(block, noisefilter_hpfreq, **kwargs)
             if ttlon_measures_dictionary is not None:
                 for key in all_ttlonmeasures_dictionary.keys():
                     all_ttlonmeasures_dictionary[key] += ttlon_measures_dictionary[key]
         # converting the results to a DataFrame and attaching to the class instance
         ttlon_measures = pd.DataFrame(all_ttlonmeasures_dictionary).round(decimals=2)
         dtypes_dict = {}
-        for key in ttlon_measures.keys():  # converting columns containing idcs and missing values
+        for key in ttlon_measures.keys():  # converting columns containing idcs & missing values
             if 'idx' in key:                         # to bypass their being cast to float
                 dtypes_dict[key] = 'Int64'
         self.ttlon_measures = ttlon_measures.astype(dtypes_dict)

@@ -102,6 +102,9 @@ class SingleNeuron:
             # saving depolarizingevents table:
             if len(self.depolarizing_events) > 0:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
+            # saving recordingblocks index:
+            if len(self.recordingblocks_index) > 0:
+                self.recordingblocks_index.to_csv(self.name + '_recordingblocks_index.csv')
 
             print(self.name + ' results have been saved.')
 
@@ -389,6 +392,16 @@ class SingleNeuron:
 
 # %% functions for plotting/seeing stuff
 
+
+    def get_recordingblocks_index(self):
+        all_blocks_infos_dict = snafs.make_recordings_index_dictionary()
+        for block in self.blocks:
+            block_infos_dict = snafs.fill_singleneuron_recordings_index_dictionary(block)
+            # for key in all_eventsmeasures_dictionary:
+            #     all_eventsmeasures_dictionary[key] += segment_eventmeasuresdict[key]
+            for key in all_blocks_infos_dict:
+                all_blocks_infos_dict[key] += block_infos_dict[key]
+        self.recordingblocks_index = pd.DataFrame(all_blocks_infos_dict).round(decimals=2)
 
     # getting a list of all block names
     def get_blocknames(self, printing='on'):

@@ -15,6 +15,47 @@ import pandas as pd
 from scipy import signal
 import quantities as pq
 
+# %% index of recording files
+
+# getting info on a recording block in dictionary format
+def fill_singleneuron_recordings_index_dictionary(block):
+    """This function creates an 'empty' dictionary with
+    a key for each measure that will be taken for each ttlon-trace. """
+    recordingblock_infos_dict = make_recordings_index_dictionary()
+    if block.segments[0].analogsignals[0].units == pq.mV:
+        ccrecording = True
+    else:
+        ccrecording = False
+
+    if len(block.segments[0].analogsignals) == 3:
+        ttl = True
+    else:
+        ttl = False
+
+    time_count = 0 * pq.s
+    for segment in block.segments:
+        time_count += (segment.t_stop - segment.t_start)
+
+    recordingblock_infos_dict['file_origin'].append(block.file_origin)
+    recordingblock_infos_dict['n_segments'].append(len(block.segments))
+    recordingblock_infos_dict['sampling_freq_inHz'].append(int(block.segments[0].analogsignals[0].sampling_rate))
+    recordingblock_infos_dict['t_recorded_ins'].append(float(time_count))
+    recordingblock_infos_dict['cc_recording'].append(ccrecording)
+    recordingblock_infos_dict['ttl_record'].append(ttl)
+
+    return recordingblock_infos_dict
+
+def make_recordings_index_dictionary():
+    recordingblock_infos = {
+        'file_origin': [],
+        'n_segments': [],
+        'sampling_freq_inHz': [],
+        't_recorded_ins': [],
+        'cc_recording': [],
+        'ttl_record': []
+    }
+    return recordingblock_infos
+
 # %% depolarizing events
 
 
@@ -817,7 +858,7 @@ def descend_trace_until(tracesnippet, stop_value):
 
 # function for calculating measures related to ttl-evoked activity:
 # return a dictionary with information related to TTL-evoked activity.
-def get_ttlresponse_measures(block, ttlhigh_value=1, response_window_inms=20):
+def get_ttlresponse_measures(block, ttlhigh_value=1, response_window_inms=20,):
     """
     This function takes as input a single block; it checks whether the block has a ttl-recording,
     and if so it will determine where ttl is high, and add start_idx, end_idx and duration into a dictionary.
@@ -839,9 +880,18 @@ def get_ttlresponse_measures(block, ttlhigh_value=1, response_window_inms=20):
                 if segment.analogsignals[0].units == pq.mV:
                     voltage_recording = np.array(np.squeeze(segment.analogsignals[0]))
                     current_recording = np.array(np.squeeze(segment.analogsignals[1]))
+                    # filtering v same as for event-detection
+
+                    # voltage_oscillationstrace, voltage_noisetrace = apply_filters_to_vtrace(voltage_recording,
+                    #                                                                         oscfilter_lpfreq,
+                    #                                                                         noisefilter_hpfreq,
+                    #                                                                         float(
+                    #                                                                             single_voltage_trace.sampling_rate.rescale(
+                    #                                                                                 'Hz')),
+                    #                                                                         plot)
                     # getting baselinev: mean v in the ms before ttl on
                     baselinev = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
-                    # getting response max amp: max v (until ttloff+20ms) - baselinev
+                    # getting response max amp: max v (until ttloff+response window) - baselinev
                     maxv = np.max(voltage_recording[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
                     response_maxamp = maxv - baselinev
                     # getting applied current: mean, and max-min in [ms before ttl on : ttl off]

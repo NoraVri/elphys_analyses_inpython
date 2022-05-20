@@ -179,7 +179,8 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
                       get_measures_type='raw', display_measures=False,
                       do_baselining=True, do_normalizing=False,
                       linecolor='blue', label=None,
-                      dvdtaxis_object=None):
+                      dvdtaxis_object=None,
+                      ddvdtaxis_object=None):
     """ This function takes as inputs:
     required arguments:
     - a vtrace as np.array. By default it should be the raw vtrace, but if event-detect measures
@@ -234,6 +235,13 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
                              color=linecolor)
         dvdtaxis_object.set_ylabel('dV/dt')
         dvdtaxis_object.set_xlabel('V')
+        # optional: plotting ddV/dt vs V onto another axis object
+        if ddvdtaxis_object is not None:
+            ddiff_event_trace = np.diff(diff_event_trace)
+            ddvdtaxis_object.plot(event_trace[:-2:], ddiff_event_trace,
+                                  color=linecolor)
+            ddvdtaxis_object.set_ylabel('ddV/dt')
+            ddvdtaxis_object.set_xlabel('V')
 
     # optional: adding scatterpoints and/or horizontal lines to mark measures where relevant:
     if display_measures and not eventmeasures_series.empty:
@@ -263,6 +271,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                             prealignpoint_window_inms=5,
                             axis_object=None, newplot_per_event=False,
                             plot_dvdt=False, dvdt_axis_object=None,
+                            plot_ddvdt=False, ddvdt_axis_object=None,
                             **kwargs):
     """ This function as inputs:
     Required arguments:
@@ -307,6 +316,7 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
     #
     axis = axis_object
     dvdt_axis = dvdt_axis_object
+    ddvdt_axis = ddvdt_axis_object
 
     # getting the individual segments from the block
     segments_for_plotting_idcs = list(set(block_eventsmeasures['segment_idx']))
@@ -334,7 +344,12 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
             plot_startidx = (eventmeasures[timealignto_measure]
                              - int(prealignpoint_window_inms / sampling_period_inms))
             # setting up axes to plot on, if relevant
-            if newplot_per_event and plot_dvdt:
+            if newplot_per_event and plot_dvdt and plot_ddvdt:
+                figure, axes = plt.subplots(1, 3, squeeze=True)
+                axis = axes[0]
+                dvdt_axis = axes[1]
+                ddvdt_axis = axes[2]
+            elif newplot_per_event and plot_dvdt:
                 figure, axes = plt.subplots(1, 2, squeeze=True)
                 axis = axes[0]
                 dvdt_axis = axes[1]
@@ -349,12 +364,14 @@ def plot_singleblock_events(rawdata_block, block_eventsmeasures, getdepolarizing
                                   eventmeasures_series=eventmeasures,
                                   linecolor=linecolor,
                                   dvdtaxis_object=dvdt_axis,
+                                  ddvdtaxis_object=ddvdt_axis,
                                   **kwargs)
             else:
                 plot_single_event(vtrace, sampling_period_inms, axis,
                                   plot_startidx,
                                   eventmeasures_series=eventmeasures,
                                   dvdtaxis_object=dvdt_axis,
+                                  ddvdtaxis_object=ddvdt_axis,
                                   **kwargs)
 
 

@@ -561,7 +561,7 @@ class SingleNeuron:
                          newplot_per_block=False, newplot_per_event=False,
                          colorby_measure='', color_lims=None, colormap='viridis',
                          plt_title='',
-                         plot_dvdt=True,
+                         plot_dvdt=True, plot_ddvdt=False,
                          **kwargs):
         """ This function plots overlays of depolarizing events, either all in one plot
         or as one plot per rawdata_block present on the singleneuron class instance.
@@ -615,19 +615,27 @@ class SingleNeuron:
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               newplot_per_event=newplot_per_event,
                                               plot_dvdt=plot_dvdt,
+                                              plot_ddvdt=plot_ddvdt,
                                               **kwargs)
             if 'display_measures' in kwargs.keys() and kwargs['display_measures']:
                 kwargs['display_measures'] = False  # turning it off for the overlayed-lines plot(s) that are made next
 
         if newplot_per_block:
             for block_name in blocks_for_plotting:
-                if plot_dvdt:
+                if plot_dvdt and plot_ddvdt:
+                    figure, axes = plt.subplots(1, 3, squeeze=True)
+                    axis = axes[0]
+                    dvdt_axis = axes[1]
+                    ddvdt_axis = axes[2]
+                elif plot_dvdt:
                     figure, axes = plt.subplots(1, 2, squeeze=True)
                     axis = axes[0]
                     dvdt_axis = axes[1]
+                    ddvdt_axis = None
                 else:
                     figure, axis = plt.subplots(1, 1, squeeze=True)
                     dvdt_axis = None
+                    ddvdt_axis = None
                 figure.suptitle(self.name + block_name + plt_title)
                 rawdata_block = self.blocks[allblocks_nameslist.index(block_name)]
                 block_events = events_for_plotting.loc[events_for_plotting['file_origin'] == block_name]
@@ -640,16 +648,24 @@ class SingleNeuron:
                     colormap=colormap,
                     axis_object=axis,
                     dvdt_axis_object=dvdt_axis,
+                    ddvdt_axis_object=ddvdt_axis,
                     **kwargs)
                 axis.set_title(axis_title)
         else:
-            if plot_dvdt:
+            if plot_dvdt and plot_ddvdt:
+                figure, axes = plt.subplots(1, 3, squeeze=True)
+                axis = axes[0]
+                dvdt_axis = axes[1]
+                ddvdt_axis = axes[2]
+            elif plot_dvdt:
                 figure, axes = plt.subplots(1, 2, squeeze=True)
                 axis = axes[0]
                 dvdt_axis = axes[1]
+                ddvdt_axis = None
             else:
                 figure, axis = plt.subplots(1, 1, squeeze=True)
                 dvdt_axis = None
+                ddvdt_axis = None
             plt.suptitle(self.name + plt_title)
             # (optional) setting color limits for the figure
             if colorby_measure:
@@ -672,13 +688,16 @@ class SingleNeuron:
                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                               axis_object=axis,
                                               dvdt_axis_object=dvdt_axis,
+                                              ddvdt_axis_object=ddvdt_axis,
                                               colorby_measure=colorby_measure,
                                               color_lims=color_lims,
                                               colormap=colormap,
                                               **kwargs)
             axis.set_title(axis_title)
-            if dvdt_axis:
-                return axis, dvdt_axis
+            if dvdt_axis and ddvdt_axis:
+                return axis, dvdt_axis, ddvdt_axis
+            elif dvdt_axis:
+                return  axis, dvdt_axis
             else:
                 return axis
 

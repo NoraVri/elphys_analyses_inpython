@@ -703,6 +703,7 @@ class SingleNeuron:
         - get_measures_type = 'raw' - otherwise, the event-detect traces will be displayed instead of raw v.
         - do_baselining and do_normalizing - if True, uses baselinev and amplitude (raw or event-detect,
             depending on get_measures_type) values to do baselining and/or normalizing, respectively.
+        - plot_dvdt - if True, will make a dVdt/V plot as well.
         """
         color_lims = [0, len(events_groups) - 1]
         colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)

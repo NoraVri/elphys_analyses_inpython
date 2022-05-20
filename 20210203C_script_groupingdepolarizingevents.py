@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20210203C'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # very good-looking recording with steady baselineV and mostly steady AP amp with peakVs > 50mV;

@@ -947,11 +947,12 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.plot_rawdatatraces_ttlaligned(newplot_per_block=True)
 
 # # blocks that are identical in light intensity & spot size:
+# light spot minimal:
 # # 2-3% - _1 and _5
-# # 5% - _0
+# # 5% - _0 and _4
 # # 10% - _2 and _3
 # singleneuron_data.plot_rawdatatraces_ttlaligned('light_0002', 'light_0003')
-# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000')
+# singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000', 'light_0004')
 # singleneuron_data.plot_rawdatatraces_ttlaligned('light_0001', 'light_0005')
 #
 # #wholefield:
@@ -1135,3 +1136,53 @@ for group, label in zip(aps_groups, aps_grouplabels):
     # aps_dvdt_axis.set_ylim([-6, 12.5])
 
 
+# %% plots for publication figures -- MSdraft version3 (APs first), figure1 draft3: spont. and light-evoked APs
+# first panel: spont.activity containing APs (and fastevents, for figure 2)
+figure, axes = singleneuron_data.plot_rawdatablocks('gapFree_0004', events_to_mark=(fastevents | aps))
+axes[0].set_xlim(720000, 840000)
+# axes[0].set_ylim(-60, -40)  # same figure with different y-axis for figure2 panel
+
+# second panel: spont.APs
+# using neat_events to select all events occurring during good, stable recording conditions - 27.6 minutes of continuous recording.
+neat_events = des_df.neat_event
+# APs plots:
+aps_toplot = aps & spont_events & neat_events
+aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(aps_toplot,
+                                   colorby_measure='peakv_idx',  # have colorbar there so that same-scaled axes will actually be the same
+                                   do_baselining=True,
+                                   prealignpoint_window_inms=6,
+                                   plotwindow_inms=19,
+                                   )
+# setting axes limits to be the same as for light-evoked APs panel
+# aps_axis.set_xlim([])
+aps_axis.set_ylim([-1, 100])
+aps_dvdt_axis.set_ylim([-4, 12.5])
+aps_dvdt_axis.set_xlim([-1, 100])
+
+# for inset: rescale axes
+# aps_axis.set_xlim([0, 5.5])
+# aps_axis.set_ylim([-0.5, 11.5])
+# aps_dvdt_axis.set_ylim([-0.15, 0.8])
+# aps_dvdt_axis.set_xlim([-1, 12])
+
+# third panel: light-evoked APs
+# using only light-applied blocks that are included in neatevents (APs lose shoulder and spikeshoulderpeaks later on, may look confusing in the figure otherwise)
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0',
+                                                colorby_measure='response_maxamp',
+                                                color_lims=[90, 100],  # plot only APs for this panel
+                                                prettl_t_inms=1,
+                                                postttl_t_inms=19,
+                                                plotlims=[-1, 100, -4, 12.5]
+                                                )
+# plotting same APs peak-aligned for zooming in on initial rise
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0',
+                                                colorby_measure='response_maxamp',
+                                                color_lims=[90, 100],  # plot only APs for this panel
+                                                prettl_t_inms=-5,
+                                                postttl_t_inms=14, #10.5,  #so that dV/dt traces will include AP rising phase
+                                                plotlims=[-0.5, 11.5, -0.15, 0.8]
+                                                )
+# aps_axis.set_xlim([0, 5.5])
+# aps_axis.set_ylim([-0.5, 11.5])
+# aps_dvdt_axis.set_ylim([-0.15, 0.8])
+# aps_dvdt_axis.set_xlim([-1, 12])

@@ -1,4 +1,6 @@
 # %% imports
+import os
+
 from singleneuron_class import SingleNeuron
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -53,44 +55,44 @@ recordings_lightactive_all = recordings_metadata[(IOneurons_recordings
 # %% analyses step1: getting APs and depolarizing events for all neurons in the dataset.
 # Go to [neuronname]_script_groupingdepolarizingevents to see notes on labeling depolarizing events for each neuron.
 # analyses step1.1: determining which neurons have spont. fastevents and/or APs, and light-evoked events and/or APs.
-hasno_depolevents_extracted_list = []
-hasno_lightactivations_list = []
-has_spontAPs_list = []
-has_DCevokedAPs_list = []
-has_fastevents_list = []
-has_neatevents_list = []
-has_lightresponses_list = []
-has_lightevokedAPs_list = []
+# hasno_depolevents_extracted_list = []
+# hasno_lightactivations_list = []
+# has_spontAPs_list = []
+# has_DCevokedAPs_list = []
+# has_fastevents_list = []
+# has_neatevents_list = []
+# has_lightresponses_list = []
+# has_lightevokedAPs_list = []
 # I don't have any experiments in mice with optogenetically-labeled things where TTl-on is used for anything besides
 # activating the light. So, we can use get_ttlonmeasures to identify neurons that actually had light responses recorded.
 # filling in the lists:
-for neuron in recordings_lightactive_all.name:
-    neuron_data = SingleNeuron(neuron)
-    neuron_data.get_ttlonmeasures_fromrawdata()
-    if neuron_data.ttlon_measures.empty:
-        hasno_lightactivations_list.append(neuron)
-
-    if neuron_data.depolarizing_events.empty:
-        hasno_depolevents_extracted_list.append(neuron)
-    elif sum(~(neuron_data.depolarizing_events.event_label.isna())) > 0:
-        spontAPs = ((neuron_data.depolarizing_events.event_label == 'actionpotential')
-                    & ~neuron_data.depolarizing_events.applied_ttlpulse)
-        if sum(spontAPs) > 0:
-            has_spontAPs_list.append(neuron)
-        currentevokedAPs = (neuron_data.depolarizing_events.event_label == 'actionpotential_on_currentpulsechange')
-        if sum(currentevokedAPs) > 0:
-            has_DCevokedAPs_list.append(neuron)
-        fastevents = (neuron_data.depolarizing_events.event_label == 'fastevent')
-        if sum(fastevents) > 0:
-            has_fastevents_list.append(neuron)
-        evokedevents = (neuron_data.depolarizing_events.applied_ttlpulse)
-        if sum(evokedevents) > 0:
-            has_lightresponses_list.append(neuron)
-        lightevoked_aps = (evokedevents & (neuron_data.depolarizing_events.event_label == 'actionpotential'))
-        if sum(lightevoked_aps) > 0:
-            has_lightevokedAPs_list.append(neuron)
-        if 'neat_event' in neuron_data.depolarizing_events.columns:
-            has_neatevents_list.append(neuron)
+# for neuron in recordings_lightactive_all.name:
+#     neuron_data = SingleNeuron(neuron)
+#     neuron_data.get_ttlonmeasures_fromrawdata()
+#     if neuron_data.ttlon_measures.empty:
+#         hasno_lightactivations_list.append(neuron)
+#
+#     if neuron_data.depolarizing_events.empty:
+#         hasno_depolevents_extracted_list.append(neuron)
+#     elif sum(~(neuron_data.depolarizing_events.event_label.isna())) > 0:
+#         spontAPs = ((neuron_data.depolarizing_events.event_label == 'actionpotential')
+#                     & ~neuron_data.depolarizing_events.applied_ttlpulse)
+#         if sum(spontAPs) > 0:
+#             has_spontAPs_list.append(neuron)
+#         currentevokedAPs = (neuron_data.depolarizing_events.event_label == 'actionpotential_on_currentpulsechange')
+#         if sum(currentevokedAPs) > 0:
+#             has_DCevokedAPs_list.append(neuron)
+#         fastevents = (neuron_data.depolarizing_events.event_label == 'fastevent')
+#         if sum(fastevents) > 0:
+#             has_fastevents_list.append(neuron)
+#         evokedevents = (neuron_data.depolarizing_events.applied_ttlpulse)
+#         if sum(evokedevents) > 0:
+#             has_lightresponses_list.append(neuron)
+#         lightevoked_aps = (evokedevents & (neuron_data.depolarizing_events.event_label == 'actionpotential'))
+#         if sum(lightevoked_aps) > 0:
+#             has_lightevokedAPs_list.append(neuron)
+#         if 'neat_event' in neuron_data.depolarizing_events.columns:
+#             has_neatevents_list.append(neuron)
 
 # %% neuron recordings lists
 # list of all neuron recordings in the dataset:
@@ -192,6 +194,10 @@ has_lightevokedAPs_list = ['20190527A', '20190529A1', '20190529B', '20190529D', 
 has_DCevokedAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529A2', '20190529B', '20190529E', '20200630B1', '20200630B2', '20200630C', '20200707E', '20200708F', '20200818B', '20200818C', '20201124C', '20201125B', '20201125C', '20210105C', '20210105E', '20210110A', '20210110B', '20210110C', '20210110E', '20210110F', '20210110G', '20210113A', '20210113B', '20210113C', '20210113D', '20210113G', '20210113H', '20210123B', '20210123D', '20210124A', '20210124B', '20210124C', '20210124D', '20210203A', '20210203B', '20210203C', '20210411B', '20210413A', '20210426B', '20210426C', '20210426D', '20210426E']
 
 
+# %% summary table: types of events in all neurons
+# data table listing all neurons in the dataset by ID; light-activation preparation; presence of light applications; light responses (subthreshold and AP); fastevents; neatevents.
+
+
 # %% one figure for all neurons with neat fast-events: neat fast-events normalized and averaged
 from singleneuron_analyses_functions import get_events_average
 figure1, axes1 = plt.subplots(1, 2)
@@ -222,6 +228,7 @@ for i, neuron in enumerate(neuron_list):
         axes1[0].set_xlabel('time (ms)')
         diff_events_avg = np.diff(normalized_neatfastevents_avg)
         axes1[1].plot(normalized_neatfastevents_avg[:-1:], diff_events_avg, color=linecolor, label=(neuron_data.name + ' N=' + str(n_events) + ' events'))
+
     # figure2: fastevents within baselinerange
         lower_lim = -55
         upper_lim = -45
@@ -259,22 +266,83 @@ for i, neuron in enumerate(neuron_list):
     axes2[1].legend(loc='upper left')
 
 
-# %% plotting APs for neurons that have them extracted
-neuron_list = has_spontAPs_list
+# %% analyses step2: seeing APs
+# also, get and save recordingblocks_index and ttl_measures
+# focusing first on neurons recorded in Thy1 mouse
+# while writing text: focusing first on neurons that have neat-events and spont.APs
+thy1mouse_neurons = list(recordings_Thy1.name)
+has_neatspontAPs = list(set(has_spontAPs_list) & set(has_neatevents_list))
+neatspontAPs_and_lightevokedAPs_thy1 = list(set(has_neatspontAPs) & set(has_lightevokedAPs_list) & set(thy1mouse_neurons))
+has_neatfastevents_list = list(set(has_fastevents_list) & set(has_neatevents_list))
+
+rbpmouse_neurons = list(recordings_RBP.name)
+rbp_spontandlightevoked_aps = list(set(has_spontAPs_list) & set(has_lightevokedAPs_list) & set(rbpmouse_neurons))
+
+neuron_list = has_neatspontAPs #has_lightevokedAPs_list  #thy1mouse_neurons
+total_n_neatspontaps = 0
 for neuron in neuron_list:
     neuron_data = SingleNeuron(neuron)
-    neuron_data.get_ttlonmeasures_fromrawdata()
-    neuron_data.plot_rawdatatraces_ttlaligned(*neuron_data.ttlon_measures.file_origin.unique())
-    spont_aps = (neuron_data.depolarizing_events.event_label == 'actionpotential') & (~neuron_data.depolarizing_events.applied_ttlpulse)
-    neuron_data.plot_depolevents(spont_aps,
-                                 colorby_measure='baselinev',
-                                 prealignpoint_window_inms=10,
-                                 plt_title=' spont.APs')
-    currentevoked_aps = (neuron_data.depolarizing_events.event_label == 'actionpotential_on_currentpulsechange')
-    if sum(currentevoked_aps) > 0:
-        neuron_data.plot_depolevents(currentevoked_aps,
+    # neuron_data.get_recordingblocks_index()
+    # neuron_data.plot_rawdatatraces_ttlaligned()
+    # neuron_data.write_results()
+    if sum(~neuron_data.depolarizing_events.event_label.isna()) > 0:
+        des_df = neuron_data.depolarizing_events
+        spont_aps = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+        # neuron_data.plot_depolevents(spont_aps,
+        #                              colorby_measure='baselinev',
+        #                              prealignpoint_window_inms=10,
+        #                              plt_title=' spont.APs')
+        neat_spontaps = (spont_aps & (des_df.neat_event))
+        neuron_data.plot_depolevents(neat_spontaps,
                                      colorby_measure='baselinev',
-                                     plt_title=' DC-evoked APs')
+                                     prealignpoint_window_inms=10,
+                                     plt_title=' neat spont.APs')
+        # total_n_neatspontaps += sum(neat_spontaps)
+        # lightevoked_aps = (des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse)
+        # neuron_data.plot_depolevents(lightevoked_aps,
+        #                              colorby_measure='applied_current',
+        #                              prealignpoint_window_inms=10,
+        #                              plt_title=' light-evoked APs')
+        # currentevoked_aps = (des_df.event_label == 'actionpotential_on_currentpulsechange')
+        # if sum(currentevoked_aps) > 0:
+        #     neuron_data.plot_depolevents(currentevoked_aps,
+        #                                  prealignpoint_window_inms=10,
+        #                                  colorby_measure='baselinev',
+        #                                  plt_title=' DC-evoked APs')
+# %% seeing fastevents
+for neuron in has_neatfastevents_list:
+    neuron_data = SingleNeuron(neuron)
+    des_df = neuron_data.depolarizing_events
+    spont_aps = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+    neatevents = des_df.neat_event
+    neatspontaps = spont_aps & neatevents
+    if sum(neatspontaps) > 0:
+        neuron_data.plot_depolevents(neatspontaps,
+                                     colorby_measure='baselinev',
+                                     prealignpoint_window_inms=10,
+                                     plt_title=' neat spont.APs')
+    else:
+        neuron_data.plot_depolevents(spont_aps,
+                                     colorby_measure='baselinev',
+                                     prealignpoint_window_inms=10,
+                                     plt_title=' spont.APs')
+    neatfastevents = neatevents & (des_df.event_label == 'fastevent')
+    neuron_data.plot_depolevents(neatfastevents,
+                                 colorby_measure='baselinev')
+
+
+
+# %% scatter of ttlresponse measures, per neuron
+results_path = path + '\\myResults'
+resultsfiles_all = os.listdir(results_path)
+resultsfiles_ttl = [filename for filename in resultsfiles_all if 'ttl' in filename]
+for filename in resultsfiles_ttl:
+    filepath = results_path + '\\' + filename
+    neuron_ttlonmeasures = pd.read_csv(filepath)
+    subthreshold_responses = neuron_ttlonmeasures[neuron_ttlonmeasures.response_maxamp < 40]
+    subthreshold_responses.plot.scatter('baselinev', 'response_maxdvdt')
+    plt.title(filename[0:10])
+
 
 # %%
 # interesting neurons:

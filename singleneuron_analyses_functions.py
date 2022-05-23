@@ -872,7 +872,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
         for idx, segment in enumerate(block.segments):
             ttl_recording = np.array(np.squeeze(segment.analogsignals[2]))
             ttlon_idcs = np.where((np.squeeze(ttl_recording > ttlhigh_value)) == True)[0]
-            if len(ttlon_idcs) > 1:
+            if len(ttlon_idcs) > 0:
                 ttlon_idx = ttlon_idcs[0]
                 ttloff_idx = ttlon_idcs[-1]
                 ms_in_samples = int(1 / segment.analogsignals[0].sampling_period.rescale('ms'))

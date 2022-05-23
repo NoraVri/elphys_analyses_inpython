@@ -1186,3 +1186,66 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('light_0',
 # aps_axis.set_ylim([-0.5, 11.5])
 # aps_dvdt_axis.set_ylim([-0.15, 0.8])
 # aps_dvdt_axis.set_xlim([-1, 12])
+# %% figure 2: subthreshold evoked events
+# blocks selected: identical illumination conditions (1ms duration), and before hyperpolarizing DC application (changes recording conditions)
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_wholeField_0014.abf',
+                                                'light_wholeField_0015.abf',
+                                                'light_wholeField_0016.abf',
+                                                'light_wholeField_0017.abf',
+                                                'light_wholeField_0018.abf',
+                                                colorby_measure='response_maxdvdt',
+                                                prettl_t_inms=0.5,
+                                                postttl_t_inms=12,
+                                                )
+
+# %% figure 3: subthreshold spontaneous events
+# APs and fastevents from trace in panelA:
+events_invtracesnippet = (des_df.file_origin == 'gapFree_0004.abf') & (des_df.peakv_idx > (720*20000)) & (des_df.peakv_idx < (840*20000))
+events_toplot = (fastevents | aps) & events_invtracesnippet & (des_df.amplitude > 3)
+fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(events_toplot,
+                                                                           do_baselining=True,
+                                                                           # timealignto_measure='rt20_start_idx',
+                                                                           prealignpoint_window_inms=3,
+                                                                           plotwindow_inms=10)
+# %%
+# neat fastevents, colored by amplitude, with averages per group overlayed
+neat_events = des_df.neat_event
+# all fastevents
+fastevents_toplot = fastevents & neat_events & (des_df.amplitude >= 3)
+fastevents_axis, fastevents_dvdt_axis = singleneuron_data.plot_depolevents(fastevents_toplot,
+                                                                           do_baselining=True,
+                                                                           do_normalizing=True,
+                                                                           colorby_measure='amplitude',
+                                                                           # timealignto_measure='rt20_start_idx',
+                                                                           prealignpoint_window_inms=2,
+                                                                           plotwindow_inms=10)
+# set axes to be the same as the averages plot:
+fastevents_axis.set_xlim([0, 10])
+# fastevents_axis.set_ylim([-0.2, 10])
+fastevents_axis.set_ylim([-0.1, 1.1])  # when plotting normalized events
+fastevents_dvdt_axis.set_xlim([-0.1, 1.1])
+fastevents_dvdt_axis.set_ylim([-0.02, 0.09])
+# fastevents_dvdt_axis.set_xlim([-0.2, 10])
+# fastevents_dvdt_axis.set_ylim([-0.2, 0.65])
+
+# averaged per amplitude group: 3.0 - 3.7mV; 3.7 - 5.2mV; 5.2 - 8mV; 8 - 10mV
+# des_df[fastevents_toplot].amplitude.plot.hist(bins=100)
+ampgroup1 = (des_df.amplitude > 3) & (des_df.amplitude < 3.7) & fastevents_toplot
+ampgroup2 = (des_df.amplitude > 3.7) & (des_df.amplitude < 5.2) & fastevents_toplot
+ampgroup3 = (des_df.amplitude > 5.2) & (des_df.amplitude < 8) & fastevents_toplot
+ampgroup4 = (des_df.amplitude > 8) & fastevents_toplot
+fastevents_avgd_axis, fastevents_avgd_dvdt_axis = singleneuron_data.plot_depoleventsgroups_averages(ampgroup1, ampgroup2, ampgroup3, ampgroup4,
+                                                  group_labels=['1', '2', '3', '4',],
+                                                  do_normalizing=True,
+                                                  # timealignto_measure='rt20_start_idx',
+                                                  prealignpoint_window_inms=2,
+                                                  plotwindow_inms=10)
+# set axes to be the same as the all-events plot:
+fastevents_avgd_axis.set_xlim([0, 10])
+# fastevents_avgd_axis.set_ylim([-0.2, 10])
+fastevents_avgd_axis.set_ylim([-0.1, 1.1])  # when plotting normalized events
+fastevents_avgd_dvdt_axis.set_xlim([-0.1, 1.1])
+fastevents_avgd_dvdt_axis.set_ylim([-0.02, 0.09])
+# fastevents_avgd_dvdt_axis.set_xlim([-0.2, 10])
+# fastevents_avgd_dvdt_axis.set_ylim([-0.2, 0.65])
+

@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20201125D'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # Nice and steady recording (baselineV ~-55mV throughout) of oscillating neuron with spont.events and light responses
@@ -188,4 +188,69 @@ plt.suptitle('light-evoked aps, neat ones only')
 # neat_events.name = 'neat_event'
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
 # singleneuron_data.write_results()
+
+# %% plots for publication figures
+# light-evoked and spont.APs with dV/dt and ddV/dt, on identically-scaled axes
+# aps
+axis, dvdtaxis, ddvdtaxis = singleneuron_data.plot_depolevents((aps & spont_events & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' neat aps',
+                                   plot_ddvdt=True
+                                   )
+# axis.set_xlim([0, 15])
+# axis.set_ylim([0, 95])
+# dvdtaxis.set_xlim([0, 95])
+# dvdtaxis.set_ylim([-3, 13])
+# ddvdtaxis.set_xlim([0, 95])
+# ddvdtaxis.set_ylim([-3, 3])
+# on shorter timescale:
+axis.set_xlim([0, 5])
+axis.set_ylim([0, 15])
+dvdtaxis.set_xlim([0, 15])
+dvdtaxis.set_ylim([0, 2])
+ddvdtaxis.set_xlim([0, 15])
+ddvdtaxis.set_ylim([0, 0.2])
+
+# aps evoked by light
+axis, dvdtaxis, ddvdtaxis = singleneuron_data.plot_depolevents((aps & ~spont_events & neat_events),
+                                   colorby_measure='baselinev',
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plotwindow_inms=15,
+                                   plt_title=' light-evoked aps',
+                                   plot_ddvdt=True
+                                   )
+# axis.set_xlim([0, 15])
+# axis.set_ylim([0, 95])
+# dvdtaxis.set_xlim([0, 95])
+# dvdtaxis.set_ylim([-3, 13])
+# ddvdtaxis.set_xlim([0, 95])
+# ddvdtaxis.set_ylim([-3, 3])
+# on shorter timescale:
+axis.set_xlim([0, 5])
+axis.set_ylim([0, 15])
+dvdtaxis.set_xlim([0, 15])
+dvdtaxis.set_ylim([0, 2])
+ddvdtaxis.set_xlim([0, 15])
+ddvdtaxis.set_ylim([0, 0.2])
+# %% figure 2: light-evoked APs and subthreshold responses
+# using 3 blocks with identical illumination conditions (most consecutive blocks with identical illumination recorded for this neuron):
+singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000.abf',
+                                                'light_0001.abf',
+                                                'light_0002.abf',
+                                                colorby_measure='applied_current',
+                                                postttl_t_inms=35,
+                                                # do_baselining=False,
+                                                # color_lims=[0, 0.5],
+                                                )
+
+# scatter of maxdvdt vs baselinev - select down to blocks used
+ttlon_subthresholdresponses = singleneuron_data.ttlon_measures.response_maxamp < 80
+ttlon_relevantblocks = singleneuron_data.ttlon_measures.file_origin.str.contains('_0000|_0001|_0002')
+ttlon_relevantresponses = singleneuron_data.ttlon_measures[(ttlon_subthresholdresponses & ttlon_relevantblocks)]
+ttlon_relevantresponses.plot.scatter('baselinev', 'response_maxdvdt', c='response_maxamp', colormap='cividis')
+
 

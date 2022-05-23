@@ -264,7 +264,44 @@ for i, neuron in enumerate(neuron_list):
     axes2[1].set_xlabel('V')
     axes2[1].set_ylabel('dV/dt')
     axes2[1].legend(loc='upper left')
-
+# %% figure: APs normalized and averaged (see if waveform is identical like for fastevents)
+from singleneuron_analyses_functions import get_events_average
+figure1, axes1 = plt.subplots(1, 2)
+# figure2, axes2 = plt.subplots(1, 2)
+neuron_list = has_spontAPs_list
+colormap = mpl.cm.plasma
+cmnormalizer = mpl.colors.Normalize(0, len(neuron_list))
+for i, neuron in enumerate(neuron_list):
+    neuron_data = SingleNeuron(neuron)
+    neuron_depolarizingevents = neuron_data.depolarizing_events
+    if 'neat_event' in neuron_data.depolarizing_events.keys():
+        neat_spont_aps = ((neuron_depolarizingevents.event_label == 'actionpotential')
+                          & (~neuron_depolarizingevents.applied_ttlpulse)
+                          & (neuron_depolarizingevents.neat_event))
+        n_events = sum(neat_spont_aps)
+        normalized_neatevents_avg, \
+        normalized_neatevents_std, \
+        time_axis = get_events_average(neuron_data.blocks,
+                                       neuron_data.depolarizing_events,
+                                       neuron_data.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                       neat_spont_aps,
+                                       timealignto_measure='rt20_start_idx',
+                                       prealignpoint_window_inms=4,
+                                       plotwindow_inms=15,
+                                       do_normalizing=True)
+        linecolor = colormap(cmnormalizer(i))
+        axes1[0].plot(time_axis, normalized_neatevents_avg, linewidth=2.5, color=linecolor)
+        axes1[0].plot(time_axis, (normalized_neatevents_avg - normalized_neatevents_std), '--', color=linecolor)
+        axes1[0].plot(time_axis, (normalized_neatevents_avg + normalized_neatevents_std), '--', color=linecolor)
+        axes1[0].set_xlabel('time (ms)')
+        diff_events_avg = np.diff(normalized_neatevents_avg)
+        axes1[1].plot(normalized_neatevents_avg[:-1:], diff_events_avg, color=linecolor, label=(neuron_data.name + ' N=' + str(n_events) + ' events'))
+    axes1[1].set_xlabel('V')
+    axes1[1].set_ylabel('dV/dt')
+    axes1[1].legend(loc='upper left')
+    axes2[1].set_xlabel('V')
+    axes2[1].set_ylabel('dV/dt')
+    axes2[1].legend(loc='upper left')
 
 # %% analyses step2: seeing APs
 # also, get and save recordingblocks_index and ttl_measures
@@ -296,6 +333,8 @@ for neuron in neuron_list:
         neuron_data.plot_depolevents(neat_spontaps,
                                      colorby_measure='baselinev',
                                      prealignpoint_window_inms=10,
+                                     plotwindow_inms=16,
+                                     plot_ddvdt=True,
                                      plt_title=' neat spont.APs')
         # total_n_neatspontaps += sum(neat_spontaps)
         # lightevoked_aps = (des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse)
@@ -310,25 +349,26 @@ for neuron in neuron_list:
         #                                  colorby_measure='baselinev',
         #                                  plt_title=' DC-evoked APs')
 # %% seeing fastevents
-for neuron in has_neatfastevents_list:
+for neuron in has_fastevents_list:
     neuron_data = SingleNeuron(neuron)
-    des_df = neuron_data.depolarizing_events
-    spont_aps = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
-    neatevents = des_df.neat_event
-    neatspontaps = spont_aps & neatevents
-    if sum(neatspontaps) > 0:
-        neuron_data.plot_depolevents(neatspontaps,
-                                     colorby_measure='baselinev',
-                                     prealignpoint_window_inms=10,
-                                     plt_title=' neat spont.APs')
-    else:
-        neuron_data.plot_depolevents(spont_aps,
-                                     colorby_measure='baselinev',
-                                     prealignpoint_window_inms=10,
-                                     plt_title=' spont.APs')
-    neatfastevents = neatevents & (des_df.event_label == 'fastevent')
-    neuron_data.plot_depolevents(neatfastevents,
-                                 colorby_measure='baselinev')
+    if sum(~neuron_data.depolarizing_events.event_label.isna()) > 0:
+        des_df = neuron_data.depolarizing_events
+        spont_aps = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+        fastevents = (des_df.event_label == 'fastevent')
+        if 'neat_event' in des_df.columns:
+            neatevents = des_df.neat_event
+            neatspontaps = spont_aps & neatevents
+            neatfastevents = neatevents & fastevents
+            neuron_data.plot_depolevents((neatspontaps | neatfastevents),
+                                         colorby_measure='baselinev',
+                                         prealignpoint_window_inms=10,
+                                         plt_title=' neat spont.events')
+        else:
+            neuron_data.plot_depolevents((spont_aps | fastevents),
+                                         colorby_measure='baselinev',
+                                         prealignpoint_window_inms=10,
+                                         plt_title=' spont.events')
+
 
 
 

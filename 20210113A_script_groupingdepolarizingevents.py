@@ -84,10 +84,5 @@ singleneuron_data.plot_depolevents(events_underinvestigation,
 
 
 
-
-
-
-
-
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording

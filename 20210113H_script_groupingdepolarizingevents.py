@@ -109,7 +109,6 @@ plt.suptitle('aps, neat ones only')
 
 # %% extracting depolarizing events
 # notes:
-# this neuron's got loads of events, but response to light is clearly not more than syanpse/spikelet
 # using gapFree_0002 for setting extraction parameters
 
 # block_no = 2
@@ -284,8 +283,18 @@ plt.suptitle('aps, neat ones only')
 # singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
 # singleneuron_data.write_results()
 
-
-
+# %% plots for publication figures: evoked APs and fastevents as a function of baselineV
+# using only blocks where baselineV is manipulated
+singleneuron_data.plot_rawdatatraces_ttlaligned('0002', '0004', '0008',
+                                                colorby_measure='applied_current',
+                                                postttl_t_inms=35,
+                                                do_baselining=False,
+                                                # color_lims=[0, 0.5],
+                                                )
+ttlon_subthresholdresponses = singleneuron_data.ttlon_measures.response_maxamp < 80
+ttlon_relevantblocks = singleneuron_data.ttlon_measures.file_origin.str.contains('0002|0004|0008')
+ttlon_relevantresponses = singleneuron_data.ttlon_measures[(ttlon_subthresholdresponses & ttlon_relevantblocks)]
+ttlon_relevantresponses.plot.scatter('baselinev', 'response_maxdvdt', 'response_maxamp')
 
 
 

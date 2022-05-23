@@ -1088,7 +1088,7 @@ class SingleNeuron:
     def get_ttlonmeasures_fromrawdata(self, **kwargs):
         # kwargs:
         # ttlhigh_value=1; sets the binary cutoff value for measuring ttl low/high
-        # response_window_inms=20; time window since ttl on in which response max amp is calculated
+        # response_window_inms=30; time window since ttl on in which response max amp is calculated
         if self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
             noisefilter_hpfreq = self.rawdata_readingnotes['getdepolarizingevents_settings']['noisefilter_hpfreq']
         else:

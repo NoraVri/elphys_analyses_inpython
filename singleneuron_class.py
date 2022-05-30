@@ -58,6 +58,8 @@ class SingleNeuron:
         self.rawdata_readingnotes = {}
 
         self.depolarizing_events = pd.DataFrame()
+        self.recordingblocks_index = pd.DataFrame()
+        self.ttlon_measures = pd.DataFrame()
         self.subthreshold_oscillations = []
         self.longpulse_measures = []
         self.passive_decay = []
@@ -104,6 +106,9 @@ class SingleNeuron:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
             # saving recordingblocks index:
             if len(self.recordingblocks_index) > 0:
+                self.recordingblocks_index.to_csv(self.name + '_recordingblocks_index.csv')
+            else:
+                self.get_recordingblocks_index()
                 self.recordingblocks_index.to_csv(self.name + '_recordingblocks_index.csv')
             # saving ttlon-measures:
             if len(self.ttlon_measures) > 0:
@@ -406,8 +411,6 @@ class SingleNeuron:
         all_blocks_infos_dict = snafs.make_recordings_index_dictionary()
         for block in self.blocks:
             block_infos_dict = snafs.fill_singleneuron_recordings_index_dictionary(block)
-            # for key in all_eventsmeasures_dictionary:
-            #     all_eventsmeasures_dictionary[key] += segment_eventmeasuresdict[key]
             for key in all_blocks_infos_dict:
                 all_blocks_infos_dict[key] += block_infos_dict[key]
         self.recordingblocks_index = pd.DataFrame(all_blocks_infos_dict).round(decimals=2)

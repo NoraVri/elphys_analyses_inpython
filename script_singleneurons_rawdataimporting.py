@@ -2347,6 +2347,125 @@ cell20210429B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # raw data cleanup:
 # no seal formation recorded, no other cleanups to apply.
 cell20210429B.write_results()
+
+# %%
+cell20220524A = SingleNeuron('20220524A')
+cell20220524A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# spont.break-in yet quite nice and steady recording: baselineV going from ~-50 to ~-45 over the course of 50 minutes,
+# and cell has lots of subthreshold events (amp <4mV).
+# raw data cleanup:
+# seal formation not recorded; no other cleanups to apply.
+cell20220524A.write_results()
+
+# %%
+cell20220524B = SingleNeuron('20220524B')
+cell20220524B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# extremely stable recording, baselineV ~-50mV for >1hr and oscillating; oscillations go from 2 - 5mV amp
+# in large 'beads' that last about 50s each.
+# raw data cleanup:
+# removing seal formation:
+cell20220524B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=32)
+cell20220524B.write_results()
+
+# %%
+cell20220524C = SingleNeuron('20220524C')
+cell20220524C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# ~1/2hr recording of non-oscillating neuron doing spontaneous events (at least early on); baselineV goes from ~-50 to ~-35mV by the end of recordings.
+# raw data cleanup:
+# removing the first two blocks where neuron is not yet being (intracellularly) recorded:
+cell20220524C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20220524C.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# removing seal formation:
+cell20220524C.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_start_t=13)
+cell20220524C.write_results()
+
+# %%
+cell20220524D = SingleNeuron('20220524D')
+cell20220524D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# looks like break-in from bad seal; barely 5 min. recording of unsteady neuron
+# raw data cleanup:
+# removing break-in:
+cell20220524D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=10)
+# removing final block where neuron is dead already (Vrest ~-15mV w/o DC):
+cell20220524D.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+cell20220524D.write_results()
+
+# %%
+cell20220524E = SingleNeuron('20220524E')
+cell20220524E.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# not a good recording at all, just break-in to a dead neuron.
+# raw data cleanup:
+# removing all recordingblocks:
+cell20220524E.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20220524E.write_results()
+
+# %%
+cell20220525A = SingleNeuron('20220525A')
+cell20220525A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# neuron oscillating with amp~10mV on break-in at baselineV ~-50mV; osc amp down to ~2mV within the first few minutes,
+# but baselineV stays steadily below -50mV throughout the >hour-long recording.
+# raw data cleanup:
+# removing seal formation:
+cell20220525A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=40)
+cell20220525A.write_results()
+
+# %%
+cell20220525B = SingleNeuron('20220525B')
+cell20220525B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# quite nice and stable recording; neuron oscillating with ~8mV amp initially down to ~4mV amp by the end of recordings
+# but doing the same beads throughout, and baselineV ~-53 throughout (manipulated up and down with DC).
+# raw data cleanup:
+# seal not recorded; no other cleanups to apply.
+cell20220525B.write_results()
+
+# %%
+cell20220525C = SingleNeuron('20220525C')
+cell20220525C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# neuron depolarizing steadily from -50 to -40mV baselineV over the course of its ~1/2hr recording;
+# oscillations coming on within the first minute and staying throughout with with amp 1-2mV
+# raw data cleanup:
+# removing seal formation:
+cell20220525C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=26)
+cell20220525C.write_results()
+
+# %%
+cell20220525D = SingleNeuron('20220525D')
+cell20220525D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# neuron oscillating throughout and has good baselineV and AP amp, though all of those do change over the course of recording.
+# raw data cleanup:
+# removing seal formation:
+cell20220525D.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=41)
+cell20220525D.write_results()
+
+# %%
+cell20220525E = SingleNeuron('20220525E')
+cell20220525E.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# looks like spont.break-in to a mostly dead cell; it's held with lots of -DC to keep a halfway decent baselineV,
+# and does fire off some APs and spont. fastevents.
+# raw data cleanup:
+# no cleanups to apply (or data should be excluded entirely - resting baselineV ~-10mV w/o DC).
+cell20220525E.write_results()
+
+# %%
+cell20220525F = SingleNeuron('20220525F')
+cell20220525F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# quite nice recording overall, though there are a few blocks in the middle where recording conditions are iffy
+# raw data cleanup:
+# removing seal formation:
+cell20220525F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=22)
+cell20220525F.write_results()
+
+# %%
+cell20220525G = SingleNeuron('20220525G')
+cell20220525G.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# quite nice and steady neuron, resting baselineV ~-50mV and manipulated up and down with DC; neuron not really doing
+# anything of interesting spont.activity though.
+# raw data cleanup:
+# removing a block that records a break-in to a dead cell:
+cell20220525G.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# removing seal formation:
+cell20220525G.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=27)
+cell20220525G.write_results()
 # %% raw data import/cleanup template
 
 # raw data cleanup:

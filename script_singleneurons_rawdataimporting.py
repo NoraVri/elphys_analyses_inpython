@@ -2466,6 +2466,44 @@ cell20220525G.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 # removing seal formation:
 cell20220525G.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=27)
 cell20220525G.write_results()
+
+# %%
+cell20220531A1 = SingleNeuron('20220531A1')
+cell20220531A1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# steady enough recording though clearly deteriorating somewhat over time: baselineV between -55 and -40mV,
+# AP peakV decreasing from ~50mV to ~20mV; boring neuron overall with very little interesting spont.activity
+# Tried evoking things by stimulating the slice with the other electrode, but to no avail.
+# raw data cleanup:
+# where relevant, removing channel on which the neuron is not recorded (A2 dead on break-in):
+cell20220531A1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', non_recording_channel=2)
+cell20220531A1.rawdata_remove_nonrecordingchannel('gapFree_0003.abf', non_recording_channel=2)
+# removing seal formation:
+cell20220531A1.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=43)
+cell20220531A1.write_results()
+
+# %%
+cell20220531B = SingleNeuron('20220531B')
+cell20220531B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# very nice recording of oscillating neuron with spont.APs and fastevents; baselineV ~-40mV and somewhat
+# unsteady initially, then settles in with baselineV ~-55mV steadily for the rest of recordings.
+# Also has a bunch of blocks recorded in V-clamp mode.
+# raw data cleanup:
+# removing seal formation:
+cell20220531B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=46.2)
+cell20220531B.write_results()
+
+# %%
+cell20220531C = SingleNeuron('20220531C')
+cell20220531C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+# raw data cleanup:
+# removing block where a different patch-attempt is recorded:
+cell20220531C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# removing seal formation:
+cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=20)
+# removing part of recording where neuron is no longer alive (baselineV > -30mV, no longer oscillating or anything):
+cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=310)
+cell20220531C.write_results()
 # %% raw data import/cleanup template
 
 # raw data cleanup:

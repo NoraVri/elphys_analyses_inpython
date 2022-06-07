@@ -29,7 +29,7 @@ import numpy as np
 # cell20160802A - has barely a handful of fastevents early on, mostly just oscillating a lot
 # cell20160802C -  quite a lot of fast-events (and tons of spont APs); mostly very similar amps though (8 - 10mV), and not the greatest recording overall. OK-looking reconstructed morph, very straight neuron
 # cell20160802D - has just one or two fastevents and a single spont AP, mostly just oscillating a lot
-# cell20160802E - saw three amplitudes (3, 8 and 10mV) of fast-events, one or two examples of each, but cell has bad baselineV throughout. Very nice reconstructed morph. with lots of dendrite
+# cell20160802E -  saw three amplitudes (3, 8 and 10mV) of fast-events, one or two examples of each, but cell has bad baselineV throughout. Very nice reconstructed morph. with lots of dendrite
 # %%
 cell_name = '20160721C'
 neuron_data = SingleNeuron(cell_name)

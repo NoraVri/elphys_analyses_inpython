@@ -1277,7 +1277,7 @@ class SingleNeuron:
             with open(datafile, 'r') as file:
                 firstline = file.readline()
                 # in Dumper files, the first line gives the channels; in TrigIn files, it's the time axis
-                if len(firstline) > 100:
+                if len(firstline) > 100:  #TrigIn file
                     file_data = pd.read_table(datafile, header=None)
                     sampling_interval = file_data.iloc[0,1] * pq.s
                     for i in range(1, len(file_data), 4):
@@ -1293,11 +1293,12 @@ class SingleNeuron:
 
                         currentsignals_list.append(current_analogsignal)
                         voltagesignals_list.append(voltage_analogsignal)
-                else:
+                else:  #Dumper file
                     file_data = pd.read_table(datafile, header=None, skiprows=2)
                     sampling_interval_str = file.readline()
                     sampling_interval = float(
                         re.split('\t', sampling_interval_str)[0]) * pq.ms
+                    sampling_interval = sampling_interval.rescale('s')
                     voltage_analogsignal = AnalogSignal(file_data.iloc[:, 0],
                                                         units=pq.mV,
                                                         sampling_period=sampling_interval)

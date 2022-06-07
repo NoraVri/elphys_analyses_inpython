@@ -42,7 +42,18 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.get_depolarizingevents_fromrawdata(min_depolamp=1.5)
 # singleneuron_data.write_results()
 
-# %%
+# %% plots and analyses: labeling actionpotentials
+des_df = singleneuron_data.depolarizing_events
+aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+aps_evokedbylight = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
+# for each category of APs, see that they are indeed that:
+events = aps_oncurrentpulsechange #aps_evokedbylight  #aps_spont
+blocknames = des_df[events].file_origin.unique()
+if len(blocknames) > 0:
+    singleneuron_data.plot_rawdatablocks(*blocknames,
+                                         events_to_mark=events,
+                                         segments_overlayed=False)
 # %% plots and analyses: seeing and labeling depolarizing events
 des_df = singleneuron_data.depolarizing_events
 nbins = 100
@@ -53,6 +64,9 @@ unlabeled_events = des_df.event_label.isna() # all events that were not automati
 unlabeled_spont_events = (spont_events & unlabeled_events)
 singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
 # notes:
+# extraction looks really quite good - not all events got picked up (on purpuse, by limiting amplitude to >1.5mV) and
+# it looks like the group of smallest-amp events are all spikelets, not fastevents. I saw just one oscillation peak
+# that got picked up as 'event', and in longPulses blocks the rebound occasionally got marked as spont.event.
 
 # Finding and labeling fast-events (and other types of events encountered along the way):
 # plotting all as-yet unlabeled events parameters:

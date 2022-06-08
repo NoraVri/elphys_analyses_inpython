@@ -691,6 +691,62 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
     return average_trace, standarddeviation_trace, time_axis
 
 
+# detecting prepotentials on APs and getting their amplitude if present
+def get_ap_prepotentials(rawdata_blocks, rawdata_blocksnameslist, depolarizingevents_df, getdepolarizingevents_settings,
+                         aps_series=pd.Series,
+                         tracesnippet_length_inms=5, baselinewindow_length_inms=2):
+    """This function checks whether APs have a prepotential, and if so adds their amplitude and index to the
+    depolarizingevents dataframe. The prepotential is defined based on ddV/dt in the 5ms before maxdVdt is reached:
+    going backwards from the max.dVdt point, ddV/dt has to dip below the detection threshold and reach a maximum value
+    > 2*detection threshold in the remaining trace. The detection threshold is calculated as mean+3*std in the first 2ms
+    of the event-trace ddV/dt.
+        """
+    # joining two series of nans to the depolarizingevents_df, to be filled with detected prepotential amp values and the idx at which it was found (unless these columns exist on the df already):
+    if 'ap_prepotential_amp' not in depolarizingevents_df.columns:
+        nanseries1 = pd.Series(np.nan, index=depolarizingevents_df.index, name='ap_prepotential_amp')
+        nanseries2 = pd.Series(np.nan, index=depolarizingevents_df.index, name='ap_prepotential_idx')
+        newdepolarizingevents_df = depolarizingevents_df.join((nanseries1, nanseries2))
+    else:
+        newdepolarizingevents_df = depolarizingevents_df
+    # getting the depolarizingevents_df for just the APs that are to be checked for prepotentials
+    aps_df = depolarizingevents_df[aps_series]
+    # for each recordingblock-segment with APs in it, do filtering; then get APs and find prepotentials
+    for blockname in aps_df.file_origin.unique():
+        block_data = rawdata_blocks[rawdata_blocksnameslist.index(blockname)]
+        block_aps_df = aps_df[(aps_df.file_origin == blockname)]
+        for segment_idx in aps_df[(aps_df.file_origin == blockname)].segment_idx.unique():
+            vtrace_asanalogsignal = block_data.segments[segment_idx].analogsignals[0]
+            sampling_frequency = float(vtrace_asanalogsignal.sampling_rate)
+            sampling_period_inms = float(vtrace_asanalogsignal.sampling_period) * 1000
+            tracesnippet_length_insamples = int(tracesnippet_length_inms / sampling_period_inms)
+            baselinewindow_length_insamples = int(baselinewindow_length_inms / sampling_period_inms)
+            vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
+            # subtracting high-frequency noise from the raw voltage (as done for calculating depolevents measures)
+            _, noisetrace = apply_filters_to_vtrace(vtrace,
+                                                    getdepolarizingevents_settings['oscfilter_lpfreq'],
+                                                    getdepolarizingevents_settings['noisefilter_hpfreq'],
+                                                    sampling_frequency,
+                                                    plot='off')
+            vtrace = vtrace - noisetrace
+            ddvdt_trace = np.diff(np.diff(vtrace))
+            segment_aps_df = block_aps_df[(block_aps_df.segment_idx == segment_idx)]
+            for ap_idx, ap_measures in segment_aps_df.iterrows():
+                tracesnippet_start_idx = (ap_measures.maxdvdt_idx - tracesnippet_length_insamples)
+                event_trace = ddvdt_trace[tracesnippet_start_idx:ap_measures.maxdvdt_idx]
+                noiselevel_mean = np.mean(ddvdt_trace[tracesnippet_start_idx:(tracesnippet_start_idx+baselinewindow_length_insamples)])
+                noiselevel_std = np.std(ddvdt_trace[tracesnippet_start_idx:(tracesnippet_start_idx+baselinewindow_length_insamples)])
+                prepotential_detection_threshold = noiselevel_mean + (5 * noiselevel_std)
+                event_trace_reversed = np.flip(event_trace)
+                reversedtrace_prepotential_index = descend_trace_until(event_trace_reversed, prepotential_detection_threshold)
+                if not np.isnan(reversedtrace_prepotential_index):
+                    prepotential_trace = event_trace[:-reversedtrace_prepotential_index:]
+                    if np.max(prepotential_trace) > (2 * prepotential_detection_threshold):
+                        prepotential_idx = ap_measures.maxdvdt_idx - reversedtrace_prepotential_index
+                        prepotential_amplitude = vtrace[prepotential_idx] - ap_measures.baselinev
+                        newdepolarizingevents_df.loc[ap_idx, 'ap_prepotential_amp'] = prepotential_amplitude
+                        newdepolarizingevents_df.loc[ap_idx, 'ap_prepotential_idx'] = prepotential_idx
+    return newdepolarizingevents_df
+
 
 # helper-functions:
 
@@ -839,7 +895,7 @@ def make_eventsmeasures_dictionary():
     return events_measures
 
 
-# descending along a v-trace snippet until a value is reached
+# descending along a trace snippet until a value is reached
 def descend_trace_until(tracesnippet, stop_value):
 
     idx = 0

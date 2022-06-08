@@ -1003,7 +1003,7 @@ class SingleNeuron:
 # %% functions for analyzing raw data
 
 
-    # getting the action_potentials and depolarizing_events DataFames
+    # getting the depolarizing_events DataFrame
     def get_depolarizingevents_fromrawdata(self, **kwargs):
         """This function goes over all voltage-traces in all raw-data blocks, and returns
         a Pandas dataframe containing action potentials and subthreshold depolarizing events.
@@ -1069,6 +1069,18 @@ class SingleNeuron:
             if 'idx' in key:                         # to bypass their being cast to float
                 dtypes_dict[key] = 'Int64'
         self.depolarizing_events.astype(dtypes_dict)
+
+    # getting prepotentials for APs
+    def get_ap_prepotentials(self, aps_series, tracesnippet_length_inms=5, baselinewindow_length_inms=2):
+
+        new_depolarizingevents_df = snafs.get_ap_prepotentials(self.blocks,
+                                                               self.get_blocknames(printing='off'),
+                                                               self.depolarizing_events,
+                                                               self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                                               aps_series=aps_series,
+                                                               tracesnippet_length_inms=tracesnippet_length_inms,
+                                                               baselinewindow_length_inms=baselinewindow_length_inms)
+        self.depolarizing_events = new_depolarizingevents_df
 
     def get_eventsgroups_averages(self, *events_groups, **kwargs):
         """

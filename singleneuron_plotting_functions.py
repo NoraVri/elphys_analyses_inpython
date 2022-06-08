@@ -232,14 +232,14 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
     if dvdtaxis_object is not None:
         diff_event_trace = np.diff(event_trace)
         dvdtaxis_object.plot(event_trace[:-1:], diff_event_trace,
-                             color=linecolor)
+                             color=linecolor, label=label)
         dvdtaxis_object.set_ylabel('dV/dt')
         dvdtaxis_object.set_xlabel('V')
         # optional: plotting ddV/dt vs V onto another axis object
         if ddvdtaxis_object is not None:
             ddiff_event_trace = np.diff(diff_event_trace)
             ddvdtaxis_object.plot(event_trace[:-2:], ddiff_event_trace,
-                                  color=linecolor)
+                                  color=linecolor, label=label)
             ddvdtaxis_object.set_ylabel('ddV/dt')
             ddvdtaxis_object.set_xlabel('V')
 
@@ -254,14 +254,26 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
                     axis_object.scatter(time_axis[point], event_trace[point],
                                         color=valsdict['color'],
                                         label=key)
-
+                    if dvdtaxis_object is not None and (point < len(diff_event_trace)):
+                        dvdtaxis_object.scatter(event_trace[point], diff_event_trace[point],
+                                                color=valsdict['color'],
+                                                label=key)
+                    if ddvdtaxis_object is not None and (point < len(ddiff_event_trace)):
+                        ddvdtaxis_object.scatter(event_trace[point], ddiff_event_trace[point],
+                                                 color=valsdict['color'],
+                                                 label=key)
                 if len(valsdict) == 3:
                     axis_object.hlines(y=event_trace[point],
                                        xmin=time_axis[point],
                                        xmax=time_axis[point] + valsdict['duration'],
                                        color=valsdict['color'],
                                        label=(key + ' = ' + str(valsdict['duration']) + 'ms'))
-        axis_object.legend(loc='lower right')
+        if ddvdtaxis_object is not None:
+            ddvdtaxis_object.legend(loc='lower right')
+        elif dvdtaxis_object is not None:
+            dvdtaxis_object.legend(loc='lower right')
+        else:
+            axis_object.legend(loc='lower right')
 
 
 # plotting all/selected events of a rawdata_block, overlayed or individually (through plot_single_event)
@@ -431,6 +443,12 @@ def make_eventmeasures_dict_forplotting(eventmeasures_series, measuretype='raw')
             measuresdict['dvdt=10_threshold'] = {
                 'idx': eventmeasures_series['dvdt10_idx'],
                 'color': 'lightgrey'
+            }
+        if 'ap_prepotential_amp' in eventmeasures_series.keys() \
+                and not pd.isna(eventmeasures_series['ap_prepotential_amp']):
+            measuresdict['ap_prepotential_amp'] = {
+                'idx': int(eventmeasures_series['ap_prepotential_idx']),
+                'color': 'red'
             }
 
         if eventmeasures_series['rise_time_10_90'] > 0:

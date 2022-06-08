@@ -207,12 +207,12 @@ axis, dvdtaxis, ddvdtaxis = singleneuron_data.plot_depolevents((aps & spont_even
 # ddvdtaxis.set_xlim([0, 95])
 # ddvdtaxis.set_ylim([-3, 3])
 # on shorter timescale:
-axis.set_xlim([0, 5])
-axis.set_ylim([0, 15])
-dvdtaxis.set_xlim([0, 15])
-dvdtaxis.set_ylim([0, 2])
-ddvdtaxis.set_xlim([0, 15])
-ddvdtaxis.set_ylim([0, 0.2])
+# axis.set_xlim([0, 5])
+# axis.set_ylim([0, 15])
+# dvdtaxis.set_xlim([0, 15])
+# dvdtaxis.set_ylim([0, 2])
+# ddvdtaxis.set_xlim([0, 15])
+# ddvdtaxis.set_ylim([0, 0.2])
 
 # aps evoked by light
 axis, dvdtaxis, ddvdtaxis = singleneuron_data.plot_depolevents((aps & ~spont_events & neat_events),
@@ -230,12 +230,12 @@ axis, dvdtaxis, ddvdtaxis = singleneuron_data.plot_depolevents((aps & ~spont_eve
 # ddvdtaxis.set_xlim([0, 95])
 # ddvdtaxis.set_ylim([-3, 3])
 # on shorter timescale:
-axis.set_xlim([0, 5])
-axis.set_ylim([0, 15])
-dvdtaxis.set_xlim([0, 15])
-dvdtaxis.set_ylim([0, 2])
-ddvdtaxis.set_xlim([0, 15])
-ddvdtaxis.set_ylim([0, 0.2])
+# axis.set_xlim([0, 5])
+# axis.set_ylim([0, 15])
+# dvdtaxis.set_xlim([0, 15])
+# dvdtaxis.set_ylim([0, 2])
+# ddvdtaxis.set_xlim([0, 15])
+# ddvdtaxis.set_ylim([0, 0.2])
 # %% figure 2: light-evoked APs and subthreshold responses
 # using 3 blocks with identical illumination conditions (most consecutive blocks with identical illumination recorded for this neuron):
 singleneuron_data.plot_rawdatatraces_ttlaligned('light_0000.abf',

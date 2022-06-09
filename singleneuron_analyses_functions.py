@@ -697,9 +697,8 @@ def get_ap_prepotentials(rawdata_blocks, rawdata_blocksnameslist, depolarizingev
                          tracesnippet_length_inms=5, baselinewindow_length_inms=2):
     """This function checks whether APs have a prepotential, and if so adds their amplitude and index to the
     depolarizingevents dataframe. The prepotential is defined based on ddV/dt in the 5ms before maxdVdt is reached:
-    going backwards from the max.dVdt point, ddV/dt has to dip below the detection threshold and reach a maximum value
-    > 2*detection threshold in the remaining trace. The detection threshold is calculated as mean+3*std in the first 2ms
-    of the event-trace ddV/dt.
+    going backwards from the max.dVdt point, ddV/dt has to dip below 0, and reach a maximum value > detection threshold
+    in the remaining trace. The detection threshold is calculated as mean+3*std in the first 2ms of the event-trace ddV/dt.
         """
     # joining two series of nans to the depolarizingevents_df, to be filled with detected prepotential amp values and the idx at which it was found (unless these columns exist on the df already):
     if 'ap_prepotential_amp' not in depolarizingevents_df.columns:
@@ -737,10 +736,14 @@ def get_ap_prepotentials(rawdata_blocks, rawdata_blocksnameslist, depolarizingev
                 noiselevel_std = np.std(ddvdt_trace[tracesnippet_start_idx:(tracesnippet_start_idx+baselinewindow_length_insamples)])
                 prepotential_detection_threshold = noiselevel_mean + (5 * noiselevel_std)
                 event_trace_reversed = np.flip(event_trace)
-                reversedtrace_prepotential_index = descend_trace_until(event_trace_reversed, prepotential_detection_threshold)
+                if len(event_trace_reversed) > 2:
+                    reversedtrace_prepotential_index = descend_trace_until(event_trace_reversed, 0)
+                else:
+                    reversedtrace_prepotential_index = np.nan
                 if not np.isnan(reversedtrace_prepotential_index):
                     prepotential_trace = event_trace[:-reversedtrace_prepotential_index:]
-                    if np.max(prepotential_trace) > (2 * prepotential_detection_threshold):
+                    if ((len(prepotential_trace) >= 2)
+                            and (np.max(prepotential_trace) > prepotential_detection_threshold)):
                         prepotential_idx = ap_measures.maxdvdt_idx - reversedtrace_prepotential_index
                         prepotential_amplitude = vtrace[prepotential_idx] - ap_measures.baselinev
                         newdepolarizingevents_df.loc[ap_idx, 'ap_prepotential_amp'] = prepotential_amplitude

@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20201125B'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # pretty nice recording: neuron is maintaining a resting baselineV very steadily (just over -50mV) and displays

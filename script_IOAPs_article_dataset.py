@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 import numpy as np
+import singleneuron_plotting_functions as plots
 
 # In this script: analysis of APs as triggered from fast-events.
 # Dataset: neurons recorded on days with optogenetic activation of inputs to IO.
@@ -197,6 +198,42 @@ has_DCevokedAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529A2', '2
 # %% summary table: types of events in all neurons
 # data table listing all neurons in the dataset by ID; light-activation preparation; presence of light applications; light responses (subthreshold and AP); fastevents; neatevents.
 
+# %% for all neurons: AP prepotential amplitudes
+# color_lims = [0, len(has_spontAPs_list) - 1]
+# colormap, cmnormalizer = plots.get_colors_forlineplots([], color_lims)
+
+for idx, neuron in enumerate(has_spontAPs_list):
+    neuron_data = SingleNeuron(neuron)
+    neuron_data.get_ap_prepotentials((neuron_data.depolarizing_events.event_label == 'actionpotential'))
+    des_df = neuron_data.depolarizing_events
+    aps = des_df.event_label == 'actionpotential'
+    spont_events = ~des_df.applied_ttlpulse
+    aps_withprepotential = ~des_df.ap_prepotential_amp.isna()
+    spont_aps_df = des_df[(aps & spont_events)]
+    if 'neat_event' in des_df.columns:
+        figure, axes = plt.subplots(1, 2, squeeze=True, sharex='row', sharey='row')
+        figure.suptitle(neuron_data.name)
+        axes[0].set_title('neat APs')
+        neat_events = des_df.neat_event
+        neatspontaps_df = des_df[(aps & spont_events & neat_events)]
+        neatspontaps_df.plot.scatter(x='baselinev',
+                                     y='ap_prepotential_amp',
+                                     # color=colormap(cmnormalizer(idx)),
+                                     # label=neuron_data.name,
+                                     ax=axes[0])
+        axes[1].set_title('all APs')
+        spont_aps_df.plot.scatter(x='baselinev',
+                                  y='ap_prepotential_amp',
+                                  ax=axes[1])
+    else:
+        figure, axes = plt.subplots(1, 1, squeeze=True)
+        figure.suptitle(neuron_data.name)
+        axes.set_title('all APs')
+        spont_aps_df.plot.scatter(x='baselinev',
+                                  y='ap_prepotential_amp',
+                                  # color=colormap(cmnormalizer(idx)),
+                                  # label=neuron_data.name,
+                                  ax=axes)
 
 # %% one figure for all neurons with neat fast-events: neat fast-events normalized and averaged
 from singleneuron_analyses_functions import get_events_average

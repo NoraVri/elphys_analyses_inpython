@@ -1250,7 +1250,7 @@ fastevents_avgd_dvdt_axis.set_ylim([-0.02, 0.09])
 # fastevents_avgd_dvdt_axis.set_ylim([-0.2, 0.65])
 
 # %% seeing AP prepotentials as measured algorithmically
-singleneuron_data.get_ap_prepotentials(aps, tracesnippet_length_inms=6)
+singleneuron_data.get_ap_prepotentials(aps, )
 des_df = singleneuron_data.depolarizing_events
 aps_spont = (aps & spont_events)
 aps_evoked = (aps & ~spont_events)
@@ -1260,9 +1260,9 @@ aps_withprepotential = ~des_df.ap_prepotential_amp.isna()
 #                                    newplot_per_event=True,
 #                                    display_measures=True)
 
-singleneuron_data.plot_depolevents((aps_spont & aps_withprepotential),
+singleneuron_data.plot_depolevents((aps_spont & neat_events & aps_withprepotential),
                                    colorby_measure='baselinev',
                                    plt_title='with prepotential')
-singleneuron_data.plot_depolevents((aps_spont & ~aps_withprepotential),
+singleneuron_data.plot_depolevents((aps_spont & neat_events & ~aps_withprepotential),
                                    colorby_measure='baselinev',
                                    plt_title='without prepotential')

@@ -1,6 +1,6 @@
 # %% imports
 import os
-
+import re
 from singleneuron_class import SingleNeuron
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -198,7 +198,127 @@ has_DCevokedAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529A2', '2
 # %% summary table: types of events in all neurons
 # data table listing all neurons in the dataset by ID; light-activation preparation; presence of light applications; light responses (subthreshold and AP); fastevents; neatevents.
 
-# %% for all neurons: AP prepotential amplitudes
+# %% analyses step: getting AP prepotential amplitudes (for dataset neurons that have at least 10 APs labeled)
+# results_path = path + '\\myResults'
+# resultsfiles_all = os.listdir(results_path)
+# resultsfiles_depolarizingevents = [filename for filename in resultsfiles_all if 'depolarizing_events' in filename]
+# for filename in resultsfiles_depolarizingevents:
+#     filepath = results_path + '\\' + filename
+#     neuron_depolarizingevents = pd.read_csv(filepath)
+#     if sum((neuron_depolarizingevents.event_label == 'actionpotential')) >= 10:
+#         neuron_name = re.split('_d', filename)[0]
+#         if neuron_name in dataset_neuronrecordings_list:
+#             neuron_data = SingleNeuron(neuron_name)
+#             neuron_data.get_ap_prepotentials((neuron_data.depolarizing_events.event_label == 'actionpotential'))
+#             neuron_data.write_results()
+
+# %% data table: APs from prepotentials
+results_path = path + '\\myResults'
+resultsfiles_all = os.listdir(results_path)
+resultsfiles_depolarizingevents = [filename for filename in resultsfiles_all if 'depolarizing_events' in filename]
+n_aps_dict = {'neuron_name': [],
+              'n_spontAPs': [],
+              'n_spontAPs_withprepotential': [],
+              'n_neatspontAPs': [],
+              'n_neatspontAPs_withprepotential': [],
+              'n_evokedAPs': [],
+              'n_evokedAPs_withprepotential': [],
+              'n_neatevokedAPs': [],
+              'n_neatevokedAPs_withprepotential': [],
+              }
+for filename in resultsfiles_depolarizingevents:
+    filepath = results_path + '\\' + filename
+    neuron_depolarizingevents = pd.read_csv(filepath)
+    aps = neuron_depolarizingevents.event_label == 'actionpotential'
+    if ('ap_prepotential_amp' in neuron_depolarizingevents.columns) and (sum(aps) >= 10):
+        neuron_name = re.split('_d', filename)[0]
+        spontaps = aps & ~(neuron_depolarizingevents.applied_ttlpulse)
+        evokedaps = aps & neuron_depolarizingevents.applied_ttlpulse
+        aps_withprepotential = aps & ~neuron_depolarizingevents.ap_prepotential_amp.isna()
+        spontaps_withprepotential = spontaps & aps_withprepotential
+        evokedaps_withprepotential = evokedaps & aps_withprepotential
+        if 'neat_event' in neuron_depolarizingevents.columns:
+            neat_aps = aps & neuron_depolarizingevents.neat_event
+            n_neatspontaps = sum(spontaps & neat_aps)
+            n_neatspontaps_withprepotential = sum(spontaps & neat_aps & aps_withprepotential)
+            n_neatevokedaps = sum(evokedaps & neat_aps)
+            n_neatevokedaps_withprepotential = sum(evokedaps & neat_aps & aps_withprepotential)
+        else:
+            n_neatspontaps = np.nan
+            n_neatspontaps_withprepotential = np.nan
+            n_neatevokedaps = np.nan
+            n_neatevokedaps_withprepotential = np.nan
+        n_aps_dict['neuron_name'].append(neuron_name)
+        n_aps_dict['n_spontAPs'].append(sum(spontaps))
+        n_aps_dict['n_spontAPs_withprepotential'].append(sum(spontaps_withprepotential))
+        n_aps_dict['n_neatspontAPs'].append(n_neatspontaps)
+        n_aps_dict['n_neatspontAPs_withprepotential'].append(n_neatspontaps_withprepotential)
+        n_aps_dict['n_evokedAPs'].append(sum(evokedaps))
+        n_aps_dict['n_evokedAPs_withprepotential'].append(sum(evokedaps_withprepotential))
+        n_aps_dict['n_neatevokedAPs'].append(n_neatevokedaps)
+        n_aps_dict['n_neatevokedAPs_withprepotential'].append(n_neatevokedaps_withprepotential)
+n_aps_df = pd.DataFrame(n_aps_dict)
+
+# %% plots: N aps vs. N aps from prepotential, separately for spont. and evoked
+figure1, axes1 = plt.subplots(1, 1, squeeze=True)
+n_aps_df.plot.scatter(x='n_spontAPs', y='n_spontAPs_withprepotential',
+                      ax=axes1, label='all spont APs', color='r')
+n_aps_df.plot.scatter(x='n_neatspontAPs', y='n_neatspontAPs_withprepotential',
+                      ax=axes1, label='neat spont APs', color='b')
+lims1 = [np.min([axes1.get_xlim(), axes1.get_ylim()]), np.max([axes1.get_xlim(), axes1.get_ylim()])]
+axes1.plot(lims1, lims1)  # line: x=y
+axes1.plot(lims1, [lim/2 for lim in lims1], '--')  # line: x=y/2
+axes1.set_ylim([-5, 150])
+axes1.set_xlim([-5, 450])
+plt.suptitle('all spontAPs (in neurons that have at least 10 APs recorded)')
+axes1.legend()
+# re-setting axes limits: neat APs only
+axes1.set_ylim([0, 110])
+axes1.set_xlim([0, 200])
+
+figure2, axes2 = plt.subplots(1, 1, squeeze=True)
+n_aps_df.plot.scatter(x='n_evokedAPs', y='n_evokedAPs_withprepotential',
+                      ax=axes2, label='all evoked APs', color='r')
+n_aps_df.plot.scatter(x='n_neatevokedAPs', y='n_neatevokedAPs_withprepotential',
+                      ax=axes2, label='neat spont APs', color='b')
+lims2 = [np.min([axes2.get_xlim(), axes2.get_ylim()]), np.max([axes2.get_xlim(), axes2.get_ylim()])]
+axes2.plot(lims2, lims2)  # line: x=y
+axes2.plot(lims2, [lim/2 for lim in lims2], '--')  # line: x=y/2
+axes2.set_ylim([-5, 150])
+axes2.set_xlim([-5, 450])
+plt.suptitle('all evokedAPs (in neurons that have at least 10 APs recorded)')
+axes2.legend()
+# re-setting axes limits: neat APs only
+axes2.set_ylim([0, 20])
+axes2.set_xlim([0, 40])
+
+# plot: % APs from prepotential, spont. vs evoked
+percentwithprepotential_spont = n_aps_df.n_spontAPs_withprepotential / n_aps_df.n_spontAPs
+percentwithprepotential_spont.name = 'percentwithprepotential_spont'
+n_aps_df = n_aps_df.join(percentwithprepotential_spont)
+percentwithprepotential_spont_neat = n_aps_df.n_neatspontAPs_withprepotential / n_aps_df.n_neatspontAPs
+percentwithprepotential_spont_neat.name = 'percentwithprepotential_spont_neat'
+n_aps_df =n_aps_df.join(percentwithprepotential_spont_neat)
+percentwithprepotential_evoked = n_aps_df.n_evokedAPs_withprepotential / n_aps_df.n_evokedAPs
+percentwithprepotential_evoked.name = 'percentwithprepotential_evoked'
+n_aps_df = n_aps_df.join(percentwithprepotential_evoked)
+percentwithprepotential_evoked_neat = n_aps_df.n_neatevokedAPs_withprepotential / n_aps_df.n_neatevokedAPs
+percentwithprepotential_evoked_neat.name = 'percentwithprepotential_evoked_neat'
+n_aps_df = n_aps_df.join(percentwithprepotential_evoked_neat)
+
+figure3, axes3 = plt.subplots(1, 1, squeeze=True)
+n_aps_df.plot.scatter(x='percentwithprepotential_spont', y='percentwithprepotential_evoked',
+                      ax=axes3, label='all APs', color='r')
+n_aps_df.plot.scatter(x='percentwithprepotential_spont_neat', y='percentwithprepotential_evoked_neat',
+                      ax=axes3, label='neat APs', color='b')
+axes3.legend()
+axes3.set_xlim([0, 1])
+axes3.set_ylim([0, 1])
+# %%
+# Figure1 panel: AP prepotential amps as a function of baselineV, for neurons with 5> neat APs
+
+# Figure1 panel: N APs from prepotential/not from prepotential (all APs and neat APs, for neurons with 10> APs)
+
 # color_lims = [0, len(has_spontAPs_list) - 1]
 # colormap, cmnormalizer = plots.get_colors_forlineplots([], color_lims)
 

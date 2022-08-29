@@ -2504,6 +2504,41 @@ cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start
 # removing part of recording where neuron is no longer alive (baselineV > -30mV, no longer oscillating or anything):
 cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=310)
 cell20220531C.write_results()
+
+# %%
+cell20220802A = SingleNeuron('20220802A')
+cell20220802A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# nice enough recording (at least at the start), though thoroughly boring in terms of spontaneous activity
+# raw data cleanup:
+# removing seal formation:
+cell20220802A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=27)
+# removing final block where neuron is thoroughly dead (resting ~-30mV and just the tinyest bit of T-type Ca left)
+cell20220802A.rawdata_remove_nonrecordingblock('gapFree_0001.abf')
+# cell kinda dead aleady during the previous recording block (electricalStim_0002), but still held at decent Vrest
+# with -DC and deteriorating kinda slowly, so not excluding any data (yet).
+cell20220802A.write_results()
+
+# %%
+cell20220802B = SingleNeuron('20220802B')
+cell20220802B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# OK recording; Vrest >-30mV on break-in but recovering a bit at first, then deteriorating slowly.
+# Spont. activity has some tiny (<1mV) oscillations and a handful fastevents (~7 - 12mV).
+# raw data cleanup:
+# removing recording block belonging to a dead patched neuron:
+cell20220802B.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+# removing seal formation:
+cell20220802B.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=33)
+cell20220802B.write_results()
+
+# %%
+cell20220802C = SingleNeuron('20220802C')
+cell20220802C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# looks like a spont.break-in initially from <G seal, but recording improves with Vrest going down to -40mV and AP
+# peakV going up to +50mV, and conditions remaining quite stable until cell dies quickly and suddenly.
+# raw data cleanup:
+# removing the final segment from the last recording file, where cell is suddenly thoroughly dead:
+cell20220802C.rawdata_remove_nonrecordingsection('electricalStim_0006.abf', remove_segments=9)
+cell20220802C.write_results()
 # %% raw data import/cleanup template
 
 # raw data cleanup:

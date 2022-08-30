@@ -516,7 +516,11 @@ class SingleNeuron:
         """
         if not hasattr(self, 'ttlon_measures'):
             self.get_ttlonmeasures_fromrawdata()
+        elif self.ttlon_measures.empty:
+            self.get_ttlonmeasures_fromrawdata()
+
         if self.ttlon_measures.empty:
+            print('no ttl on found')
             return
         # updating noisefilter_hpfreq if set to 'default' but value for get_depolarizingevents is different from standard default
         if noisefilter_hpfreq == 'default' and\

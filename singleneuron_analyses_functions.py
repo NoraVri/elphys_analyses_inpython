@@ -930,6 +930,8 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
         ttlon_measures_dict = make_ttlonmeasures_dictionary()
         for idx, segment in enumerate(block.segments):
             ttl_recording = np.array(np.squeeze(segment.analogsignals[2]))
+            if np.min(ttl_recording) < -1:
+                ttl_recording = np.absolute(ttl_recording)
             ttlon_idcs = np.where((np.squeeze(ttl_recording > ttlhigh_value)) == True)[0]
             if len(ttlon_idcs) > 0:
                 ttlon_idx = ttlon_idcs[0]

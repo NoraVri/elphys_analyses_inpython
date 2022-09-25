@@ -314,6 +314,23 @@ n_aps_df.plot.scatter(x='percentwithprepotential_spont_neat', y='percentwithprep
 axes3.legend()
 axes3.set_xlim([0, 1])
 axes3.set_ylim([0, 1])
+
+# plots: N APs against % from prepotential, plotted for spont and for evoked
+figure4, axes4 = plt.subplots(1, 2, squeeze=True)
+n_aps_df.plot.scatter(x='n_spontAPs', y='percentwithprepotential_spont',
+                      ax=axes4[0], label='spont APs', color='b')
+n_aps_df.plot.scatter(x='n_evokedAPs', y='percentwithprepotential_evoked',
+                      ax=axes4[1], label='evoked APs', color='r')
+
+figure5, axes5 = plt.subplots(2, 1, squeeze=True, sharex='all')
+n_aps_df['percentwithprepotential_spont'].plot.hist(bins=30, ax=axes5[0])
+axes5[0].set_title('portion of spont APs from prepotential')
+axes5[0].set_xlim([0, 1])
+axes5[0].set_ylim([0, 6])
+n_aps_df['percentwithprepotential_evoked'].plot.hist(bins=30, ax=axes5[1])
+axes5[1].set_title('portion of evoked APs from prepotential')
+axes5[1].set_xlim([0, 1])
+axes5[1].set_ylim([0, 6])
 # %%
 # Figure1 panel: AP prepotential amps as a function of baselineV, for neurons with 5> neat APs
 

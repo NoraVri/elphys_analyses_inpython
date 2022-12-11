@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20200630D'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # actually has some spont.fastevents early on in the recording, and responds to light with something fast always

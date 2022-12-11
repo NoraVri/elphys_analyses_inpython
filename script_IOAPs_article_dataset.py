@@ -212,6 +212,57 @@ has_DCevokedAPs_list = ['20190527A', '20190527B', '20190529A1', '20190529A2', '2
 #             neuron_data.get_ap_prepotentials((neuron_data.depolarizing_events.event_label == 'actionpotential'))
 #             neuron_data.write_results()
 
+# %% plotting prepotential amplitudes for neurons with 10 or more neat APs
+results_path = path + '\\myResults'
+resultsfiles_all = os.listdir(results_path)
+resultsfiles_depolarizingevents = [filename for filename in resultsfiles_all if 'depolarizing_events' in filename]
+i = 0
+sum_i = 0
+j = 0
+sum_j = 0
+figure1, axis1 = plt.subplots(1,1,squeeze=True)
+spontaps_neurons_list = []
+figure2, axis2 = plt.subplots(1,1,squeeze=True)
+neatspontaps_neurons_list = []
+for filename in resultsfiles_depolarizingevents:
+    filepath = results_path + '\\' + filename
+    neuron_depolarizingevents = pd.read_csv(filepath)
+    if sum((neuron_depolarizingevents.event_label == 'actionpotential')) >= 10:
+        neuron_name = re.split('_d', filename)[0]
+        if neuron_name in dataset_neuronrecordings_list:
+            i += 1
+            spontaps_neurons_list.append(neuron_name)
+            spont_aps = (neuron_depolarizingevents.event_label == 'actionpotential') \
+                             & (~neuron_depolarizingevents.applied_ttlpulse)
+            ap_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[spont_aps].dropna()
+            jitter = np.random.uniform(-0.2, 0.2, size=len(ap_prepotentials_amps))
+            scatter_is = np.ones([len(ap_prepotentials_amps)]) * i + jitter
+            sum_i += len(ap_prepotentials_amps)
+            axis1.scatter(scatter_is, ap_prepotentials_amps)
+            axis1.set_title('all spont APs')
+            axis1.set_xlabel('neuron #')
+            axis1.set_ylabel('AP prepotential amplitude')
+
+            if 'neat_event' in neuron_depolarizingevents.columns:
+                neat_spont_aps = (neuron_depolarizingevents.event_label == 'actionpotential') \
+                                 & (~neuron_depolarizingevents.applied_ttlpulse) \
+                                 & (neuron_depolarizingevents.neat_event)
+                j += 1
+                neatspontaps_neurons_list.append(neuron_name)
+                prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[neat_spont_aps]
+                jitter = np.random.uniform(-0.2, 0.2, size=len(prepotentials_amps))
+                scatter_is = np.ones([len(prepotentials_amps)]) * j + jitter
+                sum_j += len(prepotentials_amps)
+                axis2.scatter(scatter_is, prepotentials_amps)
+                axis2.set_title('neat spont. APs only')
+                axis2.set_xlabel('neuron #')
+                axis2.set_ylabel('AP prepotential amplitude')
+
+# histogram of %APs from prepotential in these neurons:
+figure, axis = plt.subplots(1,1,squeeze=True)
+neat_n_aps_df = n_aps_df[~n_aps_df.n_neatspontAPs.isna()] #defined below
+neat_n_aps_df['percentwithprepotential_spont_neat'].plot.hist(bins=20, ax=axis)
+
 # %% data table: APs from prepotentials
 results_path = path + '\\myResults'
 resultsfiles_all = os.listdir(results_path)
@@ -280,7 +331,7 @@ figure2, axes2 = plt.subplots(1, 1, squeeze=True)
 n_aps_df.plot.scatter(x='n_evokedAPs', y='n_evokedAPs_withprepotential',
                       ax=axes2, label='all evoked APs', color='r')
 n_aps_df.plot.scatter(x='n_neatevokedAPs', y='n_neatevokedAPs_withprepotential',
-                      ax=axes2, label='neat spont APs', color='b')
+                      ax=axes2, label='neat evoked APs', color='b')
 lims2 = [np.min([axes2.get_xlim(), axes2.get_ylim()]), np.max([axes2.get_xlim(), axes2.get_ylim()])]
 axes2.plot(lims2, lims2)  # line: x=y
 axes2.plot(lims2, [lim/2 for lim in lims2], '--')  # line: x=y/2
@@ -316,11 +367,14 @@ axes3.set_xlim([0, 1])
 axes3.set_ylim([0, 1])
 
 # plots: N APs against % from prepotential, plotted for spont and for evoked
-figure4, axes4 = plt.subplots(1, 2, squeeze=True)
+figure4, axes4 = plt.subplots(1, 1, squeeze=True)
 n_aps_df.plot.scatter(x='n_spontAPs', y='percentwithprepotential_spont',
-                      ax=axes4[0], label='spont APs', color='b')
+                      ax=axes4, label='spont APs', color='b')
 n_aps_df.plot.scatter(x='n_evokedAPs', y='percentwithprepotential_evoked',
-                      ax=axes4[1], label='evoked APs', color='r')
+                      ax=axes4, label='evoked APs', color='r')
+for neuron in n_aps_df.iterrows():
+    axes4.plot([neuron[1].n_spontAPs, neuron[1].n_evokedAPs],
+               [neuron[1].percentwithprepotential_spont, neuron[1].percentwithprepotential_evoked])
 
 figure5, axes5 = plt.subplots(2, 1, squeeze=True, sharex='all')
 n_aps_df['percentwithprepotential_spont'].plot.hist(bins=30, ax=axes5[0])
@@ -547,15 +601,32 @@ for neuron in has_fastevents_list:
 
 
 # %% scatter of ttlresponse measures, per neuron
+has_lightapplied_inbaselineVrange_list = []  # definition: lowest baselineV < -60mV, range at least 20mV
 results_path = path + '\\myResults'
 resultsfiles_all = os.listdir(results_path)
 resultsfiles_ttl = [filename for filename in resultsfiles_all if 'ttl' in filename]
 for filename in resultsfiles_ttl:
+    cell_name = re.split('_', filename)[0]
     filepath = results_path + '\\' + filename
     neuron_ttlonmeasures = pd.read_csv(filepath)
     subthreshold_responses = neuron_ttlonmeasures[neuron_ttlonmeasures.response_maxamp < 40]
-    subthreshold_responses.plot.scatter('baselinev', 'response_maxdvdt')
-    plt.title(filename[0:10])
+    if ((subthreshold_responses.baselinev.min() <= -60)
+            & ((subthreshold_responses.baselinev.min() - subthreshold_responses.baselinev.max()) <= -20)):
+        # subthreshold_responses.plot.scatter('baselinev', 'response_maxdvdt')
+        # plt.title(cell_name)
+        has_lightapplied_inbaselineVrange_list.append(cell_name)
+
+    if (cell_name in has_neatevents_list) and (cell_name in has_lightapplied_inbaselineVrange_list):
+        depolarizingeventsfile_name = cell_name + '_depolarizing_events.csv'
+        depolarizingevents_df = pd.read_csv((results_path+'\\'+depolarizingeventsfile_name))
+        neat_blocks_fileorigins = depolarizingevents_df.file_origin[depolarizingevents_df.neat_event].unique()
+        ttlon_file_origins = subthreshold_responses.file_origin
+        if sum(ttlon_file_origins.isin(neat_blocks_fileorigins)) > 0:
+            neat_ttlon_traces = subthreshold_responses[ttlon_file_origins.isin(neat_blocks_fileorigins)]
+            neat_ttlon_traces.plot.scatter('baselinev', 'response_maxdvdt')
+            plt.title(cell_name + ' neat files only')
+            neuron_data = SingleNeuron(cell_name)
+            neuron_data.plot_rawdatatraces_ttlaligned(*neat_ttlon_traces.file_origin.unique())
 
 
 # %%

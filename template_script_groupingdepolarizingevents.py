@@ -206,7 +206,11 @@ plt.suptitle('aps, neat ones only')
 # spont_events = ~des_df.applied_ttlpulse
 # unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 # unlabeled_spont_events = (spont_events & unlabeled_events)
-# singleneuron_data.plot_rawdatablocks(events_to_mark=unlabeled_spont_events, segments_overlayed=False)
+# blocknames = des_df[unlabeled_spont_events].file_origin.unique()
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=unlabeled_spont_events,
+#                                          segments_overlayed=False)
 # notes:
 
 # Finding and labeling fast-events (and other types of events encountered along the way):

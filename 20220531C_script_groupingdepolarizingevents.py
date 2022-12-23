@@ -12,7 +12,11 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
 # nice recording of an IO cell patched with a pipette containing QX-free intra in the tip,
-# and further back-filled with intra containing QX
+# and further back-filled with intra containing QX.
+# After analyzing the data, seems QX did not reach a (fully) effective concentration: spont.fastevents and a
+# spont.AP did occur even after ~30min. recording, and APs could continuously be evoked with DC pulses (even if their
+# amplitude decreased some - this could be due to anything).
+
 
 des_df = singleneuron_data.depolarizing_events
 
@@ -61,18 +65,18 @@ aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpuls
 # singleneuron_data.depolarizing_events.loc[ap_on_currentpulsechange, 'event_label'] = 'actionpotential_on_currentpulsechange'
 
 # %% plots and analyses: seeing and labeling subthreshold depolarizing events
-des_df = singleneuron_data.depolarizing_events
-nbins = 100
+# des_df = singleneuron_data.depolarizing_events
+# nbins = 100
 # Seeing that light/puff-evoked things all got labeled as such:
-evoked_events = des_df.applied_ttlpulse
+# evoked_events = des_df.applied_ttlpulse
 # singleneuron_data.plot_rawdatablocks('light', events_to_mark=evoked_events)
 # notes:
 # no ttl-evoked events in this neuron.
 
 # Seeing that spontaneous fast-events got picked up:
-spont_events = ~des_df.applied_ttlpulse
-unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
-unlabeled_spont_events = (spont_events & unlabeled_events)
+# spont_events = ~des_df.applied_ttlpulse
+# unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# unlabeled_spont_events = (spont_events & unlabeled_events)
 # blocknames = des_df[unlabeled_spont_events].file_origin.unique()
 # if len(blocknames) > 0:
 #     singleneuron_data.plot_rawdatablocks(*blocknames,
@@ -89,34 +93,37 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 
 # Finding and labeling fast-events (and other types of events encountered along the way):
 # plotting all as-yet unlabeled events parameters:
-des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
-                                 bins=nbins,
-                                 )
-plt.suptitle('all as-yet unlabeled events')
-singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
-                                                      cmeasure='baselinev',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
-singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
-                                                      cmeasure='amplitude',
-                                                      unlabeled_spont_events=unlabeled_spont_events,
-                                                      )
-
-singleneuron_data.plot_depolevents(unlabeled_spont_events,
-                                   colorby_measure='baselinev',
-                                   plotwindow_inms=15,
-                                   do_baselining=True,
-                                   # do_normalizing=True,
-                                   plot_dvdt=True
-                                   )
+# des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+#                                  bins=nbins,
+#                                  )
+# plt.suptitle('all as-yet unlabeled events')
+# singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+#                                                       cmeasure='baselinev',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
+# singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+#                                                       cmeasure='amplitude',
+#                                                       unlabeled_spont_events=unlabeled_spont_events,
+#                                                       )
+#
+# singleneuron_data.plot_depolevents(unlabeled_spont_events,
+#                                    colorby_measure='baselinev',
+#                                    plotwindow_inms=15,
+#                                    do_baselining=True,
+#                                    # do_normalizing=True,
+#                                    plot_dvdt=True
+#                                    )
 
 # Labeling fast-events and other events fitting in categories not labeled automatically (fastevent, compound_event, other_event, noiseevent)
-# By amplitude, rise-time and half-width parameters and gradually changing normalized shape, it looks to me that all the remaining subthreshold events should be counted as fastevents.
-
+# By amplitude, rise-time and half-width parameters and gradually changing normalized shape, it looks to me that
+# all the remaining subthreshold events should be counted as fastevents.
+# Labeling them as such:
+# singleneuron_data.depolarizing_events.loc[unlabeled_spont_events, 'event_label'] = 'fastevent'
+# singleneuron_data.write_results()
 
 
 # %% seeing all APs

@@ -258,7 +258,11 @@ plt.suptitle('aps, neat ones only')
 #                                                       cmeasure='amplitude',
 #                                                       events_underinvestigation=events_underinvestigation,
 #                                                       )
-
+# blocknames = des_df[events_underinvestigation].file_origin.unique()
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=events_underinvestigation,
+#                                          segments_overlayed=False)
 
 
 

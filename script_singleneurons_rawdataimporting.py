@@ -2349,6 +2349,22 @@ cell20210429B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 cell20210429B.write_results()
 
 # %%
+cell20211227B = SingleNeuron('20211227B')
+cell20211227B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# not a good recording at all; cell manages to be at baselineV ~-45 with -2nA DC for about 30s, then dies thoroughly.
+# removing all blocks:
+blocknames = cell20211227B.get_blocknames(printing='off')
+for name in blocknames:
+    cell20211227B.rawdata_remove_nonrecordingblock(name)
+cell20211227B.write_results()
+
+# %%
+cell20211227C = SingleNeuron('20211227C')
+cell20211227C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# not a great recording: spont.break-in and baselineV ~-30mV w/o DC for the most part.
+# no cleanups to apply.
+
+# %%
 cell20220524A = SingleNeuron('20220524A')
 cell20220524A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # spont.break-in yet quite nice and steady recording: baselineV going from ~-50 to ~-45 over the course of 50 minutes,
@@ -2504,6 +2520,28 @@ cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start
 # removing part of recording where neuron is no longer alive (baselineV > -30mV, no longer oscillating or anything):
 cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t=310)
 cell20220531C.write_results()
+
+# %%
+cell20220722B = SingleNeuron('20220722B')
+cell20220722B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+
+
+
+# %%
+cell20220722C = SingleNeuron('20220722C')
+cell20220722C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# very nice ~2hr-long recording of neuron doing lots of spont.APs and other events, which are blocked by TTX and come back with washout.
+# raw data cleanup:
+# removing seal formation:
+cell20220722C.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=32)
+# all 'withStim' files have ch1 recording turned on as well (cell is recorded on ch2, ch1 is being used to stimulate)
+# but there is no time-locked response in the recorded cell to the stimulation at all.
+# Removing ch1 recordings:
+stim_blocks = [block for block in cell20220722C.get_blocknames(printing='off') if 'withStim' in block]
+for block in stim_blocks:
+    cell20220722C.rawdata_remove_nonrecordingchannel(block, 1)
+cell20220722C.write_results()
 
 # %%
 cell20220802A = SingleNeuron('20220802A')

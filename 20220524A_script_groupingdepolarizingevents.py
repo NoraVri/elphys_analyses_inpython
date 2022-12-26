@@ -65,24 +65,48 @@ nbins = 100
 spont_events = ~des_df.applied_ttlpulse
 unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
 unlabeled_spont_events = (spont_events & unlabeled_events)
-blocknames = des_df[unlabeled_spont_events].file_origin.unique()
-if len(blocknames) > 0:
-    singleneuron_data.plot_rawdatablocks(*blocknames,
-                                         events_to_mark=unlabeled_spont_events,
-                                         segments_overlayed=False)
+# blocknames = des_df[unlabeled_spont_events].file_origin.unique()
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=unlabeled_spont_events,
+#                                          segments_overlayed=False)
 # notes:
+# one real event each in gapFree files #0 and 1, and another handful in gapFree #2;
+# other than that, all 'events' are DC-evoked, mostly rebound responses that got picked up funny.
+# not_spontevents = (unlabeled_spont_events & ~(des_df.file_origin.str.contains('gapFree')))
+# not_spontevents2 = (unlabeled_spont_events
+#                     & (des_df.file_origin == 'gapFree_0000.abf')
+#                     & (des_df.baselinev_idx > (20 * 20000)))
+# not_spontevents3 = (unlabeled_spont_events
+#                     & (des_df.file_origin == 'gapFree_0001.abf')
+#                     & (des_df.baselinev_idx < (100 * 20000)))
+# currentpulsechange_events = (not_spontevents | not_spontevents2 | not_spontevents3)
+# singleneuron_data.depolarizing_events.loc[currentpulsechange_events, 'event_label'] = 'currentpulsechange_events'
+# singleneuron_data.write_results()
 
+singleneuron_data.plot_depolevents(unlabeled_spont_events,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
 
+des_df[unlabeled_spont_events].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude', 'baselinev'],
+                                 bins=nbins,
+                                 )
+plt.suptitle('all as-yet unlabeled events')
+singleneuron_data.scatter_depolarizingevents_measures('maxdvdt', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      unlabeled_spont_events=unlabeled_spont_events,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'amplitude',
+                                                      cmeasure='baselinev',
+                                                      unlabeled_spont_events=unlabeled_spont_events,
+                                                      )
+singleneuron_data.scatter_depolarizingevents_measures('rise_time_20_80', 'maxdvdt',
+                                                      cmeasure='amplitude',
+                                                      unlabeled_spont_events=unlabeled_spont_events,
+                                                      )
 
-
-# singleneuron_data.plot_depolevents(unlabeled_spont_events,
-#                                    colorby_measure='baselinev',
-#                                    plotwindow_inms=15,
-#                                    do_baselining=True,
-#                                    # do_normalizing=True,
-#                                    plot_dvdt=True
-#                                    )
-
-
-
-
+# I think the remaining 7 events are more likely to be spikelets than fastevents: amplitudes are 2 - 4mV, and risetimes look to be distributed normally around 1.2ms.

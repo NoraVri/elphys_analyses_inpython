@@ -341,7 +341,7 @@ def get_events_measures(peaks_idcs,
         else:
             auxttlsnippet = auxttl_recording[baseline_idx:peak_idx]
 
-        if (auxttlsnippet is not None) and (len(auxttlsnippet) > 0) and (np.amax(auxttlsnippet) > 1):
+        if (auxttlsnippet is not None) and (len(auxttlsnippet) > 0) and (np.amax(np.abs(auxttlsnippet)) > 1):
             ttlpulse_applied = True
         else:
             ttlpulse_applied = False

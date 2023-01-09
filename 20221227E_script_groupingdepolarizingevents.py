@@ -27,9 +27,9 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.write_results()
 
 # %% plots and analyses: labeling actionpotentials
-# des_df = singleneuron_data.depolarizing_events
-# aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
-# aps_evokedbyttl = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
+des_df = singleneuron_data.depolarizing_events
+aps_oncurrentpulsechange = des_df.event_label == 'actionpotential_on_currentpulsechange'
+aps_evokedbyttl = ((des_df.event_label == 'actionpotential') & (des_df.applied_ttlpulse))
 # aps_spont = (des_df.event_label == 'actionpotential') & (~des_df.applied_ttlpulse)
 # # for each category of APs, see that they are indeed that:
 # events = aps_oncurrentpulsechange #aps_evokedbyttl  #aps_spont
@@ -54,13 +54,44 @@ singleneuron_data = SingleNeuron(neuron_name)
 #                                    plot_dvdt=True
 #                                    )
 
-# singleneuron_data.plot_depolevents(aps_oncurrentpulsechange, #aps_evokedbyttl,  #aps_spont,
-#                                    colorby_measure='baselinev',
-#                                    plotwindow_inms=50,
-#                                    prealignpoint_window_inms=20,
-#                                    do_baselining=False,
-#                                    # do_normalizing=True,
-#                                    plot_dvdt=True
-#                                    )
+# %% plots and analyses: seeing and labeling subthreshold depolarizing events
+des_df = singleneuron_data.depolarizing_events
+nbins = 100
+unlabeled_events = des_df.event_label.isna() # all events that were not automatically given a label
+# Seeing that ttl-evoked things all got labeled as such:
+evoked_events = des_df.applied_ttlpulse
+unlabeled_evoked_events = unlabeled_events & evoked_events
+# notes:
+# baseline-points are not to be trusted (as expected with electrical stim artefact) and there may be a few events that didn't get labeled as ttl-evoked but should have; did not see any events labeled that shouldn't've been.
+
+# Seeing that spontaneous fast-events got picked up:
+spont_events = ~des_df.applied_ttlpulse
+unlabeled_spont_events = (spont_events & unlabeled_events)
+# notes:
+# 25 events got picked up, but only one that's a proper spontaneous fastevent; most others are evoked by electricalStim
+# via the 'single shot'-button on the stimulator, and the one spontaneous event picked up in electricalStim#1 looks like
+# a Ca-spike (may have been set off by a fastevent).
+# Labeling the fastevent:
+# fastevent = (unlabeled_spont_events
+#              & (des_df.file_origin == 'gapFree_0000.abf')
+#              & (des_df.baselinev_idx > (180 * 20000)))
+# singleneuron_data.depolarizing_events.loc[fastevent, 'event_label'] = 'fastevent'
+# Labeling the stim-triggered events as evoked:
+# ttlevoked_events = (unlabeled_spont_events
+#                     & (des_df.file_origin == 'gapFree_0000.abf')
+#                     & ~fastevent)
+# singleneuron_data.depolarizing_events.loc[ttlevoked_events, 'applied_ttlpulse'] = True
+# singleneuron_data.write_results()
+
+# events = unlabeled_spont_events
+# blocknames = des_df[events].file_origin.unique()
+# if len(blocknames) > 0:
+#     singleneuron_data.plot_rawdatablocks(*blocknames,
+#                                          events_to_mark=events,
+#                                          segments_overlayed=False)
+
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+
+
 
 

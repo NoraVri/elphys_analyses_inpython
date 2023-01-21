@@ -1682,6 +1682,16 @@ cell20200805B.plot_rawdatablocks(segments_overlayed=False)
 # removing all data:
 cell20200805B.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 cell20200805B.write_results()
+
+# %%
+cell20200805C = SingleNeuron('20200805C')
+cell20200805C.plot_rawdatablocks(segments_overlayed=False)
+# Looks like a proper >>G seal formed on a dead cell - baselineV ~0mV on break-in, recorded for just a few s.
+# raw data cleanup:
+# removing all data:
+cell20200805C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20200805C.write_results()
+
 # %%
 cell20200818A = SingleNeuron('20200818A')
 cell20200818A.plot_rawdatablocks(segments_overlayed=False)
@@ -1715,6 +1725,15 @@ cell20200818C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start
 cell20200818C.rawdata_remove_nonrecordingsection('longPulses_0004.abf', trace_end_t=46)  # file misnamed at recordings
 cell20200818C.write_results()
 
+# %%
+cell20200819A = SingleNeuron('20200819A')
+cell20200819A.plot_rawdatablocks(segments_overlayed=False)
+# spont.break-in from not sure what seal according to notes (break-in not recorded); just a neuron holding steady for
+# about 4 minutes doing nothing spontaneously (APs can be evoked with DC) and then it left.
+# raw data cleanup:
+# removing part of the trace where neuron leaves (baselineV from -60 to -10 in ~5seconds):
+cell20200819A.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_end_t=227)
+cell20200819A.write_results()
 # %%
 # cell20200909A = SingleNeuron('20200909A')
 #

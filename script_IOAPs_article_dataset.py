@@ -9,27 +9,20 @@ import pandas as pd
 import numpy as np
 import singleneuron_plotting_functions as plots
 
-# In this script: analysis of APs as triggered from fast-events.
-# Dataset: neurons recorded on days with optogenetic activation of inputs to IO.
-
+# # In this script: analysis of APs as triggered from fast-events.
+# # Dataset: neurons recorded on days with optogenetic activation of inputs to IO.
+#
 # metadata imports
 path="D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
-recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')
-experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')
+recordings_metadata = pd.read_csv(path+'\\'+'myData_recordings_metadata.csv')  # metadata on each recording
+experimentdays_metadata = pd.read_csv(path+'\\'+'myData_experimentDays_metadata.csv')  # metadata on the experiment day - mouse type etc. that is the same for all neurons recorded on that day
 
-# analyses step0: go to script_rawdata_importing and go over raw data for each neuron in the dataset (N=99).
-# analyses step0.1: get list of neurons again, but without those whose total_t_recorded_in_s = 0 (neuron data excluded)
-
-# getting all IO neuron recordings
-IOneurons_recordings = (recordings_metadata.anatomical_location == 'inferior_olive') \
-                       & (recordings_metadata.total_t_recorded_in_s > 0)
 # getting all experiment days that optogenetically activatable inputs were in the slice,
 # split out per type of labeled inputs:
 virus_toMidbrain_mice = ['HUM042', 'HUM043', 'HUM044', 'HUM045', 'HUM046']
 virus_toMDJ_mice = ['HUM050', 'HUM051', 'HUM052', 'HUM053', 'HUM054', 'HUM055']
 RBP_mice = ['RBP', 'RBP4-cre/Ai32']
 Thy1_mice = ['Thy1', 'thy1']
-
 expdays_virus_toMidbrain = experimentdays_metadata[
     experimentdays_metadata.virusinjection_ID.isin(virus_toMidbrain_mice)].date
 expdays_virus_toMDJ = experimentdays_metadata[
@@ -38,24 +31,51 @@ expdays_RBP = experimentdays_metadata[experimentdays_metadata.genetics.isin(RBP_
 expdays_Thy1 = experimentdays_metadata[experimentdays_metadata.genetics.isin(Thy1_mice)].date
 
 # getting IO neuron recordings from days that optogenetically activatable inputs were in the slice
-# split out per input type
-recordings_virus_toMidbrain = recordings_metadata[(IOneurons_recordings
-                                                   & recordings_metadata.date.isin(expdays_virus_toMidbrain))]
+# per input type, and adding mouse type from experiment_days to recordings metadata
+recordings_virus_toMidbrain = recordings_metadata[(recordings_metadata.date.isin(expdays_virus_toMidbrain))]
 recordings_virus_toMidbrain['mouse_type'] = 'virus_toMidbrain'
-recordings_virus_toMDJ = recordings_metadata[(IOneurons_recordings
-                                              & recordings_metadata.date.isin(expdays_virus_toMDJ))]
+recordings_virus_toMDJ = recordings_metadata[(recordings_metadata.date.isin(expdays_virus_toMDJ))]
 recordings_virus_toMDJ['mouse_type'] = 'virus_toMDJ'
-recordings_RBP = recordings_metadata[(IOneurons_recordings
-                                      & recordings_metadata.date.isin(expdays_RBP))]
+recordings_RBP = recordings_metadata[(recordings_metadata.date.isin(expdays_RBP))]
 recordings_RBP['mouse_type'] = 'RBP'
-recordings_Thy1 = recordings_metadata[(IOneurons_recordings
-                                       & recordings_metadata.date.isin(expdays_Thy1))]
+recordings_Thy1 = recordings_metadata[(recordings_metadata.date.isin(expdays_Thy1))]
 recordings_Thy1['mouse_type'] = 'Thy1'
-# all together
+# adding them all together again into collected dataframes
 expdays_lightactive_all = pd.concat([expdays_virus_toMidbrain, expdays_virus_toMDJ, expdays_RBP, expdays_Thy1])
 recordings_dfs_list = [recordings_Thy1, recordings_RBP, recordings_virus_toMDJ, recordings_virus_toMidbrain]
 recordings_lightactive_all = pd.concat(recordings_dfs_list)
-# Total number of neurons in the dataset: N = 77.
+# checked and double-checked: anatomical location data is up-to-date for all recordings, as is time_recorded_ins.
+# So, these tags can be used to filter out any recordings that aren't IO or aren't real recordings (t=0):
+IOneurons_recordings_t_over0 = (recordings_lightactive_all.anatomical_location == 'inferior_olive') \
+                       & (recordings_lightactive_all.total_t_recorded_in_s > 0)
+recordings_lightactive_IO = recordings_lightactive_all[IOneurons_recordings_t_over0]
+# Total number of recorded neurons in the dataset: N = 78 (len(recordings_lightactive_IO))
+# Total number of labeled mice used: n = 26 (len(expdays_lightactive_all))
+
+# adding a column to recordings_metadata: n segments with light on (i.e., ttl applied)
+recordings_lightactive_IO.insert(loc=18, column='n_ttl_applications', value=np.nan)
+resultsfiles_path = path + '\\myResults'
+resultsfiles_list = os.listdir(resultsfiles_path)
+for neuron in recordings_lightactive_IO.name:
+    neuron_recordingblocks_index_filename = neuron + '_recordingblocks_index.csv'
+    neuron_recordingblocks_index = pd.read_csv(resultsfiles_path + '\\' + neuron_recordingblocks_index_filename)
+    if sum(neuron_recordingblocks_index.ttl_record) > 0:
+        n_lightapplications = sum(neuron_recordingblocks_index[neuron_recordingblocks_index.ttl_record].n_segments)
+        recordings_lightactive_IO.loc[(recordings_lightactive_IO.name == neuron), 'n_ttl_applications'] = n_lightapplications
+
+# recordings_metadata for neurons with light applications only:
+recordings_lightactive_IO_ttlapplied = recordings_lightactive_IO[~(recordings_lightactive_IO.n_ttl_applications.isna())]
+# Total number of neurons with light applications in the dataset: N = 69 (len(recordings_lightactive_IO_ttlapplied))
+# Smallest number of light applications in one neuron: 5 (recordings_lightactive_IO.n_ttl_applications.min())
+# shortest recording is just under 3 minutes (recordings_lightactive_IO_ttlapplied.total_t_recorded_in_s.min() / 60)
+#  5 neurons have recording shorter than 5 minutes (recordings_lightactive_IO_ttlapplied[~(recordings_lightactive_IO_ttlapplied.total_t_recorded_in_s > 300)].name)
+
+
+
+
+
+
+
 
 # %% analyses step1: getting APs and depolarizing events for all neurons in the dataset.
 # Go to [neuronname]_script_groupingdepolarizingevents to see notes on labeling depolarizing events for each neuron.
@@ -68,9 +88,9 @@ recordings_lightactive_all = pd.concat(recordings_dfs_list)
 # has_neatevents_list = []
 # has_lightresponses_list = []
 # has_lightevokedAPs_list = []
-# I don't have any experiments in mice with optogenetically-labeled things where TTl-on is used for anything besides
-# activating the light. So, we can use get_ttlonmeasures to identify neurons that actually had light responses recorded.
-# filling in the lists:
+# # I don't have any experiments in mice with optogenetically-labeled things where TTl-on is used for anything besides
+# # activating the light. So, we can use get_ttlonmeasures to identify neurons that actually had light responses recorded.
+# # filling in the lists:
 # for neuron in recordings_lightactive_all.name:
 #     neuron_data = SingleNeuron(neuron)
 #     neuron_data.get_ttlonmeasures_fromrawdata()
@@ -286,51 +306,95 @@ n_evokedaps_df.hist(column='neatevoked_percentwithprepotential',
                    sharex=True, sharey=True,
                    bins=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100])
 
-# %% plotting prepotential amplitudes for neurons with 10 or more neat APs
+# %% plotting prepotential amplitudes for neurons that have them extracted
 results_path = path + '\\myResults'
 resultsfiles_all = os.listdir(results_path)
 resultsfiles_depolarizingevents = [filename for filename in resultsfiles_all if 'depolarizing_events' in filename]
 i = 0
-sum_i = 0
 j = 0
-sum_j = 0
 figure1, axis1 = plt.subplots(1,1,squeeze=True)
-spontaps_neurons_list = []
 figure2, axis2 = plt.subplots(1,1,squeeze=True)
-neatspontaps_neurons_list = []
+figure3, axes3 = plt.subplots(1,2,squeeze=True)
+axis3 = axes3[0]
+axis3bis = axes3[1]
+figure4, axis4 = plt.subplots(1,1,squeeze=True)
+
+
 for filename in resultsfiles_depolarizingevents:
     filepath = results_path + '\\' + filename
     neuron_depolarizingevents = pd.read_csv(filepath)
-    if sum((neuron_depolarizingevents.event_label == 'actionpotential')) >= 10:
+    if ('ap_prepotential_amp' in neuron_depolarizingevents.columns):
+        i += 1
         neuron_name = re.split('_d', filename)[0]
-        if neuron_name in dataset_neuronrecordings_list:
-            i += 1
-            spontaps_neurons_list.append(neuron_name)
-            spont_aps = (neuron_depolarizingevents.event_label == 'actionpotential') \
-                             & (~neuron_depolarizingevents.applied_ttlpulse)
-            ap_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[spont_aps].dropna()
-            jitter = np.random.uniform(-0.2, 0.2, size=len(ap_prepotentials_amps))
-            scatter_is = np.ones([len(ap_prepotentials_amps)]) * i + jitter
-            sum_i += len(ap_prepotentials_amps)
-            axis1.scatter(scatter_is, ap_prepotentials_amps)
-            axis1.set_title('all spont APs')
-            axis1.set_xlabel('neuron #')
-            axis1.set_ylabel('AP prepotential amplitude')
+        aps = neuron_depolarizingevents.event_label == 'actionpotential'
+        aps_withprepotential = aps & ~neuron_depolarizingevents.ap_prepotential_amp.isna()
+        spontaps = (aps & ~(neuron_depolarizingevents.applied_ttlpulse))
+        evokedaps = (aps & (neuron_depolarizingevents.applied_ttlpulse))
+        # all spont.APs
+        if sum((aps_withprepotential & spontaps)) > 0:
+            spontaps_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[(aps_withprepotential & spontaps)]
+            percentaps_fromprepotential = np.round((len(spontaps_prepotentials_amps) / sum(spontaps)) * 100)
+            jitter = np.random.uniform(-0.2, 0.2, size=len(spontaps_prepotentials_amps))
+            scatter_is = np.ones([len(spontaps_prepotentials_amps)]) * i + jitter
+            legend_text = (neuron_name + ' ' + str(percentaps_fromprepotential) + '%')
+            axis1.scatter(scatter_is, spontaps_prepotentials_amps, label=legend_text)
+        # all evoked APs
+        if sum((aps_withprepotential & evokedaps)) > 0:
+            evokedaps_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[(aps_withprepotential & evokedaps)]
+            percentaps_fromprepotential = np.round((len(evokedaps_prepotentials_amps) / sum(evokedaps)) * 100)
+            jitter = np.random.uniform(-0.2, 0.2, size=len(evokedaps_prepotentials_amps))
+            scatter_is = np.ones([len(evokedaps_prepotentials_amps)]) * i + jitter
+            legend_text = (neuron_name + ' ' + str(percentaps_fromprepotential) + '%')
+            axis2.scatter(scatter_is, evokedaps_prepotentials_amps, label=legend_text)
+        # everything again, for neat APs
+        if ('neat_event' in neuron_depolarizingevents.columns):
+            j += 1
+            neat_aps = (aps & neuron_depolarizingevents.neat_event)
+            # neat spont.APs
+            if sum(aps_withprepotential & spontaps & neat_aps) > 0:
+                neatspontaps = (spontaps & neat_aps)
+                neatspontaps_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[neatspontaps].dropna()
+                percentneataps_fromprepotential = np.round((len(neatspontaps_prepotentials_amps) / sum(neatspontaps)) * 100)
+                jitter = np.random.uniform(-0.2, 0.2, size=len(neatspontaps_prepotentials_amps))
+                scatter_js = np.ones([len(neatspontaps_prepotentials_amps)]) * j + jitter
+                legend_text = (neuron_name + ' ' + str(percentneataps_fromprepotential) + '%')
+                axis3.scatter(scatter_js, neatspontaps_prepotentials_amps, label=legend_text)
+                # neat spont.fastevents, if there are any
+                neatfastevents = (neuron_depolarizingevents.neat_event & (neuron_depolarizingevents.event_label == 'fastevent'))
+                neatfastevents_amps = neuron_depolarizingevents.amplitude[neatfastevents]
+                jitter = np.random.uniform(-0.2, 0.2, size=len(neatfastevents_amps))
+                scatter_js = np.ones([len(neatfastevents_amps)]) * j + jitter
+                axis3bis.scatter(scatter_js, neatfastevents_amps)
 
-            if 'neat_event' in neuron_depolarizingevents.columns:
-                neat_spont_aps = (neuron_depolarizingevents.event_label == 'actionpotential') \
-                                 & (~neuron_depolarizingevents.applied_ttlpulse) \
-                                 & (neuron_depolarizingevents.neat_event)
-                j += 1
-                neatspontaps_neurons_list.append(neuron_name)
-                prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[neat_spont_aps]
-                jitter = np.random.uniform(-0.2, 0.2, size=len(prepotentials_amps))
-                scatter_is = np.ones([len(prepotentials_amps)]) * j + jitter
-                sum_j += len(prepotentials_amps)
-                axis2.scatter(scatter_is, prepotentials_amps)
-                axis2.set_title('neat spont. APs only')
-                axis2.set_xlabel('neuron #')
-                axis2.set_ylabel('AP prepotential amplitude')
+            # neat evoked APs
+            if sum(aps_withprepotential & evokedaps & neat_aps) > 0:
+                neatevokedaps = (evokedaps & neat_aps)
+                neatevokedaps_prepotentials_amps = neuron_depolarizingevents.ap_prepotential_amp[neatevokedaps].dropna()
+                percentneataps_fromprepotential = np.round((len(neatevokedaps_prepotentials_amps) / sum(neatevokedaps)) * 100)
+                jitter = np.random.uniform(-0.2, 0.2, size=len(neatevokedaps_prepotentials_amps))
+                scatter_ls = np.ones([len(neatevokedaps_prepotentials_amps)]) * j + jitter
+                legend_text = (neuron_name + ' ' + str(percentneataps_fromprepotential) + '%')
+                axis4.scatter(scatter_ls, neatevokedaps_prepotentials_amps, label=legend_text)
+
+axis1.set_title('all spont APs')
+axis1.set_xlabel('neuron #')
+axis1.set_ylabel('AP prepotential amplitude')
+axis1.legend()
+axis2.set_title('all evoked APs')
+axis2.set_xlabel('neuron #')
+axis2.set_ylabel('AP prepotential amplitude')
+axis2.legend()
+axis3.set_title('all neat spont APs')
+axis3.set_xlabel('neuron #')
+axis3.set_ylabel('AP prepotential amplitude')
+axis3.legend()
+axis4.set_title('all neat evoked APs')
+axis4.set_xlabel('neuron #')
+axis4.set_ylabel('AP prepotential amplitude')
+axis4.legend()
+for axis in [axis1, axis2, axis3, axis3bis, axis4]:
+    axis.set_xlim([0, 30])
+    axis.set_ylim([0, 40])
 
 
 # %% plots: N aps vs. N aps from prepotential, separately for spont. and evoked

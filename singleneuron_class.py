@@ -1086,6 +1086,7 @@ class SingleNeuron:
                                                                baselinewindow_length_inms=baselinewindow_length_inms)
         self.depolarizing_events = new_depolarizingevents_df
 
+    # getting averaged waveforms
     def get_eventsgroups_averages(self, *events_groups, **kwargs):
         """
         This function gets averages (mean +/- std) of selected groups of events (as indexed into the
@@ -1104,6 +1105,7 @@ class SingleNeuron:
                                                         self.rawdata_readingnotes['getdepolarizingevents_settings'],
                                                         events_group, **kwargs)
 
+    # getting the ttlon_measures DataFrame
     def get_ttlonmeasures_fromrawdata(self, **kwargs):
         # kwargs:
         # ttlhigh_value=1; sets the binary cutoff value for measuring ttl low/high
@@ -1125,6 +1127,19 @@ class SingleNeuron:
             if 'idx' in key:                         # to bypass their being cast to float
                 dtypes_dict[key] = 'Int64'
         self.ttlon_measures = ttlon_measures.astype(dtypes_dict)
+
+    # adding events-frequencies to the recordingblocks_index DataFrame
+    def get_depolarizingevents_frequencies_byrecordingblocks(self):
+        if self.recordingblocks_index.empty:
+            self.get_recordingblocks_index()
+        elif 'file_timestamp' not in self.recordingblocks_index.columns:
+            self.get_recordingblocks_index()
+
+        if self.depolarizing_events.empty:
+            print('no depolarizing events extracted for this neuron; recordingblocks index not updated')
+        else:
+            new_recordingblocks_index = snafs.add_events_frequencies_torecordingblocksindex(self.recordingblocks_index, self.depolarizing_events)
+            self.recordingblocks_index = new_recordingblocks_index
 
     # getting long-pulse measures (unfinished)
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):

@@ -37,10 +37,16 @@ def fill_singleneuron_recordings_index_dictionary(block):
     for segment in block.segments:
         time_count += (segment.t_stop - segment.t_start)
 
+    if block.rec_datetime is not None:
+        block_datetime = pd.Timestamp(block.rec_datetime)
+    else:
+        block_datetime = np.nan
+
     recordingblock_infos_dict['file_origin'].append(block.file_origin)
     recordingblock_infos_dict['n_segments'].append(len(block.segments))
     recordingblock_infos_dict['sampling_freq_inHz'].append(int(block.segments[0].analogsignals[0].sampling_rate))
     recordingblock_infos_dict['t_recorded_ins'].append(float(time_count))
+    recordingblock_infos_dict['file_timestamp'].append(block_datetime)
     recordingblock_infos_dict['cc_recording'].append(ccrecording)
     recordingblock_infos_dict['ttl_record'].append(ttl)
 
@@ -52,10 +58,29 @@ def make_recordings_index_dictionary():
         'n_segments': [],
         'sampling_freq_inHz': [],
         't_recorded_ins': [],
+        'file_timestamp': [],
         'cc_recording': [],
         'ttl_record': []
     }
     return recordingblock_infos
+
+# adding information on frequencies of APs and fastevents to existing recordingblocks_index DataFrame
+def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depolarizingevents_df):
+    blocks_spontaps_freqs = []
+    blocks_spontfastevents_freqs = []
+    for block in recordingblocks_index_df.file_origin.unique():
+        block_spontevents = depolarizingevents_df[((depolarizingevents_df.file_origin == block)
+                                                   & ~(depolarizingevents_df.applied_ttlpulse))]
+        block_n_spontaps = len(block_spontevents[(block_spontevents.event_label == 'actionpotential')])
+        block_spontaps_avgfreq = block_n_spontaps / (recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
+        blocks_spontaps_freqs.append(block_spontaps_avgfreq)
+        block_n_spontfastevents = len(block_spontevents[(block_spontevents.event_label == 'fastevent')])
+        block_spontevents_avgfreq = block_n_spontfastevents / (recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
+        blocks_spontfastevents_freqs.append(block_spontevents_avgfreq)
+    recordingblocks_index_df['spontaps_avgfreqs'] = blocks_spontaps_freqs
+    recordingblocks_index_df['spontfastevents_avgfreqs'] = blocks_spontfastevents_freqs
+    return recordingblocks_index_df
+
 
 # %% depolarizing events
 

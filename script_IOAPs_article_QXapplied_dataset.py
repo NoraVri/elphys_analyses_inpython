@@ -26,16 +26,23 @@ qxdays_recordings_metadata = recordings_metadata[recordings_metadata.date.isin(q
 # Getting recordings metadata for only neurons that were patched with QX in the pipette:
 qxpatched_recordings_metadata = qxdays_recordings_metadata[((qxdays_recordings_metadata.elphysrecording_notes.str.contains('QX', na=False))
                                                             & (qxdays_recordings_metadata.total_t_recorded_in_s > 0))]
-# recordings performed in 2022-05 all had low QX concentration (~0.3mM);
-# recordings performed in 2022-12 were done with tip filled with QX-free intra (with varying success; in at least one case QX-containing intra could be seen to come out of the pipette before the neuron was patched).
+# Recordings performed in 2022-05 all had low QX concentration (~0.3mM);
+# Recordings performed in 2022-12 were done with tip filled with QX-free intra (with varying success; in some cases
+# QX-containing intra could be seen to come out of the pipette before the neuron was patched; in other cases neurons
+# died before QX-containing intra reached them).
+# Experiment-day notes on neurons where I attempted patching with QX-free intra in the tip of the pipette:
+# 20221227C - died before QX-intra could be seen to reach the recorded neuron
+# 20221227D - died while stimulating electrode was moving around; not sure whether QX reached the neuron
+# 20221227E - QX-intra could be seen coming out of the pipette faintly just before patching the neuron; neuron was filled with QX-intra within 15 minutes from establishing patch
+# 20221227F - QX-intra could be seen coming out of the pipette clearly before patching the neuron
+# 20221227G - soma faintly labeled in QX-color by the time neuron died quickly and suddenly (~15 minutes after establishing patch); however, the last 8 sweeps of recorded data had to be excluded, and it seems that in the 5 minutes before that the neuron was able to make Na-spikes throughout..
+# 20221229C - soma labeled in QX-color by file electricalStim#5
+# 20221229D - both colors could be seen to come out of the pipette before patching; neuron labeled in both colors by file GapFree#1
+# 20221229E - it took at least ~10 minutes for QX-intra to reach the recorded neuron
+# 20221229F - died after ~5min. of recording, no visible fluorescent labeling in either color
 
-
-
-
-# %% apply once: get recordingblocks_index for each neuron, updated with timestamp and events-frequencies information
-for neuron in qxpatched_recordings_metadata.name:
-    neuron_data = SingleNeuron(neuron)
-    print(neuron)
-    neuron_data.get_depolarizingevents_frequencies_byrecordingblocks()
-    neuron_data.write_results()
+# Based on these notes, neurons 20221227C, 20221227D, 20221227G and 20221229F should be excluded from the QX-patched dataset
+# because QX (probably) did not actually reach the recorded neurons.
+to_drop = ['20221227C', '20221227D', '20221227G', '20221229F']
+qxpatched_recordings_metadata = qxpatched_recordings_metadata[~qxpatched_recordings_metadata.name.isin(to_drop)]
 

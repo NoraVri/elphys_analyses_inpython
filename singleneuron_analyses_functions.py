@@ -72,10 +72,10 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
         block_spontevents = depolarizingevents_df[((depolarizingevents_df.file_origin == block)
                                                    & ~(depolarizingevents_df.applied_ttlpulse))]
         block_n_spontaps = len(block_spontevents[(block_spontevents.event_label == 'actionpotential')])
-        block_spontaps_avgfreq = block_n_spontaps / (recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
+        block_spontaps_avgfreq = block_n_spontaps / float(recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
         blocks_spontaps_freqs.append(block_spontaps_avgfreq)
         block_n_spontfastevents = len(block_spontevents[(block_spontevents.event_label == 'fastevent')])
-        block_spontevents_avgfreq = block_n_spontfastevents / (recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
+        block_spontevents_avgfreq = block_n_spontfastevents / float(recordingblocks_index_df[recordingblocks_index_df.file_origin == block].t_recorded_ins)
         blocks_spontfastevents_freqs.append(block_spontevents_avgfreq)
     recordingblocks_index_df['spontaps_avgfreqs'] = blocks_spontaps_freqs
     recordingblocks_index_df['spontfastevents_avgfreqs'] = blocks_spontfastevents_freqs

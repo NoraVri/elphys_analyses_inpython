@@ -11,8 +11,47 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
-# 2hr-long recording of neuron doing lots of things spontaneously, including fast-events so big I mistook them for
-# APs at first (peakV > 0). Also, successful TTX application and washout (at least as far as APs).
+# 2hr-long recording of neuron doing lots of things spontaneously, including fast-events; funny IO neuron with a
+# tendency to fire APs with a frequency on large depolarizing current pulses.
+# Also, successful TTX application and washout (at least as far as APs) but had to increase concentration
+# (from ~0.1 to ~0.3uM TTX) to achieve that.
+
+# %% summary plots
+des_df = singleneuron_data.depolarizing_events
+fastevents = des_df.event_label == 'fastevent'
+aps = des_df.event_label == 'actionpotential'
+spont_events = ~des_df.applied_ttlpulse  #
+
+# histograms of events parameters
+nbins = 100
+# fast-events
+des_df[fastevents].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('fast-events parameter distributions')
+# aps
+des_df[aps].hist(column=['maxdvdt', 'rise_time_20_80', 'width_50', 'amplitude',
+                                'baselinev', 'approx_oscinstphase', 'approx_oscslope'],
+                                bins=nbins)
+plt.suptitle('aps parameter distributions')
+
+# line plots
+# fast-events:
+singleneuron_data.plot_depolevents(fastevents,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
+# aps:
+singleneuron_data.plot_depolevents(aps,
+                                   colorby_measure='baselinev',
+                                   plotwindow_inms=15,
+                                   do_baselining=True,
+                                   # do_normalizing=True,
+                                   plot_dvdt=True
+                                   )
 
 # %% !note: Any code written below is meant just for telling the story of selecting out the fast-events,
 #   and cannot simply be uncommented and run to get exactly the saved results (the console has to be re-initialized
@@ -150,3 +189,5 @@ unlabeled_spont_events = (spont_events & unlabeled_events)
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 
+# singleneuron_data.get_depolarizingevents_frequencies_byrecordingblocks()
+sorted = singleneuron_data.recordingblocks_index.sort_values('file_timestamp')

@@ -2541,11 +2541,37 @@ cell20220531C.rawdata_remove_nonrecordingsection('gapFree_0002.abf', trace_end_t
 cell20220531C.write_results()
 
 # %%
+cell20220616C = SingleNeuron('20220616C')
+# neuron has some super-long recording files (longest one is almost 33 minutes); don't try to plot all at the same time
+# beautiful seal and patch, neuron doing spont.APs, fastevents and oscs from the start
+cell20220616C.plot_rawdatablocks(#'gapFree_0001',
+                                 # '0000',
+    # 'gapFree_withTTXwash_0001',
+    'Pulses',
+                                 time_axis_unit='s', segments_overlayed=False)
+# raw data cleanup:
+# file gapFree_0001 has ch1 recorded as well - was used to apply currents to the slice through the other patch pipette,
+# completely ineffectively. Removing the recording channel:
+cell20220616C.rawdata_remove_nonrecordingchannel('gapFree_0001.abf', non_recording_channel=1)
+# removing seal formation:
+cell20220616C.rawdata_remove_nonrecordingsection('gapFree_0001.abf', trace_start_t=30)
+# two additional gapFree files have ch1 recorded, this time with nothing even happening on it; removing them:
+cell20220616C.rawdata_remove_nonrecordingchannel('gapFree_withTTX_0000.abf', non_recording_channel=1)
+cell20220616C.rawdata_remove_nonrecordingchannel('gapFree_withTTXwash_0000.abf', non_recording_channel=1)
+# no other cleanups to apply; all data looks good in terms of baselineV, though neuron never seems to fully regain
+# the ability to do Na-involving things no matter how long I left the TTX to wash out.
+cell20220616C.write_results()
+
+# %%
 cell20220722B = SingleNeuron('20220722B')
 cell20220722B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
-
-
-
+# not the greatest recording: spont.break-in from <G seal and baselineV just over -40mV from the start; but seems very
+# stable nonetheless (baselineV remains <-35mV for the duration of recording).
+# Cell loses ability to make Na-APs but it takes quite a while from the start of (low concentration) TTX application.
+# raw data cleanup:
+# removing seal formation:
+cell20220722B.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=34)
+cell20220722B.write_results()
 
 # %%
 cell20220722C = SingleNeuron('20220722C')

@@ -938,6 +938,21 @@ def descend_trace_until(tracesnippet, stop_value):
     else:
         return float('nan')
 
+
+# keeping every n'th True instance in a pd.Series of booleans (for reducing the number of lines in plots)
+def keep_every_nth(bool_series, n=2, start_idx=0):
+    # this function takes a pd.Series of booleans, and
+    # returns a new pd.Series where every n'th True is kept
+    # (and the others are flipped to False).
+    bool_series_copy = bool_series.copy()  # otherwise, changes are performed in-place (modifying the original bool_series)
+    keep_series = bool_series_copy[bool_series_copy]  # getting an indexed pd.Series of True values only
+    keep_series_flipped = ~keep_series  # flipping all to False, so that every n'th can be flipped back to True
+    for i in range(start_idx, len(keep_series_flipped), n):
+        keep_series_flipped.iloc[i] = True
+    for idx, bool in keep_series_flipped.iteritems():  # putting the new boolean values back in their original place in the pd.Series
+        bool_series_copy.loc[idx] = bool
+    return bool_series_copy
+
 # %% ttl-evoked activity
 
 

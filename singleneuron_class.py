@@ -413,7 +413,10 @@ class SingleNeuron:
             block_infos_dict = snafs.fill_singleneuron_recordings_index_dictionary(block)
             for key in all_blocks_infos_dict:
                 all_blocks_infos_dict[key] += block_infos_dict[key]
-        self.recordingblocks_index = pd.DataFrame(all_blocks_infos_dict).round(decimals=2)
+        recordingblocks_index = pd.DataFrame(all_blocks_infos_dict).round(decimals=2)
+        if ('file_timestamp' in recordingblocks_index.columns) and not (sum(~recordingblocks_index.file_timestamp.isna()) == 0):
+            recordingblocks_index = recordingblocks_index.sort_values('file_timestamp')
+        self.recordingblocks_index = recordingblocks_index
 
     # getting a list of all block names
     def get_blocknames(self, printing='on'):
@@ -1138,7 +1141,8 @@ class SingleNeuron:
         if self.depolarizing_events.empty:
             print('no depolarizing events extracted for this neuron; recordingblocks index not updated')
         else:
-            new_recordingblocks_index = snafs.add_events_frequencies_torecordingblocksindex(self.recordingblocks_index, self.depolarizing_events)
+            new_recordingblocks_index = snafs.add_events_frequencies_torecordingblocksindex(self.recordingblocks_index,
+                                                                                            self.depolarizing_events)
             self.recordingblocks_index = new_recordingblocks_index
 
     # getting long-pulse measures (unfinished)

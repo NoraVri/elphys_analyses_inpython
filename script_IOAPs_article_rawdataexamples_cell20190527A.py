@@ -52,7 +52,24 @@ aps_dvdt_axis.plot(xs, ys, color='red')
 # aps_dvdt_axis.set_ylim([-0.15, 0.8])
 # aps_dvdt_axis.set_xlim([-1, 12])
 
-# %% panel 3: light-evoked APs
+# %% panel 3: prepotential amplitudes
+aps_axis, aps_dvdt_axis, aps_ddvdt_axis = singleneuron_data.plot_depolevents(neat_aps_subset,
+                                   do_baselining=True,
+                                   prealignpoint_window_inms=3.5,
+                                   plotwindow_inms=7,
+                                   plot_ddvdt=True,
+                                   display_measures=True,
+                                   )
+aps_axis.set_xlim([0, 7])
+# rescale axes
+# aps_axis.set_xlim([0, 3])
+# aps_axis.set_ylim([-0.5, 11.5])
+# aps_dvdt_axis.set_ylim([-0.15, 0.8])
+# aps_dvdt_axis.set_xlim([-1, 12])
+# aps_ddvdt_axis.set_xlim([-1, 12])
+# aps_ddvdt_axis.set_ylim([-0.06, 0.2])
+
+# %% panel 4: light-evoked APs
 # using only light-applied blocks that are included in neatevents
 neatevents_blocks = des_df[neatevents].file_origin.unique()
 neatevents_light_blocks = [block for block in neatevents_blocks if 'light' in block]

@@ -71,7 +71,7 @@ recordings_lightactive_IO_ttlapplied = recordings_lightactive_IO[~(recordings_li
 # shortest recording is just under 3 minutes (recordings_lightactive_IO_ttlapplied.total_t_recorded_in_s.min() / 60)
 #  5 neurons have recording shorter than 5 minutes (recordings_lightactive_IO_ttlapplied[~(recordings_lightactive_IO_ttlapplied.total_t_recorded_in_s > 300)].name)
 
-# %% create dataframe: APs from prepotentials - aggregate numbers and percentages
+# %% create dataframe: APs from prepotentials - per neuron, aggregate numbers and percentages
 # In this section: collecting numbers of APs evoked from prepotential by looping over depolarizing_events-resultsfiles
 results_path = path + '\\myResults'
 resultsfiles_all = os.listdir(results_path)
@@ -86,37 +86,42 @@ n_aps_dict = {'neuron_name': [],
               'n_neatevokedAPs': [],
               'n_neatevokedAPs_withprepotential': [],
               }
-for filename in resultsfiles_depolarizingevents:
-    filepath = results_path + '\\' + filename
-    neuron_depolarizingevents = pd.read_csv(filepath)
-    aps = neuron_depolarizingevents.event_label == 'actionpotential'
-    if ('ap_prepotential_amp' in neuron_depolarizingevents.columns):
-        neuron_name = re.split('_d', filename)[0]
-        spontaps = aps & ~(neuron_depolarizingevents.applied_ttlpulse)
-        evokedaps = aps & neuron_depolarizingevents.applied_ttlpulse
-        aps_withprepotential = aps & ~neuron_depolarizingevents.ap_prepotential_amp.isna()
-        spontaps_withprepotential = spontaps & aps_withprepotential
-        evokedaps_withprepotential = evokedaps & aps_withprepotential
-        if 'neat_event' in neuron_depolarizingevents.columns:
-            neat_aps = aps & neuron_depolarizingevents.neat_event
-            n_neatspontaps = sum(spontaps & neat_aps)
-            n_neatspontaps_withprepotential = sum(spontaps & neat_aps & aps_withprepotential)
-            n_neatevokedaps = sum(evokedaps & neat_aps)
-            n_neatevokedaps_withprepotential = sum(evokedaps & neat_aps & aps_withprepotential)
-        else:
-            n_neatspontaps = 0
-            n_neatspontaps_withprepotential = 0
-            n_neatevokedaps = 0
-            n_neatevokedaps_withprepotential = 0
-        n_aps_dict['neuron_name'].append(neuron_name)
-        n_aps_dict['n_spontAPs'].append(sum(spontaps))
-        n_aps_dict['n_spontAPs_withprepotential'].append(sum(spontaps_withprepotential))
-        n_aps_dict['n_neatspontAPs'].append(n_neatspontaps)
-        n_aps_dict['n_neatspontAPs_withprepotential'].append(n_neatspontaps_withprepotential)
-        n_aps_dict['n_evokedAPs'].append(sum(evokedaps))
-        n_aps_dict['n_evokedAPs_withprepotential'].append(sum(evokedaps_withprepotential))
-        n_aps_dict['n_neatevokedAPs'].append(n_neatevokedaps)
-        n_aps_dict['n_neatevokedAPs_withprepotential'].append(n_neatevokedaps_withprepotential)
+for neuron_name in recordings_lightactive_IO.name:
+    filename = [filename for filename in resultsfiles_depolarizingevents if neuron_name in filename]
+    if len(filename) == 1:
+        filename = filename[0]
+        filepath = results_path + '\\' + filename
+        neuron_depolarizingevents = pd.read_csv(filepath)
+        aps = neuron_depolarizingevents.event_label == 'actionpotential'
+        if ('ap_prepotential_amp' in neuron_depolarizingevents.columns):
+            neuron_name = re.split('_d', filename)[0]
+            spontaps = aps & ~(neuron_depolarizingevents.applied_ttlpulse)
+            evokedaps = aps & neuron_depolarizingevents.applied_ttlpulse
+            aps_withprepotential = aps & ~neuron_depolarizingevents.ap_prepotential_amp.isna()
+            spontaps_withprepotential = spontaps & aps_withprepotential
+            evokedaps_withprepotential = evokedaps & aps_withprepotential
+            if 'neat_event' in neuron_depolarizingevents.columns:
+                neat_aps = aps & neuron_depolarizingevents.neat_event
+                n_neatspontaps = sum(spontaps & neat_aps)
+                n_neatspontaps_withprepotential = sum(spontaps & neat_aps & aps_withprepotential)
+                n_neatevokedaps = sum(evokedaps & neat_aps)
+                n_neatevokedaps_withprepotential = sum(evokedaps & neat_aps & aps_withprepotential)
+            else:
+                n_neatspontaps = 0
+                n_neatspontaps_withprepotential = 0
+                n_neatevokedaps = 0
+                n_neatevokedaps_withprepotential = 0
+            n_aps_dict['neuron_name'].append(neuron_name)
+            n_aps_dict['n_spontAPs'].append(sum(spontaps))
+            n_aps_dict['n_spontAPs_withprepotential'].append(sum(spontaps_withprepotential))
+            n_aps_dict['n_neatspontAPs'].append(n_neatspontaps)
+            n_aps_dict['n_neatspontAPs_withprepotential'].append(n_neatspontaps_withprepotential)
+            n_aps_dict['n_evokedAPs'].append(sum(evokedaps))
+            n_aps_dict['n_evokedAPs_withprepotential'].append(sum(evokedaps_withprepotential))
+            n_aps_dict['n_neatevokedAPs'].append(n_neatevokedaps)
+            n_aps_dict['n_neatevokedAPs_withprepotential'].append(n_neatevokedaps_withprepotential)
+    else:
+        print(neuron_name)
 n_aps_df = pd.DataFrame(n_aps_dict)
 # cross-referencing with recordings_lightactive_all to get mouse types for each neuron
 cellnames_mousetypes_df_lightactive = recordings_lightactive_all.filter(['name', 'mouse_type'], axis=1)
@@ -139,7 +144,7 @@ for index, row in n_aps_df.iterrows():
         n_aps_df.loc[index, 'neat_evoked_percentwithprepotential'] = ((row.n_neatevokedAPs_withprepotential / row.n_neatevokedAPs) * 100)
 
 
-# %% create dataframe: all data on all APs with prepotentials recorded from neurons in the dataset
+# %% create dataframe: all data on all APs with prepotentials recorded from all neurons in the dataset
 all_aps_dfs_for_concatenation = []
 for filename in resultsfiles_depolarizingevents:
     filepath = results_path + '\\' + filename
@@ -153,6 +158,13 @@ all_prepotential_aps_df = pd.concat(all_aps_dfs_for_concatenation)
 all_prepotential_aps_df = all_prepotential_aps_df.iloc[:, 1:59]  # the first column of the resulting df is a copy of the index column and the final (60th) column is named "applied_ttlpulse" and filled with nans for some reason, even while the applied_ttlpulse-column with actual values gets copied over just fine.
 neatevent_nans = all_prepotential_aps_df.neat_event.isna()  # neatevent-column comes up containing True/False/nan, where nan should be considered False
 all_prepotential_aps_df.loc[neatevent_nans, 'neat_event'] = False
+
+# adding data column: time between prepotential-point and AP peak for each AP with measured prepotential
+
+# adding data column: time between TTL-onset and AP peak for each light-evoked AP with measured prepotential
+
+
+
 # filtering down to 'neat' APs only:
 neat_prepotential_aps_df = all_prepotential_aps_df[all_prepotential_aps_df.neat_event]
 
@@ -170,13 +182,14 @@ for neuron in all_prepotential_aps_df.name.unique():
 all_prepotential_aps_df = all_prepotential_aps_df.sort_values('mean_prepotential_amp')
 
 # function for getting data only from neurons that have at least N APs with prepotential (APs category (spont/evoked//neat/all) determined by subsection of prepotential_aps_df the function is run on):
-
 def get_atleast_n_df_byneuronname(df, atleast_n):
     for neuron in df.name.unique():
         neuron_df = df[df.name == neuron]
         if len(neuron_df) < atleast_n:
             df.drop(neuron_df.index, inplace=True)
     return df
+
+# %% create dataframe: time from TTL onset to AP peak for light-evoked APs
 
 
 # %% FIGURE PANELS

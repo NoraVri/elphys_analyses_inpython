@@ -993,6 +993,8 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
                     baselinev = np.mean(noisecleaned_voltage_recording[(ttlon_idx-ms_in_samples):ttlon_idx])
                     # getting response max amp: max v (until ttloff+response window) - baselinev
                     maxv = np.max(noisecleaned_voltage_recording[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
+                    maxv_idx = np.argmax(noisecleaned_voltage_recording[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
+                    maxamp_postttl_t = maxv_idx / ms_in_samples
                     response_maxamp = maxv - baselinev
                     # getting max.dV/dt
                     dvdt = np.diff(noisecleaned_voltage_recording)
@@ -1008,6 +1010,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
                 else:
                     baselinev = None
                     response_maxamp = None
+                    maxamp_postttl_t = None
                     maxdvdt = None
                     applied_current = None
                     applied_current_range = None
@@ -1017,6 +1020,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
                 ttl_duration_inms = None
                 baselinev = None
                 response_maxamp = None
+                maxamp_postttl_t = None
                 maxdvdt = None
                 applied_current = None
                 applied_current_range = None
@@ -1028,6 +1032,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
             ttlon_measures_dict['ttlon_duration_inms'].append(ttl_duration_inms)
             ttlon_measures_dict['baselinev'].append(baselinev)
             ttlon_measures_dict['response_maxamp'].append(response_maxamp)
+            ttlon_measures_dict['response_maxamp_postttl_t_inms'].append(maxamp_postttl_t)
             ttlon_measures_dict['response_maxdvdt'].append(maxdvdt)
             ttlon_measures_dict['applied_current'].append(applied_current)
             ttlon_measures_dict['applied_current_range'].append(applied_current_range)
@@ -1053,7 +1058,8 @@ def make_ttlonmeasures_dictionary():
 
         'baselinev': [],
         'response_maxamp': [],
-        'response_maxdvdt': []
+        'response_maxamp_postttl_t_inms': [],
+        'response_maxdvdt': [],
 
     }
     return ttlon_measures

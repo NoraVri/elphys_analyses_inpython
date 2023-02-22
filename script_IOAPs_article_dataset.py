@@ -9,7 +9,9 @@ import pandas as pd
 import numpy as np
 
 # In this script: analysis of APs as triggered from fast-events.
-# Dataset: neurons recorded on days with optogenetic activation of inputs to IO.
+# Dataset: IO neurons recorded from brainstem slices of mice with optogenetically activatable axons from elsewhere in the brain.
+
+# AP-prepotential calculation has been run with default function parameters for all events labeled "actionpotential" in neuron_deolarizingevents-dataframes.
 
 # %% DATA TABLES
 # %% metadata imports
@@ -409,16 +411,67 @@ sns.stripplot(
 
 
 
+# %% checking over the dataset - neatevents marked
+has_neatevents_list = []
+has_no_neatevents_list = []
 
+for neuron_name in recordings_lightactive_IO.name:
+    filename = [filename for filename in resultsfiles_depolarizingevents if neuron_name in filename][0]  # this works because all neurons in the lightactive-dataset have a neuron_depolarizingevents-file saved in the myResults folder
+    filepath = results_path + '\\' + filename
+    neuron_depolarizingevents = pd.read_csv(filepath)
+    if ('neat_event' in neuron_depolarizingevents.columns):
+        has_neatevents_list.append(neuron_name)
+    else:
+        has_no_neatevents_list.append(neuron_name)
 
-
-
-
-
-
-
-
-
+has_no_neatevents_list = ['20190527C',  # justified why not
+                          '20190529A2', # justified why not
+                          '20190529C',  # justified why not
+                          '20190529D',  # justified why not
+                          '20190529E',  # justified why not
+                          '20200630A',  # added (evokedAPs)
+                          '20200630B1', # justified why not
+                          '20200630B2', # added (evokedAPs)
+                          '20200701B',  # justified why not
+                          '20200701D',  # justified why not
+                          '20200706A',  # justified why not
+                          '20200706D',  # justified why not
+                          '20200706E',  # justified why not
+                          '20200707E',  # justified why not
+                          '20200708A',  # justified why not
+                          '20200708C',  # justified why not
+                          '20200708G',  # justified why not
+                          '20210105A',  # justified why not
+                          '20210105B',  # justified why not
+                          '20210105C',  # justified why not
+                          '20210105D',  # justified why not
+                          '20210105E',  # justified why not
+                          '20210429B',  # justified why not
+                          '20200818C',  # justified why not
+                          '20200819A',  # justified why not
+                          '20201124C',  # justified why not
+                          '20201125E',  # justified why not
+                          '20201125F',  # justified why not
+                          '20210411A',  # justified why not
+                          '20210411B',  # justified why not
+                          '20210411C',  # justified why not
+                          '20210411F',  # justified why not
+                          '20210413A',  # justified why not
+                          '20210413B',  # justified why not
+                          '20210426B',  # justified why not
+                          '20210426C',  # justified why not
+                          '20210426E',  # justified why not
+                          '20210110B',  # justified why not
+                          '20210110C',  # justified why not
+                          '20210110F',  # justified why not
+                          '20210113A',  # justified why not
+                          '20210113B',  # justified why not
+                          '20210113E',  # added (two spont.APs)
+                          '20210113F',  # justified why not
+                          '20210123B',  # justified why not
+                          '20210124C',  # justified why not
+                          '20210124D',  # justified why not
+                          '20210203A']  # justified why not
 
 
 

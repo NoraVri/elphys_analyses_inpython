@@ -67,4 +67,5 @@ singleneuron_data.write_results()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# not including this neuron's data in neat-events: baselineV too noisy and variable, and anyway there's exactly 1 AP and 1 fastevent spontaneously.
+# not including this neuron's data in neat-events: baselineV too noisy and variable, and anyway there's exactly 1 AP
+# and 1 fastevent spontaneously, while in the light-files the neuron can't seem to stay stable for more than a minute or so.

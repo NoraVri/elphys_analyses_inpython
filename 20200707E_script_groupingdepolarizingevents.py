@@ -65,3 +65,5 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # Cell has baselineV ~-25mV on break-in, and it regains itself nicely (~-40mV resting V for most of recording) but
 # doesn't display any interesting behavior spontaneously, so I see no reason to include this neuron's data in the neat-pile.
+# On reconsideration of evokedAPs, still not marking them as neat: baselineV barely reaches <-40mV most of the time
+# and is on the whole too unsteady to call this recording 'neat'.

@@ -64,4 +64,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# neuron has about 8min. of nice recording but no spont.events there whatsoever; so I see no reason to mark neatevents for this neuron.
+# neuron has about 8min. of nice recording gapFree before any light applications; however, it doesn't start making
+# events until after Vrest depolarizes a bunch and AP amplitude (as seen from DC-evoked APs) goes way down.
+# So, no neatevents for this neuron.

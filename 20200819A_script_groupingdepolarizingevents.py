@@ -70,3 +70,5 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% neat events
+# no reason to mark neat events for this neuron as there aren't any.

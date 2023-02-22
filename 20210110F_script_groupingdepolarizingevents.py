@@ -62,7 +62,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# up to and including the first half of light_0001 there is no real sign of recording quality deteriorating (hard
-# to tell though cause no spont.events or APs seen most of that time). However, that's barely 7 minutes of recording
-# altogether in which the neuron doesn't do anything interesting spontaneously anyway, so I see
-# no reason to add neatevents.
+# up to and including the first half of light_0001 there is no real sign of recording quality deteriorating, mostly
+# because there aren't really any events to judge this by... In sweeps where neuron is doing APs the recording quality
+# is already clearly unstable. So, not marking neatevents for this neuron.

@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20200630B2'
 singleneuron_data = SingleNeuron(neuron_name)
 
-# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # a little indecisive about its baselineV at first (just like its pair), but then settles for a quite steady run of
@@ -62,7 +62,12 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # not a single spontaneous event got picked up - indeed I saw none in the raw data.
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# I'm not adding neatevents because there are no spontaneous events whatsoever anyway,
-# but really it's quite a nice recording for the most part.
-
-
+# though a little unsteady at first, this neuron has some very nice steady behavior for quite a while during light
+# applications (baselineV ~-50mV, AP amp 84-90mV); it then starts to go off a bit over the course of prolonged -DC
+# (to see effect of hyperpolarization on evoking APs, which is quite profound).
+# neat_events = (singleneuron_data.depolarizing_events.file_origin.str.contains('light')
+#                & (singleneuron_data.depolarizing_events.file_origin.str.contains('0000|1|2|3')))
+# # adding the neatevents-series to the depolarizing_events-df:
+# neat_events.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
+# singleneuron_data.write_results()

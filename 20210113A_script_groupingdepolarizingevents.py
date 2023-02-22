@@ -12,7 +12,8 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 # notes summary:
 # not a great recording: baselineV rather unsteady at times, kinda noisy all around, and includes some very
-# strange events (sudden hyperolarization of 10-15mV from -45mV resting). Still, light response always includes (a) fastevent(s).
+# strange events (sudden hyperolarization of 10-15mV from -45mV resting, looks like a giant inhibitory synapse).
+# Still, light response always includes (a) fastevent(s).
 
 # %% plotting light-evoked activity
 singleneuron_data.plot_rawdatatraces_ttlaligned()
@@ -86,3 +87,5 @@ singleneuron_data.plot_depolevents(events_underinvestigation,
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# not marking neat events for this neuron: even though baselineV is below -40mV, it doesn't keep steady for more than
+# a minute or so at the time so I don't trust that recorded events will be very 'neat'.

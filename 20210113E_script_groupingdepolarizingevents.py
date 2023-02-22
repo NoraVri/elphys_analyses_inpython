@@ -70,4 +70,12 @@ singleneuron_data.plot_depolevents(aps,
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# not marking neatevents for this neuron: <5min. recording, and anyway it doesn't have fastevents at all.
+# although osc.amp is clearly going steadily down over the course of recording, I see no reason not to include it in
+# neatevents: baselineV is steady with mean ~-45mV, and APs have amplitude of almost 100mV. Marking the entire (<3min.)
+# recording as 'neat':
+# neatevents = ~singleneuron_data.depolarizing_events.file_origin.isna()
+# # adding the neatevents-series to the depolarizing_events-df:
+# neat_events.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
+# singleneuron_data.write_results()
+

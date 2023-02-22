@@ -108,3 +108,15 @@ singleneuron_data.plot_depolevents(unlabeled_spont_events,
                                    # do_normalizing=True,
                                    plot_dvdt=True
                                    )
+
+# Having studied the remaining unlabeled events for quite a while, I am quite sure there is just one that is a
+# fastevent: 10mV amplitude and with all other measured parameters in the right range. The two smallest events (<5mV)
+# have slower rise-time and different decay shapes; and the 4 largest events (15 - 25mV) look like incomplete APs
+# (they all have long after-hyperpolarizations). Labeling accordingly:
+fastevent = unlabeled_spont_events & (des_df.amplitude > 8) & (des_df.amplitude < 12)
+singleneuron_data.depolarizing_events.loc[fastevent, 'event_label'] = 'fastevent'
+singleneuron_data.write_results()
+
+#### -- this concludes sorting through all sub-threshold events and labeling them -- ####
+# %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
+# Not marking neatevents for this neuron: it doesn't seem to be able to fire complete APs, so it does not belong on the neat-pile.

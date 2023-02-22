@@ -75,4 +75,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# I see no reason to mark neatevents for this neuron: it isn't really doing anything at all spontaneously.
+# I see no reason to mark neatevents for this neuron: it isn't really doing anything at all spontaneously or in response
+# to light, and even though baselineV just below -40mV the total lack of other activity (spont. or evoked) makes it
+# difficult to judge the quality of this neuron's recording.

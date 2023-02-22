@@ -64,6 +64,10 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# though neuron seems to be on good behavior during the light-applied blocks, but this is for a total of <3minutes
-# recording. Also, display any of the spontaneous activity that is of interest to us, so I see
-# no reason to include its data in the 'neat' pile.
+# neuron seems to be on good behavior during the light-applied blocks, with stable baselineV and decent AP amplitude
+# (64-68mV). Marking those blocks as "neat":
+# neat_events = singleneuron_data.depolarizing_events.file_origin.str.contains('light')
+# # adding the neatevents-series to the depolarizing_events-df:
+# neat_events.name = 'neat_event'
+# singleneuron_data.depolarizing_events = singleneuron_data.depolarizing_events.join(neat_events)
+# singleneuron_data.write_results()

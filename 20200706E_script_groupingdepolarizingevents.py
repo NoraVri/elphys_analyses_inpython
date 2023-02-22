@@ -175,3 +175,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
 # not sure if it's worth marking neat events: osc amp is continuously decreasing making me doubt the stability of the
 # recording;  plus the huge oscillations (20mV amp) early on really distort the fastevents (also baseline-point is often shifted).
+# On reconsideration, decided again not to mark events as neat: AP amp is mildly but continuously decreasing over the
+# few (<3) minutes where there are APs, as is osc amp - all pointing towards the idea that the slow dying of the neuron
+# is what underlies its stopping to make events altogether pretty soon.

@@ -71,5 +71,6 @@ singleneuron_data.plot_rawdatatraces_ttlaligned()
 
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# Neuron starts to get leaky halfway through recording totaling ~13 min., and anyway it's not displaying any
-# interesting activity spontaneously; so I see no reason to mark neatevents.
+# Neuron gets very leaky halfway through recording totaling ~13 min., and before that doesn't have much of events to
+# judge recording quality by (a handful APs gets evoked by DC current early on, and then never again). So, not marking
+# neatevents for this neuron.

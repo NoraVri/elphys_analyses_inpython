@@ -8,7 +8,7 @@ import numpy as np
 neuron_name = '20210411B'
 singleneuron_data = SingleNeuron(neuron_name)
 
-singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# singleneuron_data.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 
 # notes summary:
 # neuron oscillating with crazy wacky shark-fin-type oscillations until I break it with hyperpolarization;
@@ -67,5 +67,5 @@ singleneuron_data.write_results()
 # singleneuron_data.write_results()
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# quite good-looking recording but neuron is doing nothing spontaneously besides oscillating,
-# so I see no reason to mark neatevents.
+# quite good-looking recording but neuron is doing nothing spontaneously besides oscillating, and does not respond to
+# light with fastevent or AP so I see no reason to mark neatevents.

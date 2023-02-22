@@ -82,5 +82,4 @@ singleneuron_data.plot_depoleventsgroups_overlayed(aps, fastevents,
 # singleneuron_data.write_results()
 #### -- this concludes sorting through all sub-threshold events and labeling them -- ####
 # %% marking 'neat' events: events occurring during stable and 'good-looking' periods of recording
-# not marking neatevents for this neuron: just 2 min. of recording and resting baselineV just >-40mV,
-# and anyway there is exactly 1 fastevent in the data for this neuron.
+# not marking neatevents for this neuron: just 2 min. of recording and resting baselineV just >-40mV.

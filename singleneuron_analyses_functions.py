@@ -96,7 +96,7 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                            plot='off'):
     """ This function finds depolarizing events, and constructs a dictionary containing
     the locations and measured parameters of all detected events.
-    It also returns a label for clearly identifyable events (all other events are labeled 'None').
+    It also returns a label for clearly identifiable events (all other events are labeled 'None').
     Depolarizations are detected and measured in multiple steps:
     First, the event-detect- (ed-)trace is created by taking the the raw voltage trace and subtracting
     oscillations (as gotten by low-pass filtering V) and noise (as gotten by high-pass filtering V) from it.

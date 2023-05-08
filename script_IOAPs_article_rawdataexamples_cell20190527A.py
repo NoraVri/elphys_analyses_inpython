@@ -23,53 +23,81 @@ axes[0].set_xlim(720000, 840000)
 # axes[0].set_ylim(-60, -40)  # same panel with different y-axis
 
 # %% panel 2: spontaneous APs, aligned to peak
+vmin = -10
+vmax = 100
+tmin = 0
+tmax = 18
+dvdtmin = -4
+dvdtmax = 13
+
+
 neat_aps = aps_spont & neatevents
 # to reduce the number of traces in the plot, take every 3rd AP
 neat_aps_subset = snafs.keep_every_nth(neat_aps, n=3)
 # plot APs
 aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(neat_aps_subset,
-                                   colorby_measure='peakv_idx',  # have colorbar there so that same-scaled axes will actually be the same
                                    do_baselining=True,
-                                   prealignpoint_window_inms=6,
-                                   plotwindow_inms=19,
+                                 prealignpoint_window_inms=6,
+                                 plotwindow_inms=18,
+                                   # display_measures=True,
                                    )
 # setting axes limits to be the same as for light-evoked APs panel
-aps_axis.set_ylim([-1, 100])
-aps_axis.set_xlim([-1, 19])
-aps_dvdt_axis.set_ylim([-4, 12.5])
-aps_dvdt_axis.set_xlim([-1, 100])
+aps_axis.set_ylim([vmin, vmax])
+aps_axis.set_xlim([tmin, tmax])
+aps_dvdt_axis.set_ylim([dvdtmin, dvdtmax])
+aps_dvdt_axis.set_xlim([vmin, vmax])
 # adding boxes to mark zoom-in areas
-xs = [0, 0, 5.5, 5.5, 0]
-ys = [-.5, 11.5, 11.5, -.5, -.5]
+xs = [3, 3, 5.5, 5.5, 3]
+ys = [-1, 12, 12, -1, -1]
 aps_axis.plot(xs, ys, color='red')
 
-xs = [-1, -1, 12, 12, -1]
-ys = [-.15, .8, .8, -.15, -.15]
+xs = [-2.5, -2.5, 12.5, 12.5, -2.5]
+ys = [-0.1, 0.8, 0.8, -0.1, -0.1]
 aps_dvdt_axis.plot(xs, ys, color='red')
-# for inset: rescale axes
-# aps_axis.set_xlim([0, 5.5])
-# aps_axis.set_ylim([-0.5, 11.5])
-# aps_dvdt_axis.set_ylim([-0.15, 0.8])
-# aps_dvdt_axis.set_xlim([-1, 12])
 
-# %% panel 3: prepotential amplitudes
+# for inset: rescale axes
+aps_axis.set_xlim([2, 6])  # same width as for light-evoked APs
+aps_axis.set_ylim([-1, 12])
+aps_dvdt_axis.set_xlim([-2.5, 12.5])
+aps_dvdt_axis.set_ylim([-0.1, 0.8])
+
+
+# %% panel 2 again, with ddvdt plotted as well
 aps_axis, aps_dvdt_axis, aps_ddvdt_axis = singleneuron_data.plot_depolevents(neat_aps_subset,
                                    do_baselining=True,
-                                   prealignpoint_window_inms=3.5,
-                                   plotwindow_inms=7,
+                                 prealignpoint_window_inms=6,
+                                 plotwindow_inms=18,
                                    plot_ddvdt=True,
                                    display_measures=True,
                                    )
-aps_axis.set_xlim([0, 7])
-# rescale axes
-# aps_axis.set_xlim([0, 3])
-# aps_axis.set_ylim([-0.5, 11.5])
-# aps_dvdt_axis.set_ylim([-0.15, 0.8])
-# aps_dvdt_axis.set_xlim([-1, 12])
-# aps_ddvdt_axis.set_xlim([-1, 12])
-# aps_ddvdt_axis.set_ylim([-0.06, 0.2])
+# setting axes limits to be the same as for light-evoked APs panel
+aps_axis.set_ylim([vmin, vmax])
+aps_axis.set_xlim([tmin, tmax])
+aps_dvdt_axis.set_ylim([dvdtmin, dvdtmax])
+aps_dvdt_axis.set_xlim([vmin, vmax])
+aps_ddvdt_axis.set_xlim([vmin, vmax])
+# adding boxes to mark zoom-in areas
+xs = [3, 3, 5.5, 5.5, 3]
+ys = [-1, 12, 12, -1, -1]
+aps_axis.plot(xs, ys, color='red')
 
-# %% panel 4: light-evoked APs
+xs = [-2.5, -2.5, 12.5, 12.5, -2.5]
+ys = [-0.1, 0.8, 0.8, -0.1, -0.1]
+aps_dvdt_axis.plot(xs, ys, color='red')
+
+xs = [-2.5, -2.5, 12.5, 12.5, -2.5]
+ys = [-0.1, 0.35, 0.35, -0.1, -0.1]
+aps_ddvdt_axis.plot(xs, ys, color='red')
+
+# for inset: rescale axes
+aps_axis.set_xlim([2, 6])  # same width as for light-evoked APs
+aps_axis.set_ylim([-1, 12])
+aps_dvdt_axis.set_xlim([-2.5, 12.5])
+aps_dvdt_axis.set_ylim([-0.1, 0.8])
+aps_ddvdt_axis.set_xlim([-2.5, 12.5])
+aps_ddvdt_axis.set_ylim([-0.1, 0.35])
+
+# %% panel 4: light-evoked APs, aligned to TTL
 # using only light-applied blocks that are included in neatevents
 neatevents_blocks = des_df[neatevents].file_origin.unique()
 neatevents_light_blocks = [block for block in neatevents_blocks if 'light' in block]
@@ -78,56 +106,41 @@ _, axes = singleneuron_data.plot_rawdatatraces_ttlaligned(*neatevents_light_bloc
                                                 colorby_measure='response_maxamp',
                                                 color_lims=[80, 100],  # selects events to plot by amplitude; APs are 90-100mV
                                                 prettl_t_inms=1,
-                                                postttl_t_inms=19,
-                                                plotlims=[-1, 100, -4, 12.5]  # same as for spont.APs panel
+                                                postttl_t_inms=25,
+                                                plotdvdt=False
                                                 )
 aps_axis = axes[0]
-aps_dvdt_axis = axes[1]
 # setting axes limits to be the same as for spont. APs panel
-aps_axis.set_ylim([-1, 100])
-aps_axis.set_xlim([-1, 19])
-aps_dvdt_axis.set_ylim([-4, 12.5])
-aps_dvdt_axis.set_xlim([-1, 100])
-# adding boxes to mark zoom-in areas
-xs = [5.5, 5.5, 11, 11, 5.5]
-ys = [0, 13, 13, 0, 0]
-aps_axis.plot(xs, ys, color='red')
+aps_axis.set_ylim([vmin, vmax])
 
-xs = [0, 0, 13, 13, 0]
-ys = [-.15, .8, .8, -.15, -.15]
-aps_dvdt_axis.plot(xs, ys, color='red')
-# for inset: rescale axes
-# aps_axis.set_xlim([5.5, 11])
-# aps_axis.set_ylim([0, 12])
-# aps_dvdt_axis.set_ylim([-0.15, 0.8])
-# aps_dvdt_axis.set_xlim([0, 13])
+
 
 # %% plotting light-evoked APs again, aligned to AP peak (and baselining to detected baseline-points, instead of to pre-TTL baseline)
 neat_lightevoked_aps = aps & neatevents & ~spont_events
 aps_axis, aps_dvdt_axis = singleneuron_data.plot_depolevents(neat_lightevoked_aps,
-                                   colorby_measure='peakv_idx',  # have colorbar there so that same-scaled axes will actually be the same
                                    do_baselining=True,
-                                   prealignpoint_window_inms=6,
-                                   plotwindow_inms=19,
+                                   prealignpoint_window_inms=9,
+                                   plotwindow_inms=18,
+                                   # display_measures=True,
                                    )
 # setting axes limits to be the same as the other full-scale panels
-aps_axis.set_ylim([-1, 100])
-aps_axis.set_xlim([-1, 19])
-aps_dvdt_axis.set_ylim([-4, 12.5])
-aps_dvdt_axis.set_xlim([-1, 100])
+aps_axis.set_ylim([vmin, vmax])
+aps_axis.set_xlim([tmin, tmax])
+aps_dvdt_axis.set_ylim([dvdtmin, dvdtmax])
+aps_dvdt_axis.set_xlim([vmin, vmax])
 
 # adding boxes to mark zoom-in areas
-xs = [0, 0, 5.5, 5.5, 0]
-ys = [-.5, 11.5, 11.5, -.5, -.5]
+xs = [4.5, 4.5, 8.5, 8.5, 4.5]
+ys = [-1, 12, 12, -1, -1]
 aps_axis.plot(xs, ys, color='red')
 
-xs = [-1, -1, 12, 12, -1]
-ys = [-.15, .8, .8, -.15, -.15]
+xs = [-2.5, -2.5, 12.5, 12.5, -2.5]
+ys = [-0.1, 0.8, 0.8, -0.1, -0.1]
 aps_dvdt_axis.plot(xs, ys, color='red')
 
 # for inset: rescale axes
-aps_axis.set_xlim([0, 5.5])
-aps_axis.set_ylim([-0.5, 11.5])
-aps_dvdt_axis.set_ylim([-0.15, 0.8])
-aps_dvdt_axis.set_xlim([-1, 12])
+# aps_axis.set_xlim([4.5, 8.5])
+# aps_axis.set_ylim([-1, 12])
+# aps_dvdt_axis.set_xlim([-2.5, 12.5])
+# aps_dvdt_axis.set_ylim([-0.1, 0.8])
 

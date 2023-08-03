@@ -162,14 +162,22 @@ class SingleNeuron:
                     continue
 
         # getting metadata for the singleneuron experiment day & recording:
-        experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
-        self.experiment_metadata = experiments_metadata.loc[
-                                    experiments_metadata.date == experiment_date]
+        experiments_metadata_path = self.path + '\\myData_experimentDays_metadata.csv'  # this file should be in the folder containing the folder(s) of raw data that are being called on
+        if os.path.isfile(experiments_metadata_path):
+            experiments_metadata = pd.read_csv(experiments_metadata_path)
+            self.experiment_metadata = experiments_metadata.loc[
+                                        experiments_metadata.date == experiment_date]
+        else:
+            print('no metadata file present: myData_experimentDays_metadata')
         if self.experiment_metadata.empty:
             print('no metadata for the experiment day were found.')
 
-        recordings_metadata = pd.read_csv(self.path + '\\myData_recordings_metadata.csv')
-        self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        recordings_metadata_path = self.path + '\\myData_recordings_metadata.csv'
+        if os.path.isfile(recordings_metadata_path):
+            recordings_metadata = pd.read_csv(recordings_metadata_path)
+            self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        else:
+            print('no metadata file present: myData_recordings_metadata')
         if self.recording_metadata.empty:
             print('no metadata for the recording were found.')
 

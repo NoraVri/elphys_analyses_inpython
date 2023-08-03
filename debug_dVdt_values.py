@@ -2,6 +2,7 @@
 import os
 import re
 from singleneuron_class import SingleNeuron
+import singleneuron_analyses_functions as snafs
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -35,3 +36,24 @@ plt.plot(time_axis[:len(npdiff_voltage_recording)], npdiff_timestepadjusted, lab
 # plt.plot(time_axis, npgradient_voltage_recording, label='np gradient')
 plt.plot(time_axis[:len(permsdiff_voltage_recording)], permsdiff_voltage_recording, label='per ms diff')
 plt.legend()
+
+# %%
+spont_events = ~des_df.applied_ttlpulse
+aps = des_df.event_label == 'actionpotential'
+aps_spont = aps & spont_events
+fastevents = des_df.event_label == 'fastevent'
+neatevents = des_df.neat_event
+neat_spontaps = (aps_spont & neatevents)
+
+neat_aps = aps_spont & neatevents
+# to reduce the number of traces in the plot and find a good subset to show
+neat_aps_subset = snafs.keep_every_nth(neat_aps, n=22, start_idx=4)
+
+
+aps_axis, aps_dvdt_axis, aps_ddvdt_axis = singleneuron_data.plot_depolevents(neat_aps_subset,
+                                   do_baselining=True,
+                                 prealignpoint_window_inms=6,
+                                 plotwindow_inms=15,
+                                   plot_ddvdt=True,
+                                   display_measures=True,
+                                   )

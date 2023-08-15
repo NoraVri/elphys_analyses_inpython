@@ -281,17 +281,6 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, voltage
                 and (np.min(voltage_derivative[idx-ms_insamples:idx]) < 0.1 * min_depolspeed)
                 and ([v_diff >= min_depolspeed for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]])):
 
-        ###OLD CRITERIA for detection in ms-by-ms derivative alone
-        # # - dV/dt > 2 * min_depolspeed, or:
-        # # - dV/dt > min_depolspeed
-        # # AND dV/dt < 10% of min_depolspeed some time in the ms before idx
-        # # AND dV/dt > min_depolspeed for a duration of at least 0.5ms after idx
-        # elif voltage_derivative[idx] > 2 * min_depolspeed or \
-        #         (voltage_derivative[idx] >= min_depolspeed
-        #             and np.min(voltage_derivative[idx-ms_insamples:idx]) < 0.1 * min_depolspeed
-        #             and [v_diff >= min_depolspeed
-        #                  for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]]):
-
             depol_idx = idx  # depol_idx will mark the baseline_v point, if a proper peak can be found to go with it
             depolarizations.append(depol_idx)
 
@@ -299,7 +288,7 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, voltage
             # points qualify if:
             # - peakv > baselinev + mindepolamp in the event-detect trace,
             # - maxv after peakv is smaller than peakv, and
-            # - minv after peakv goes back down to <90% of peak amp within peakwindow
+            # - minv after peakv goes back down by at least 10% of peak amp within peakwindow
             ed_baselinev = np.mean(voltage_eventdetecttrace[
                                    depol_idx - ms_insamples:depol_idx])
             ed_peakvtrace = voltage_eventdetecttrace[
@@ -636,7 +625,8 @@ def get_events_measures(peaks_idcs,
 # labeling three specific types of clearly identifiable cases:
 # 1. action potentials (events with high peak v or large peak amplitude)
 # 2. spikeshoulderpeaks (events that occur before ahp_width_window on the previous event runs out)
-# 3. events on top of/evoked by current pulse change (diff(current) > 8 in the window from 20ms before until after the event);
+# 3. events on top of/evoked by current pulse change (dI/dt > 100pA/ms in the window from 20ms before until after the
+# event);
         # creating empty labels for all events
         event_label = None
         spikeshoulderpeaks = []
@@ -663,7 +653,7 @@ def get_events_measures(peaks_idcs,
         if preevent_idx < 0:
             preevent_idx = 0
         didt_around_event = take_derivative((current_recording[preevent_idx:int(baseline_idx + ahpwindow_insamples)]), sampling_period_inms)
-        if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 8:
+        if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 100:
             if event_label is None:
                 event_label = 'currentpulsechange'
             else:
@@ -692,8 +682,8 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
     oscillation-subtracted.
     The function returns an average trace, a std-trace and a corresponding time axis.
     """
-    # !!this code will fail miserably if there are blocks with different sampling frequency recorded for the same neuron
-    # TODO at least put in a warning or something for cases where neuron is recorded at varying sampling freqs
+    #!!this code will fail miserably if there are blocks with different sampling frequency recorded for the same
+    # neuron; it will warn of this by not returning an averaged trace and printing an 'average not valid' statement
     eventmeasures_df = depolarizingevents_df[events_series]
     sampling_frequency = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_rate)
     sampling_period_inms = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
@@ -702,10 +692,13 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
     # initializing array to collect all events-traces into
     eventstraces_array = np.zeros((tracesnippet_length, len(eventmeasures_df)))
     running_event_index = 0
+    # collecting sampling rates for each block where events occur, to put up a warning if they are not identical:
+    blocks_sampling_rates = []
     for block in rawdata_blocks:
         block_eventsmeasures = eventmeasures_df[(eventmeasures_df.file_origin == block.file_origin)]
         if not block_eventsmeasures.empty:
             segments_idcs = list(set(block_eventsmeasures['segment_idx']))
+            blocks_sampling_rates.append(float(block.channel_indexes[0].analogsignals[0].sampling_rate))
             for segment_idx in segments_idcs:
                 segment_eventsmeasures = block_eventsmeasures[(block_eventsmeasures.segment_idx == segment_idx)]
                 vtrace_asanalogsignal = block.segments[segment_idx].analogsignals[0]
@@ -744,7 +737,10 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
                     running_event_index += 1
     average_trace = np.nanmean(eventstraces_array, axis=1)
     standarddeviation_trace = np.nanstd(eventstraces_array, axis=1)
-    return average_trace, standarddeviation_trace, time_axis
+    if (blocks_sampling_rates[0] == blocks_sampling_rates[i] for i in range(1, len(blocks_sampling_rates))):
+        return average_trace, standarddeviation_trace, time_axis
+    else:
+        print('average not valid; recording blocks have varying sampling rates')
 
 
 # detecting prepotentials on APs and getting their amplitude if present

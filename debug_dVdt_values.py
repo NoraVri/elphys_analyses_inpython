@@ -57,3 +57,9 @@ aps_axis, aps_dvdt_axis, aps_ddvdt_axis = singleneuron_data.plot_depolevents(nea
                                    plot_ddvdt=True,
                                    display_measures=True,
                                    )
+
+
+
+# %% TODO following fixes:
+# - check that events are being properly picked up for multiple neurons; especially APs and currentpulsechanges
+# - re-do singleneuron analyses for all neurons in the depolarizingevents-dataset(s)

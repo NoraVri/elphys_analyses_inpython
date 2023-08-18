@@ -81,6 +81,65 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
     recordingblocks_index_df['spontfastevents_avgfreqs'] = blocks_spontfastevents_freqs
     return recordingblocks_index_df
 
+# %% cell-attached recordings
+
+
+def get_aps_from_cellattachedrecording(block_file_origin, segment_idx, single_segment,
+                                        getbaseline_lpfilter_freq=4, getnoise_hpfilterfreq=5000,
+                                       plot='off'):
+    """ This function finds the peaks of action potentials/currents in cell-attached recordings.
+    Workflow:
+    - identify whether file is current- or voltage-clamp recording
+        if vc, multiply by -1 to detect APs as peaks in the data (instead of valleys)
+    - get baseline (by low-pass filtering) and noiselevel (by high-pass filtering)
+        subtract these from the raw data to get clean trace centered around 0
+    - detect peaks that go over noise/threshold value by at least ...
+    - check that identified peaks aren't due to applied current/voltage steps
+
+    """
+
+
+    recording_primary = single_segment.analogsignals[0]
+    recording_secondary = single_segment.analogsignals[1]
+    time_axis = recording_primary.times
+    sampling_frequency = float(recording_primary.sampling_rate.rescale('Hz'))  # cast to float gets rid of quantities
+
+    # checking units on the primary; multiplying signal by -1 if it's current
+    primary_recording_unit = recording_primary.units
+    if primary_recording_unit == pq.pA:
+        data_trace = -1 * np.array(np.squeeze(recording_primary))
+    elif primary_recording_unit == pq.mV:
+        data_trace = np.array(np.squeeze(recording_primary))
+    else:
+        print('function requirements are not met by the data; no result produced')
+        return
+
+    # getting a low-pass and a high-pass filtered version of data trace:
+    data_trace_lpfiltered, data_trace_hpfiltered = apply_filters_to_vtrace(data_trace,
+                                                                           getbaseline_lpfilter_freq,
+                                                                           getnoise_hpfilterfreq,
+                                                                           sampling_frequency,
+                                                                           plot)
+    # if plot = 'on', make some plots of the raw and filtered data:
+    if plot == 'on':
+        figure, axes = plt.subplots(2, 1, sharex='all')
+        axes[0].plot(time_axis, data_trace, label='raw data')
+        # axes[0].set_title('raw recording')
+        axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
+        # axes[0].set_title('hp-filtered')
+        axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
+        # axes[1].set_title('lp-filtered')
+        axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered), label='raw - lp_filtered')
+        # axes[2].set_title('raw - lp-filtered')
+        axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered - data_trace_hpfiltered),
+                     label='raw - lp_filtered - hp_filtered')
+        # axes[2].set_title('raw - lp-filtered - hp-filtered')
+        axes[0].set_ylabel(str(primary_recording_unit))
+        axes[1].set_xlabel(str(time_axis.units))
+        axes[0].legend()
+        axes[1].legend()
+        figure.suptitle('segment idx = ' + segment_idx)
+
 
 # %% depolarizing events
 

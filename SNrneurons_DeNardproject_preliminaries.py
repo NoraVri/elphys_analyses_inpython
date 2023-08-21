@@ -30,7 +30,7 @@ block = example_bad_data.blocks[1]
 # for i in segments_idcs:
 #         get_aps_from_cellattachedrecording(block.file_origin, i,
 #                                            block.segments[i], plot='on')
-peaks_idcs, end_idcs, start_idcs = get_spikes_from_cellattachedrecording(block.file_origin, 7,
+peaks_idcs = get_spikes_from_cellattachedrecording(block.file_origin, 7,
                                            block.segments[7], plot='on')
 # %%
 # and let's see some of the data I recorded in I-clamp and V-clamp:
@@ -40,6 +40,13 @@ nv_example_data = SingleNeuron('230608A',
 nv_example_data2 = SingleNeuron('230727A',
                                path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
 
+segment = nv_example_data.blocks[3].segments[0]
+peaks_idcs = get_spikes_from_cellattachedrecording('file', 0,
+                                                   segment, plot='on')
+
+segment2 = nv_example_data.blocks[1].segments[0]
+peaks_idcs2 = get_spikes_from_cellattachedrecording('file', 0,
+                                                   segment2, plot='on')
 
 # %% let's see what applying filters does to cc and vc recordings:
 for block in example_data.blocks:

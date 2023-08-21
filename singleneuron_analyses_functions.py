@@ -103,7 +103,6 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
 
     """
 
-
     recording_primary = single_segment.analogsignals[0]
     recording_secondary = single_segment.analogsignals[1]
     time_axis = recording_primary.times
@@ -112,15 +111,19 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
     primary_recording_unit = recording_primary.units
     data_trace = np.array(np.squeeze(recording_primary))  # stripping pq-properties and getting an array of dimension 1x0
 
-    # # checking units on the primary; multiplying signal by -1 if it's current
-    # redone this, no inverting of the signal (just use negative threshold instead)
-    # if primary_recording_unit == pq.pA:
-    #     data_trace = -1 * np.array(np.squeeze(recording_primary))
-    # elif primary_recording_unit == pq.mV:
-    #     data_trace = np.array(np.squeeze(recording_primary))
-    # else:
-    #     print('function requirements are not met by the data; no result produced')
-    #     return
+    # checking units on the primary; inverting the signal if it's current
+    if primary_recording_unit == pq.pA:
+        data_trace = -1 * data_trace
+    elif primary_recording_unit == pq.mV:
+        data_trace = data_trace
+    else:
+        print('data trace units not compatible with this function; no result produced')
+        return
+
+    # spike peaks should be over threshold for at least 5 samples/0.2ms (whichever is longer)
+    min_peaktrace_length = int(0.2 * ms_in_samples)
+    if min_peaktrace_length < 5:
+        min_peaktrace_length = 5
 
     # getting a low-pass and a high-pass filtered version of data trace:
     data_trace_lpfiltered, data_trace_hpfiltered = apply_filters_to_vtrace(data_trace,
@@ -130,27 +133,34 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
                                                                            plot)
     # cleaning up the data trace: subtracting lp-filtered and hp-filtered version
     spikedetection_data_trace = data_trace - data_trace_lpfiltered - data_trace_hpfiltered
+    # TODO: zero-padding traces such that artefacts in lp-filtered version gets baseline value right for all data
 
     # getting the noise-level: mean value of abs(hp-filtered trace)
     noise_value = np.mean(np.abs(recording_primary))
 
-    # spike peaks should be over threshold for at least 5 samples/0.2ms (whichever is longer)
-    min_peaktrace_length = int(0.2 * ms_in_samples)
-    if min_peaktrace_length < 5:
-        min_peaktrace_length = 5
-
     # getting threshold value for spike detection: (default: 3x noise)
-
-    # TODO add some code to deal with VC/CC value conversions
+    # TODO add some code to give more options for detection threshold
     if detection_threshold is None:
-        detection_threshold = -3 * noise_value
+        detection_threshold = 3 * noise_value
+    elif (isinstance(detection_threshold, int) or isinstance(detection_threshold, float)):
+        if detection_threshold < 0:
+            detection_threshold = -1 * detection_threshold
+        else:
+            detection_threshold = detection_threshold  # current trace will be inverted to find spikes; so, detection threshold should always be a positive number
+    else:
+        print('detection threshold must be either a number or None')
+        return
+
 
     start_idcs = []
     end_idcs = []
     peaks_idcs = []
 
     # get idcs in the raw data trace that go over/under (CC/VC recording) threshold value:
-    data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace < detection_threshold))
+    data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace > detection_threshold))
+    if len(data_trace_pastthreshold_idcs) < 2:
+        print('no spikes detected in segment ' + str(segment_idx) + ' of block ' + block_file_origin)
+        return
     # differentiate this trace to get places where successive idcs are part of the same detected peak
     pastthreshold_idcs_diff = np.squeeze(np.diff(data_trace_pastthreshold_idcs))
     pastthreshold_idcs_diff_largevalues_idcs = np.squeeze(np.where(pastthreshold_idcs_diff > 1))
@@ -165,9 +175,10 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
 
     for start_idx, end_idx in zip(start_idcs, end_idcs):
         spikedetect_trace = spikedetection_data_trace[start_idx:end_idx]
-        spikepeak_idx_in_peaktrace = np.argmin(spikedetect_trace)
-        peaks_idcs.append((start_idx+spikepeak_idx_in_peaktrace))
-
+        if len(spikedetect_trace) >= min_peaktrace_length:
+            spikepeak_idx_in_peaktrace = np.argmax(spikedetect_trace)
+            peaks_idcs.append((start_idx+spikepeak_idx_in_peaktrace))
+        else: continue
 
 
     # if plot = 'on', make some plots to visualize how spikes are detected:
@@ -188,8 +199,8 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
 
         axes[1].hlines(detection_threshold, time_axis[0], time_axis[-1],
                        color='r', label='detection threshold')
-        axes[1].scatter(time_axis[data_trace_pastthreshold_idcs], spikedetection_data_trace[data_trace_pastthreshold_idcs],
-                        color='y', label='detected points')
+        # axes[1].scatter(time_axis[data_trace_pastthreshold_idcs], spikedetection_data_trace[data_trace_pastthreshold_idcs],
+        #                 color='y', label='detected points')
         # axes[1].scatter(time_axis[start_idcs], spikedetection_data_trace[start_idcs],
         #                 color='r', label='peaktrace start points')
         # axes[1].scatter(time_axis[end_idcs], spikedetection_data_trace[end_idcs],
@@ -197,7 +208,11 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
         axes[1].scatter(time_axis[peaks_idcs], spikedetection_data_trace[peaks_idcs],
                         color='b', label='detected peaks')
 
-        axes[0].set_ylabel(str(primary_recording_unit))
+        if primary_recording_unit == pq.pA:
+            ylabel = 'current (pA); inverted to detect spikes as peaks'
+        else:
+            ylabel = str(primary_recording_unit)
+        axes[0].set_ylabel(ylabel)
         axes[1].set_xlabel(str(time_axis.units))
         axes[0].legend()
         axes[1].legend()

@@ -6,7 +6,7 @@ import numpy as np
 # stuff I wrote
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import apply_filters_to_vtrace
-from singleneuron_analyses_functions import get_aps_from_cellattachedrecording
+from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
 
 # %% first exploration of data
 
@@ -14,13 +14,25 @@ from singleneuron_analyses_functions import get_aps_from_cellattachedrecording
 example_data = SingleNeuron('20230720C',
                             path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
 single_segment = example_data.blocks[0].segments[0]
-get_aps_from_cellattachedrecording(0, 0, single_segment, plot='on')
+get_spikes_from_cellattachedrecording(0, 0, single_segment, plot='on')
 
 
 example_data2 = SingleNeuron('230511A',
                              path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
 
-
+# %%
+example_bad_data = SingleNeuron('230202_bad traces',
+                             path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
+# block = example_bad_data.blocks[0]
+# segments_idcs = [0, 50, 88, 99]
+block = example_bad_data.blocks[1]
+# segments_idcs = [0, 7, 13, 18]
+# for i in segments_idcs:
+#         get_aps_from_cellattachedrecording(block.file_origin, i,
+#                                            block.segments[i], plot='on')
+peaks_idcs, end_idcs, start_idcs = get_spikes_from_cellattachedrecording(block.file_origin, 7,
+                                           block.segments[7], plot='on')
+# %%
 # and let's see some of the data I recorded in I-clamp and V-clamp:
 nv_example_data = SingleNeuron('230608A',
                                path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')

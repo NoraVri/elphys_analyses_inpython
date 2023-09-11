@@ -66,6 +66,9 @@ def make_recordings_index_dictionary():
 
 # adding information on frequencies of APs and fastevents to existing recordingblocks_index DataFrame
 def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depolarizingevents_df):
+    '''
+    Quick-and-dirty function for getting the avg. frequency of APs and fastevents per block
+    '''
     blocks_spontaps_freqs = []
     blocks_spontfastevents_freqs = []
     for block in recordingblocks_index_df.file_origin.unique():
@@ -80,6 +83,30 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
     recordingblocks_index_df['spontaps_avgfreqs'] = blocks_spontaps_freqs
     recordingblocks_index_df['spontfastevents_avgfreqs'] = blocks_spontfastevents_freqs
     return recordingblocks_index_df
+
+def get_events_intervals_in_idcs(events_df, events_column_name):
+    '''
+    Function inputs: events-dataframe with columns file_origin and segment_idx,
+    and a column identified by events_column_name marking events locations.
+    A column named 'interval' is added to the events_df (note: function returns a modified copy of the events_df that went in).
+    Intervals are calculated between any two consecutive datapoints that were
+    recorded in the same file and in the same segment/sweep, and are logged with
+    the second event in each interval.
+    '''
+    if 'interval' not in events_df.columns:
+        events_df['interval'] = ''
+    for i, event_dfrow in events_df.iterrows():
+        if i == 0:
+            pass
+        elif ((event_dfrow.file_origin == events_df.loc[i-1,'file_origin'])
+              and (event_dfrow.segment_idx == events_df.loc[i-1, 'segment_idx'])):
+            event_idx = event_dfrow[events_column_name]
+            previous_event_idx = events_df.loc[i-1, events_column_name]
+            interval = event_idx - previous_event_idx
+            events_df.loc[i,'interval'] = interval
+        else:
+            pass
+    return
 
 # %% cell-attached recordings
 

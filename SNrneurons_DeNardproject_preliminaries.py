@@ -75,3 +75,9 @@ for block in example_data.blocks:
 # cc_lpfiltered, cc_hpfiltered = apply_filters_to_vtrace(cc_segment, plot='on')
 
 
+# %%
+neuron_data = SingleNeuron('20221229E')
+des_df = neuron_data.depolarizing_events
+
+intervals_df = neuron_data.get_events_intervals_inms(event_labels=['actionpotential', 'fastevent'])
+

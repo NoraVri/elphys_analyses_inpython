@@ -58,6 +58,7 @@ class SingleNeuron:
         self.rawdata_readingnotes = {}
 
         self.depolarizing_events = pd.DataFrame()
+        self.cellattached_aps = pd.DataFrame()
         self.recordingblocks_index = pd.DataFrame()
         self.ttlon_measures = pd.DataFrame()
         self.subthreshold_oscillations = []
@@ -104,6 +105,9 @@ class SingleNeuron:
             # saving depolarizingevents table:
             if len(self.depolarizing_events) > 0:
                 self.depolarizing_events.to_csv(self.name + '_depolarizing_events.csv')
+            # saving cell-attached aps table:
+            if len(self.cellattached_aps) > 0:
+                self.cellattached_aps.to_csv(self.name + '_cellattached_aps.csv')
             # saving recordingblocks index:
             if len(self.recordingblocks_index) > 0:
                 self.recordingblocks_index.to_csv(self.name + '_recordingblocks_index.csv')
@@ -224,6 +228,14 @@ class SingleNeuron:
                         if 'idx' in key:                         # to bypass their being cast to float
                             dtypes_dict[key] = 'Int64'
                     self.depolarizing_events = self.depolarizing_events.astype(dtypes_dict)
+
+                if 'cellattached_aps' in path:
+                    self.cellattached_aps = pd.read_csv(path, index_col=0)
+                    dtypes_dict = {}
+                    for key in self.depolarizing_events.keys():  # converting columns containing idcs and missing values
+                        if 'idx' in key:                         # to bypass their being cast to float
+                            dtypes_dict[key] = 'Int64'
+                    self.cellattached_aps = self.cellattached_aps.astype(dtypes_dict)
 
                 if 'recordingblocks_index' in path:
                     self.recordingblocks_index = pd.read_csv(path, index_col=0)
@@ -1159,6 +1171,77 @@ class SingleNeuron:
             new_recordingblocks_index = snafs.add_events_frequencies_torecordingblocksindex(self.recordingblocks_index,
                                                                                             self.depolarizing_events)
             self.recordingblocks_index = new_recordingblocks_index
+
+    # getting the time-intervals between labeled events
+    def get_events_intervals_inms(self, events_table='depolarizing_events',
+                                  event_labels=None,
+                                  events_column_name='peakv_idx'):
+        '''
+
+        '''
+        # getting to the relevant events-table:
+        if events_table == 'depolarizing_events':
+            events_df = self.depolarizing_events
+        elif events_table == 'cellattached_aps':
+            events_df = self.cellattached_aps
+        else:
+            print('events-table could not be resolved; no analyses performed')
+            return
+
+        # getting out a copy containing only the relevant rows&columns:
+            # creating a mask for selecting relevant rows
+        if event_labels is None:
+            rows_mask = np.ones(events_df.shape[0], dtype=bool)
+        elif isinstance(event_labels, str):
+            rows_mask = events_df.event_label.str.fullmatch(event_labels, na=False)
+        elif isinstance(event_labels, list):
+            regex_string = '|'.join(event_labels)
+            rows_mask = events_df.event_label.str.fullmatch(regex_string, na=False)
+        else:
+            print('event-labels could not be resolved; no analyses performed')
+            return
+            # copying relevant rows and columns into the relevant-events-dataframe  !note: copying is key to pandas being able to keep track of what's what
+        re_df = events_df.loc[rows_mask, ['event_label', 'file_origin', 'segment_idx', events_column_name]].copy()
+            # re-indexing to ensure that row indices are consecutive numbers (needed for get_events_intervals-function to run):
+        re_df.reset_index(inplace=True)
+
+        # getting intervals between events, in idcs:
+        snafs.get_events_intervals_in_idcs(re_df, events_column_name)
+
+        # convert intervals to ms, accounting for the possibility that different blocks were recorded at different sampling rates:
+            # getting recordingblocks_index as easy access to sampling_freq per block
+        if self.recordingblocks_index.empty:
+            self.get_recordingblocks_index()
+        elif 'sampling_freq_inHz' not in self.recordingblocks_index.columns:
+            self.get_recordingblocks_index()
+            # if all blocks were recorded at the same rate, simply multiply intervals_in_idcs by sampling_interval:
+        if len(self.recordingblocks_index.sampling_freq_inHz.unique()) == 1:
+            sampling_freq = int(self.recordingblocks_index.sampling_freq_inHz[0])  # note: object still has quantities-properties; cast to int to bypass
+            sampling_interval_inms = 1 / sampling_freq * 1000
+            events_intervals_inms = pd.to_numeric(events_df.interval) * sampling_interval_inms  # cast to numeric to avoid errors with empty values
+            re_df['intervals_inms'] = events_intervals_inms
+            # otherwise, multiply by sampling interval per block:
+        else:
+            re_df['interval_inms'] = ''
+            for _, row in self.recordingblocks_index.iterrows():
+                block_sampling_freq = int(row.sampling_freq_inHz)
+                block_sampling_interval_inms = 1 / block_sampling_freq * 1000
+                intervals = re_df.loc[re_df.file_origin == row.file_origin, 'interval']
+                intervals_inms = pd.to_numeric(intervals) * block_sampling_interval_inms
+                re_df.loc[re_df.file_origin == row.file_origin, 'interval_inms'] = intervals_inms
+
+
+            # re_df_grouped = re_df.groupby('file_origin', sort=False)
+            # for name, group in re_df_grouped:
+            #     block_sampling_freq = int(self.recordingblocks_index[self.recordingblocks_index.file_origin == name].sampling_freq_inHz)
+            #     block_sampling_interval_inms = 1 / block_sampling_freq * 1000
+            #     block_events_intervals_inms = pd.to_numeric(group.interval) * block_sampling_interval_inms
+            #     group['intervals_inms'] = block_events_intervals_inms
+
+        return re_df
+
+
+
 
     # getting long-pulse measures (unfinished)
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):

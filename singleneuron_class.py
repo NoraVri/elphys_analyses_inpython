@@ -58,7 +58,7 @@ class SingleNeuron:
         self.rawdata_readingnotes = {}
 
         self.depolarizing_events = pd.DataFrame()
-        self.cellattached_aps = pd.DataFrame()
+        self.cellattached_spikes = pd.DataFrame()
         self.recordingblocks_index = pd.DataFrame()
         self.ttlon_measures = pd.DataFrame()
         self.subthreshold_oscillations = []
@@ -1086,7 +1086,7 @@ class SingleNeuron:
             mV_unit = 1 * pq.mV
             if not block_primary_unit == mV_unit:
                 continue
-
+            # looping over segments
             for i, segment in enumerate(block.segments):
                 segment_eventmeasuresdict = snafs.get_depolarizingevents(
                     block.file_origin, i, segment,
@@ -1157,6 +1157,32 @@ class SingleNeuron:
             if 'idx' in key:                         # to bypass their being cast to float
                 dtypes_dict[key] = 'Int64'
         self.ttlon_measures = ttlon_measures.astype(dtypes_dict)
+
+    # getting the cellattached_aps DataFrame
+    def get_spikes_from_cellattachedrawdata(self, **kwargs):
+        '''
+
+        '''
+        # initializing empty dictionary for collecting results:
+        all_spikepeaks_dict = snafs.make_spikepeaks_dictionary()
+        # get spikepeaks for each segment in each block, and collect into spikepeaks_dict
+        for block in self.blocks:
+            for i, segment in enumerate(block.segments):
+                segment_spikepeaksdict = snafs.get_spikes_from_cellattachedrecording(block.file_origin,
+                                                                                     i, segment,
+                                                                                     **kwargs)
+                # updating the final results-dictionary with the per-segment results:
+                for key in all_spikepeaks_dict:
+                    all_spikepeaks_dict[key] += segment_spikepeaksdict[key]
+        # turn into a DataFrame:
+        spikepeaks_df = pd.DataFrame(all_spikepeaks_dict).round(decimals=2)
+        dtypes_dict = {}
+        for key in spikepeaks_df.keys():  # converting columns containing idcs and missing values to Int64 datatype
+            if 'idx' in key:                         # to bypass their being cast to floats
+                dtypes_dict[key] = 'Int64'
+        spikepeaks_df.astype(dtypes_dict)
+        # add to class instance and save:
+        self.cellattached_spikes = spikepeaks_df
 
     # adding events-frequencies to the recordingblocks_index DataFrame
     def get_depolarizingevents_frequencies_byrecordingblocks(self):
@@ -1230,18 +1256,7 @@ class SingleNeuron:
                 intervals_inms = pd.to_numeric(intervals) * block_sampling_interval_inms
                 re_df.loc[re_df.file_origin == row.file_origin, 'interval_inms'] = intervals_inms
 
-
-            # re_df_grouped = re_df.groupby('file_origin', sort=False)
-            # for name, group in re_df_grouped:
-            #     block_sampling_freq = int(self.recordingblocks_index[self.recordingblocks_index.file_origin == name].sampling_freq_inHz)
-            #     block_sampling_interval_inms = 1 / block_sampling_freq * 1000
-            #     block_events_intervals_inms = pd.to_numeric(group.interval) * block_sampling_interval_inms
-            #     group['intervals_inms'] = block_events_intervals_inms
-
         return re_df
-
-
-
 
     # getting long-pulse measures (unfinished)
     def get_longpulsemeasures_fromrawdata(self, longpulses_blocks, **kwargs):

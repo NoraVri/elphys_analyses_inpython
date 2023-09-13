@@ -14,7 +14,7 @@ from singleneuron_analyses_functions import get_spikes_from_cellattachedrecordin
 example_data = SingleNeuron('20230720C',
                             path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
 single_segment = example_data.blocks[0].segments[0]
-get_spikes_from_cellattachedrecording(0, 0, single_segment, plot='on')
+# get_spikes_from_cellattachedrecording(0, 0, single_segment, plot='on')
 
 
 example_data2 = SingleNeuron('230511A',

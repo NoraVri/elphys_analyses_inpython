@@ -1172,8 +1172,9 @@ class SingleNeuron:
                                                                                      i, segment,
                                                                                      **kwargs)
                 # updating the final results-dictionary with the per-segment results:
-                for key in all_spikepeaks_dict:
-                    all_spikepeaks_dict[key] += segment_spikepeaksdict[key]
+                if segment_spikepeaksdict is not None:
+                    for key in all_spikepeaks_dict:
+                        all_spikepeaks_dict[key] += segment_spikepeaksdict[key]
         # turn into a DataFrame:
         spikepeaks_df = pd.DataFrame(all_spikepeaks_dict).round(decimals=2)
         dtypes_dict = {}
@@ -1181,7 +1182,7 @@ class SingleNeuron:
             if 'idx' in key:                         # to bypass their being cast to floats
                 dtypes_dict[key] = 'Int64'
         spikepeaks_df.astype(dtypes_dict)
-        # add to class instance and save:
+        # add to class instance:
         self.cellattached_spikes = spikepeaks_df
 
     # adding events-frequencies to the recordingblocks_index DataFrame

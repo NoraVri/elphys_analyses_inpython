@@ -13,10 +13,10 @@ from singleneuron_analyses_functions import get_spikes_from_cellattachedrecordin
 # first, let's see that I can open recording files sent to me by DeNard:
 example_data = SingleNeuron('20230720C',
                             path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
-single_segment = example_data.blocks[0].segments[0]
-# get_spikes_from_cellattachedrecording(0, 0, single_segment, plot='on')
+# single_segment = example_data.blocks[0].segments[0]
+# segment_spikes = get_spikes_from_cellattachedrecording('block', 0, single_segment, plot='on')
 
-
+# %%
 example_data2 = SingleNeuron('230511A',
                              path='D:\\Beaste_IIa_Documents_backup\\Surmeier lab - stuffs and things\\DVS_project_data')
 

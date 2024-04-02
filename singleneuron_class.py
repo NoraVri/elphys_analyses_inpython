@@ -17,12 +17,14 @@ import numpy as np
 import quantities as pq
 import pandas as pd
 import seaborn as sns
+from dotenv import load_dotenv
 
 # imports of functions I wrote
 import singleneuron_plotting_functions as plots
 import singleneuron_analyses_functions as snafs
 # %%
-rawdata_path = "D:\\Beaste_IIa_Documents_backup\\elphys_andDirectlyRelatedThings_copy"
+load_dotenv()
+rawdata_path = os.environ.get('RAWDATA_PATH')
 
 
 class SingleNeuron:

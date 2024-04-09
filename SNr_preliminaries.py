@@ -62,6 +62,19 @@ singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
                                                 prettl_t_inms = 10, postttl_t_inms=100,
                                                 color_lims=[-100, -80],
                                                 plt_title='with drug')
+# %%
+# making some better comparison plots
+nodrugfigure, ndaxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+                                                prettl_t_inms = 10, postttl_t_inms=100,
+                                                color_lims=[-95, -50],
+                                                maxamp_for_plotting=50,
+                                                )
+yesdrugfigure, daxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
+                                                prettl_t_inms = 10, postttl_t_inms=100,
+                                                color_lims=[-95, -50],
+                                                maxamp_for_plotting=50,
+                                                plt_title='with drug',
+                                                )
 
 
 # %%

@@ -76,6 +76,7 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                     color_lims=None, plotlims=None,
                     skip_vtraces_block=None,
                     skip_vtraces_idcs=None,
+                    maxamp_for_plotting=None,
                     noisefilter_hpfreq=3000,):
     """
     This function takes a list of blocks, and plots vtraces aligned to ttl-onset (for those blocks that have ttl).
@@ -96,7 +97,8 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     blocknames_list = [block.file_origin for block in blockslist]
     blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list)
                                             & (~ttlmeasures_df.baselinev.isna()))]  # by skipping traces where no baselinev value was calculated, we skip vclamp-recordings and traces where ttl wasn't actually on (even though 3rd channel was recorded)
-    # return ttlmeasures_df, blocks_ttlmeasures_df
+    if maxamp_for_plotting is not None:
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df['response_maxamp'] < maxamp_for_plotting)]
     if color_lims is not None and colorby_measure is not None:
         blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df[colorby_measure] >= color_lims[0])
                                                     & (blocks_ttlmeasures_df[colorby_measure] <= color_lims[1])]

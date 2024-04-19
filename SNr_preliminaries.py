@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 import numpy as np
+from singleneuron_plotting_functions import plot_ttlaligned
 
 # %% in this script:
 # generating a data gallery of SNr neurons recorded so far towards supplement grant proposal.
@@ -36,45 +37,74 @@ neuron_name = '20240327C'
 # my naked eye sees lots of variance in response amp, but no relationship between baselineV and response amp (i.e., driving force of response does not seem to increase with hyperpolarization)
 # smallest optoStim response ~7mV depolarization, largest ~25mV; may be on average a little smaller with drug
 singleneuron_data = SingleNeuron(neuron_name)
-# singleneuron_data.get_ttlonmeasures_fromrawdata()
+# singleneuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=150)
 # singleneuron_data.write_results()
 
-# plotting long pulses - without drug applied:
-singleneuron_data.plot_rawdatablocks('longPulses_0', time_axis_unit='s')
-# plotting long pulses - with drug applied:
-singleneuron_data.plot_rawdatablocks('longPulses_with', time_axis_unit='s')
+# %% basic plots
+# # plotting long pulses - without drug applied:
+# singleneuron_data.plot_rawdatablocks('longPulses_0', time_axis_unit='s')
+# # plotting long pulses - with drug applied:
+# singleneuron_data.plot_rawdatablocks('longPulses_with', time_axis_unit='s')
+#
+#
+# # plotting opto response - without drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100)
+# # better view on subthreshold responses:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 color_lims=[-100, -80])
+#
+# # plotting opto response - with drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 plt_title='with drug')
+# # better view on subthreshold responses:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 color_lims=[-100, -80],
+#                                                 plt_title='with drug')
+#
+# # making some better comparison plots
+# nodrugfigure, ndaxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 color_lims=[-95, -50],
+#                                                 maxamp_for_plotting=50,
+#                                                 )
+# yesdrugfigure, daxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 color_lims=[-95, -50],
+#                                                 maxamp_for_plotting=50,
+#                                                 plt_title='with drug',
+#                                                 )
+# %% figuring out a figure comparing response with/without drug
+# First let's see what subthreshold responses may look like:
+singleneuron_data.ttlon_measures.plot.scatter('baselinev', 'response_maxamp')
+# looks like anything with baselineV <-60mV AND response_maxamp < 40mV should be subthreshold responses.
+subthreshold_responses_df = singleneuron_data.ttlon_measures[(singleneuron_data.ttlon_measures.baselinev < -60) & (singleneuron_data.ttlon_measures.response_maxamp < 40)]
+
+nodrug_sr_df = subthreshold_responses_df[~(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))]
+yesdrug_sr_df = subthreshold_responses_df[(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))]
 
 
-# plotting opto response - without drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100)
-# better view on subthreshold responses:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                color_lims=[-100, -80])
+figure1, axes1 = plot_ttlaligned(singleneuron_data.blocks, nodrug_sr_df,
+                                 do_baselining=False,
+                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
+figure1.suptitle('no drug')
+axes1[0].set_ylim([-100, -45])
+figure2, axes2 = plot_ttlaligned(singleneuron_data.blocks, yesdrug_sr_df,
+                                 do_baselining=False,
+                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
+figure2.suptitle('with drug')
+axes2[0].set_ylim([-100, -45])
 
-# plotting opto response - with drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                plt_title='with drug')
-# better view on subthreshold responses:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                color_lims=[-100, -80],
-                                                plt_title='with drug')
-# %%
-# making some better comparison plots
-nodrugfigure, ndaxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                color_lims=[-95, -50],
-                                                maxamp_for_plotting=50,
-                                                )
-yesdrugfigure, daxes = singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_with', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                color_lims=[-95, -50],
-                                                maxamp_for_plotting=50,
-                                                plt_title='with drug',
-                                                )
+figure, axes = plt.subplots(1, 1, squeeze=True)
+nodrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
+                          ax=axes)
+yesdrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
+                           c='red',
+                           ax=axes)
+figure.legend(['no drug', 'with drug'])
 
 
 # %%
@@ -94,43 +124,85 @@ singleneuron_data = SingleNeuron(neuron_name)
 # singleneuron_data.get_ttlonmeasures_fromrawdata()
 # singleneuron_data.write_results()
 
-# plotting long pulses - without drug applied:
-singleneuron_data.plot_rawdatablocks('longPulses_0', time_axis_unit='s')
-# plotting long pulses - with drug applied:
-singleneuron_data.plot_rawdatablocks('longPulses_withSulpiride_0', time_axis_unit='s')
-# plotting long pulses - with drug washout:
-singleneuron_data.plot_rawdatablocks('longPulses_withSulpirideWashout', time_axis_unit='s')
+# %% basic plots
+# # plotting long pulses - without drug applied:
+# singleneuron_data.plot_rawdatablocks('longPulses_0', time_axis_unit='s')
+# # plotting long pulses - with drug applied:
+# singleneuron_data.plot_rawdatablocks('longPulses_withSulpiride_0', time_axis_unit='s')
+# # plotting long pulses - with drug washout:
+# singleneuron_data.plot_rawdatablocks('longPulses_withSulpirideWashout', time_axis_unit='s')
+#
+#
+# # plotting opto response - without drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 plt_title='without drug')
+#
+# # plotting opto response - with drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpiride_', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 plt_title='with drug')
+#
+# # plotting opto response - with drug washout:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpirideWashout', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,
+#                                                 plt_title='drug washout')
+#
+# # plotting again, focus on subthreshold responses
+# # plotting opto response - without drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100, color_lims=[-100, -70],
+#                                                 plt_title='without drug')
+# # plotting opto response - with drug applied:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpiride_', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,color_lims=[-100, -70],
+#                                                 plt_title='with drug')
+# # plotting opto response - with drug washout:
+# singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpirideWashout', plotdvdt=False,
+#                                                 prettl_t_inms = 10, postttl_t_inms=100,color_lims=[-100, -70],
+#                                                 plt_title='drug washout')
+
+# %% figuring out a figure of averaged traces
+# First let's see what subthreshold responses may look like:
+singleneuron_data.ttlon_measures.plot.scatter('baselinev', 'response_maxamp')
+# there's a clear split: anything with response_maxamp < 30mV are subthreshold responses; 50mV or more are APs (I checked).
 
 
-# plotting opto response - without drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                plt_title='without drug')
+subthreshold_responses_df = singleneuron_data.ttlon_measures[(singleneuron_data.ttlon_measures.response_maxamp < 30)]
 
-# plotting opto response - with drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpiride_', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                plt_title='with drug')
+nodrug_sr_df = subthreshold_responses_df[~(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))]
+yesdrug_sr_df = subthreshold_responses_df[(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))
+                                          & ~(subthreshold_responses_df.file_origin.str.contains('Washout'))]
+washoutdrug_sr_df = subthreshold_responses_df[(subthreshold_responses_df.file_origin.str.contains('Washout'))]
 
-# plotting opto response - with drug washout:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpirideWashout', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,
-                                                plt_title='drug washout')
+figure1, axes1 = plot_ttlaligned(singleneuron_data.blocks, nodrug_sr_df,
+                                 do_baselining=False,
+                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
+figure1.suptitle('no drug')
+axes1[0].set_ylim([-100, -40])
 
-# plotting again, focus on subthreshold responses
-# plotting opto response - without drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_0', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100, color_lims=[-100, -70],
-                                                plt_title='without drug')
-# plotting opto response - with drug applied:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpiride_', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,color_lims=[-100, -70],
-                                                plt_title='with drug')
-# plotting opto response - with drug washout:
-singleneuron_data.plot_rawdatatraces_ttlaligned('optoStim_withSulpirideWashout', plotdvdt=False,
-                                                prettl_t_inms = 10, postttl_t_inms=100,color_lims=[-100, -70],
-                                                plt_title='drug washout')
+figure2, axes2 = plot_ttlaligned(singleneuron_data.blocks, yesdrug_sr_df,
+                                 do_baselining=False,
+                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
+figure2.suptitle('with drug')
+axes2[0].set_ylim([-100, -40])
 
+figure3, axes3 = plot_ttlaligned(singleneuron_data.blocks, washoutdrug_sr_df,
+                                 do_baselining=False,
+                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
+figure3.suptitle('with drug washout')
+axes3[0].set_ylim([-100, -40])
+
+figure, axes = plt.subplots(1, 1, squeeze=True)
+nodrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
+                          ax=axes)
+yesdrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
+                           c='red',
+                           ax=axes)
+washoutdrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
+                               c='grey',
+                               ax=axes)
+figure.legend(['no drug', 'drug', 'washout'])
 
 # %%
 neuron_name = '20240311F'

@@ -82,6 +82,66 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
     return recordingblocks_index_df
 
 
+# %% averaging traces
+def get_blocks_average(blockslist, indexing_df=None):
+    """
+    This function is meant for averaging whole-length traces from blocks that all have the same structure (i.e. identical sampling rate, trace length and number of recording channels).
+    """
+    first_block = blockslist[0]
+    sampling_rate = first_block.segments[0].analogsignals[0].sampling_rate
+    trace_length = len(first_block.segments[0].analogsignals[0])
+    n_channels = len(first_block.channel_indexes)
+    ch0_rec_unit = first_block.segments[0].analogsignals[0].units
+    n_segments = 0
+    for block in blockslist:
+        block_sr = block.segments[0].analogsignals[0].sampling_rate
+        block_trace_length = len(block.segments[0].analogsignals[0])
+        block_channels = len(block.channel_indexes)
+        block_ch0_rec_unit = block.segments[0].analogsignals[0].units
+        block_segments = len(block.segments)
+        if not ((sampling_rate == block_sr)
+                and (trace_length == block_trace_length)
+                and (n_channels == block_channels)
+                and (ch0_rec_unit == block_ch0_rec_unit)):
+            print('block structures not matching')
+            return
+        else:
+            n_segments += block_segments
+
+    if indexing_df is None:  # average all traces from all blocks
+        alltraces_array = np.zeros((trace_length, n_segments, n_channels))
+        running_trace_idx = 0
+        for block in blockslist:
+            for segment in block.segments:
+                for chidx, rec_trace in enumerate(segment.analogsignals):
+                    rec = np.squeeze(np.array(rec_trace))
+                    alltraces_array[:, running_trace_idx, chidx] = rec
+                running_trace_idx += 1
+    elif (('file_origin' and 'segment_idx') in indexing_df.keys()):  # checking that the indexing_df fits the data in the blocks, then averaging only those
+        alltraces_array = np.zeros((trace_length, len(indexing_df), n_channels))
+        running_trace_idx = 0
+        for block in blockslist:
+            if not (block.file_origin in indexing_df.file_origin.values):
+                continue
+            else:
+                block_idxdf = indexing_df[(indexing_df.file_origin == block.file_origin)]
+                for segment_idx in block_idxdf.segment_idx:
+                    segment = block.segments[segment_idx]
+                    for chidx, rec_trace in enumerate(segment.analogsignals):
+                        rec = np.squeeze(np.array(rec_trace))
+                        alltraces_array[:, running_trace_idx, chidx] = rec
+                    running_trace_idx += 1
+    else:
+        print('indexing dataframe could not be resolved')
+        return
+
+    average_traces_array = np.nanmean(alltraces_array, axis=1)
+    std_traces_array = np.nanstd(alltraces_array, axis=1)
+
+
+    return alltraces_array, average_traces_array, std_traces_array
+
+
 # %% depolarizing events
 
 
@@ -953,6 +1013,7 @@ def keep_every_nth(bool_series, n=2, start_idx=0):
         bool_series_copy.loc[idx] = bool
     return bool_series_copy
 
+
 # %% ttl-evoked activity
 
 
@@ -1063,6 +1124,7 @@ def make_ttlonmeasures_dictionary():
 
     }
     return ttlon_measures
+
 
 # %% long-pulse response properties
 

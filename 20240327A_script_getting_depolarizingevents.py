@@ -14,6 +14,14 @@ neuron_name = '20240327A'
 # response to opto stim. may have gotten up to 50% larger after drug application, or not changed at all - gonna have to do statistics on that
 singleneuron_data = SingleNeuron(neuron_name)
 
+# %%
+blockslist = singleneuron_data.blocks[15:20]
+from singleneuron_analyses_functions import get_blocks_average
+all, mean, std = get_blocks_average(blockslist)
+# %%
+blockslist = [block for block in singleneuron_data.blocks if ('Stim' in block.file_origin)]
+all, mean, std = get_blocks_average(blockslist, singleneuron_data.ttlon_measures)
+
 # %% getting depolarizing events
 # # let's see how my algorithm does by default
 #

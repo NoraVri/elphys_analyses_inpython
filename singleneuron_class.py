@@ -492,6 +492,19 @@ class SingleNeuron:
         if len(blocknames_list) == 1:
             return figure, axes
 
+
+    def plot_average_trace(self, block_identifier):
+        """
+        This function takes a block identifier unique to a specific recording condition, and plots all traces averaged.
+        """
+        blockslist = [block for block in self.blocks if block_identifier in block.file_origin]
+        time_axis, average_traces_array, std_traces_array, rec_units = snafs.get_blocks_average(blockslist)
+
+        figure, axes = plots.plot_averaged_traces(time_axis, average_traces_array, std_traces_array, rec_units)
+
+        return figure, axes
+
+
     def plot_rawdatatraces_ttlaligned(self, *block_identifiers,
                                       newplot_per_block=False,
                                       newplot_per_ttlduration=False,

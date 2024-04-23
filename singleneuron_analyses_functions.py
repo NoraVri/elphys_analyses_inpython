@@ -87,6 +87,7 @@ def get_blocks_average(blockslist, indexing_df=None):
     """
     This function is meant for averaging whole-length traces from blocks that all have the same structure (i.e. identical sampling rate, trace length and number of recording channels).
     """
+    # First, run a quick-and-dirty check that block structure is all the same
     first_block = blockslist[0]
     sampling_rate = first_block.segments[0].analogsignals[0].sampling_rate
     trace_length = len(first_block.segments[0].analogsignals[0])
@@ -108,6 +109,7 @@ def get_blocks_average(blockslist, indexing_df=None):
         else:
             n_segments += block_segments
 
+    # getting all the relevant traces into a single array for averaging
     if indexing_df is None:  # average all traces from all blocks
         alltraces_array = np.zeros((trace_length, n_segments, n_channels))
         running_trace_idx = 0
@@ -117,7 +119,7 @@ def get_blocks_average(blockslist, indexing_df=None):
                     rec = np.squeeze(np.array(rec_trace))
                     alltraces_array[:, running_trace_idx, chidx] = rec
                 running_trace_idx += 1
-    elif (('file_origin' and 'segment_idx') in indexing_df.keys()):  # checking that the indexing_df fits the data in the blocks, then averaging only those
+    elif (('file_origin' and 'segment_idx') in indexing_df.keys()):  # checking that the indexing_df fits the data in the blocks, then averaging only those whose address is in the dataframe
         alltraces_array = np.zeros((trace_length, len(indexing_df), n_channels))
         running_trace_idx = 0
         for block in blockslist:
@@ -135,11 +137,17 @@ def get_blocks_average(blockslist, indexing_df=None):
         print('indexing dataframe could not be resolved')
         return
 
+    # doing the averaging
     average_traces_array = np.nanmean(alltraces_array, axis=1)
     std_traces_array = np.nanstd(alltraces_array, axis=1)
 
+    # get time axis and recording units information (should be same for all blocks since we checked, so should be OK to get it all from the first signal of the first block)
+    time_axis = first_block.segments[0].analogsignals[0].times
+    rec_units = []
+    for analogsignal in first_block.segments[0].analogsignals:
+        rec_units.append(analogsignal.units)
 
-    return alltraces_array, average_traces_array, std_traces_array
+    return time_axis, average_traces_array, std_traces_array, rec_units
 
 
 # %% depolarizing events

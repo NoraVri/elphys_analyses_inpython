@@ -69,25 +69,31 @@ def plot_block(block, depolarizingevents_df,
     return figure, axes
 
 
-def plot_averaged_traces(time_axis, average_traces_array, std_traces_array, rec_units):
+def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_traces_arrays, traces_labels, rec_units):
     """
+    This function takes as inputs a list of axes, a list of averaged traces and std traces, a list of labels for these traces, and a list of recording units.
+    It's meant to be used through wrapper functions on the singleneuron_class
+    """
+    n_subplots = len(axis_object)
+    n_traces = len(average_traces_arrays)
+    color_lims = [0, n_traces - 1]
+    colormap, cm_normalizer = get_colors_forlineplots([], color_lims)
+    line_colors = [colormap(cm_normalizer(i)) for i in range(n_traces)]
 
-    """
-    if average_traces_array.ndim == 2:
-        n_subplots = average_traces_array.shape[1]
-        figure, axes = plt.subplots(n_subplots, 1, sharex='all')
+    for average_traces_array, std_traces_array, line_color, trace_label in zip(average_traces_arrays, std_traces_arrays, line_colors, traces_labels):
         for i in range(n_subplots):
             averagedtrace_forplotting = average_traces_array[:, i]
             stdtrace = std_traces_array[:, i]
             avgplusstd_trace = averagedtrace_forplotting + stdtrace
             avgminusstd_trace = averagedtrace_forplotting - stdtrace
-            axes[i].plot(time_axis, averagedtrace_forplotting, linewidth=2, color='black')
-            axes[i].plot(time_axis, avgplusstd_trace, linestyle='--', color='grey')
-            axes[i].plot(time_axis, avgminusstd_trace, linestyle='--', color='grey')
-            axes[i].set_xlabel('time in ' + str(time_axis.units))
-            axes[i].set_ylabel(str(rec_units[i]))
+            axis_object[i].plot(time_axis, averagedtrace_forplotting, linewidth=3, color=line_color, label=trace_label)
+            axis_object[i].plot(time_axis, avgplusstd_trace, linestyle='--', color=line_color)
+            axis_object[i].plot(time_axis, avgminusstd_trace, linestyle='--', color=line_color)
+            axis_object[i].set_xlabel('time in ' + str(time_axis.units))
+            axis_object[i].set_ylabel(str(rec_units[i]))
 
-        return figure, axes
+    return axis_object
+
 
 # plotting traces aligned to TTL, in neat windows (including options for setting scales to be identical across neurons)
 def plot_ttlaligned(blockslist, ttlmeasures_df,

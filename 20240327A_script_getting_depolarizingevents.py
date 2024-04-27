@@ -16,16 +16,24 @@ singleneuron_data = SingleNeuron(neuron_name)
 
 # %% poking around with getting and plotting averaged traces
 # blockslist = singleneuron_data.blocks[15:20]
-# from singleneuron_analyses_functions import get_blocks_average
+from singleneuron_analyses_functions import get_blocks_average
 # all, mean, std = get_blocks_average(blockslist)
 # # %%
-# blockslist = [block for block in singleneuron_data.blocks if ('Stim' in block.file_origin)]
-# all, mean, std = get_blocks_average(blockslist, singleneuron_data.ttlon_measures)
+ttlblocks_df = singleneuron_data.ttlon_measures
+beforedrug_df = ttlblocks_df[ttlblocks_df.file_origin.str.contains('Stim_00')]
+afterdrug_df = ttlblocks_df[ttlblocks_df.file_origin.str.contains('Sulp')]
+blockslist = [block for block in singleneuron_data.blocks if ('Stim' in block.file_origin)]
+time_axis, average_traces_array, std_traces_array, rec_units = get_blocks_average(blockslist, beforedrug_df)
 
+# %%
 singleneuron_data.plot_average_trace('optoStim_00')
 
+# %%
+ttlblocks_df = singleneuron_data.ttlon_measures
+beforedrug_df = ttlblocks_df[ttlblocks_df.file_origin.str.contains('Stim_00')]
+afterdrug_df = ttlblocks_df[ttlblocks_df.file_origin.str.contains('Sulp')]
 
-
+singleneuron_data.plot_averaged_traces(before_drug=beforedrug_df, after_drug=afterdrug_df)
 
 # %%
 # %% getting depolarizing events

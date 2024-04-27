@@ -495,14 +495,54 @@ class SingleNeuron:
 
     def plot_average_trace(self, block_identifier):
         """
-        This function takes a block identifier unique to a specific recording condition, and plots all traces averaged.
+        This function takes a block identifier, and plots all traces from blocks that fit that identifier averaged.
+        Will fail miserably or plot nonsense if mismatching blocks have the identifier in common.
         """
         blockslist = [block for block in self.blocks if block_identifier in block.file_origin]
         time_axis, average_traces_array, std_traces_array, rec_units = snafs.get_blocks_average(blockslist)
 
-        figure, axes = plots.plot_averaged_traces(time_axis, average_traces_array, std_traces_array, rec_units)
+        n_subplots = average_traces_array.shape[1]
+        figure, axes = plt.subplots(n_subplots, 1, sharex='all')
+        plots.plot_averaged_traces(axes, time_axis, [average_traces_array], [std_traces_array], [block_identifier], rec_units)
 
         return figure, axes
+
+
+    def plot_averaged_traces(self, **named_indexing_dataframes):
+        """
+        This function takes named indexing dataframes and plots an average trace per df onto a single set of axes
+
+        """
+        averages_arrays_list = []
+        stds_arrays_list = []
+        all_rec_units_lists = []
+        traces_names_list = []
+        for name, df in zip(named_indexing_dataframes.keys(), named_indexing_dataframes.values()):
+            blockslist = [block for block in self.blocks if block.file_origin in df.file_origin.values]
+            time_axis, average_traces_array, std_traces_array, rec_units = snafs.get_blocks_average(blockslist)
+            averages_arrays_list.append(average_traces_array)
+            stds_arrays_list.append(std_traces_array)
+            all_rec_units_lists.append(rec_units)
+            traces_names_list.append(name)
+
+        # quick check that recording units (/number of traces to plot) are the same
+        if not [all_rec_units_lists[0] == units_list for units_list in all_rec_units_lists]:
+            print('averaged traces incompatible for plotting together; no plot made')
+        else:
+            rec_units = all_rec_units_lists[0]
+            n_subplots = len(rec_units)
+            figure, axes = plt.subplots(n_subplots, 1, sharex='all', constrained_layout=True)
+            axes = plots.plot_averaged_traces(axes, time_axis, averages_arrays_list, stds_arrays_list, traces_names_list, rec_units)
+
+            n_traces = len(traces_names_list)
+            color_lims = [0, n_traces - 1]
+            colormap, cm_normalizer = plots.get_colors_forlineplots([], color_lims)
+
+            colorbar = figure.colorbar(mpl.cm.ScalarMappable(norm=cm_normalizer, cmap=colormap),
+                                       ticks=list(range(n_traces))
+                                       )
+            colorbar.ax.set_yticklabels(traces_names_list)
+
 
 
     def plot_rawdatatraces_ttlaligned(self, *block_identifiers,

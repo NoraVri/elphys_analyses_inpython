@@ -87,8 +87,8 @@ def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_trac
             avgplusstd_trace = averagedtrace_forplotting + stdtrace
             avgminusstd_trace = averagedtrace_forplotting - stdtrace
             axis_object[i].plot(time_axis, averagedtrace_forplotting, linewidth=3, color=line_color, label=trace_label)
-            axis_object[i].plot(time_axis, avgplusstd_trace, linestyle='--', color=line_color)
-            axis_object[i].plot(time_axis, avgminusstd_trace, linestyle='--', color=line_color)
+            # axis_object[i].plot(time_axis, avgplusstd_trace, linestyle='--', color=line_color)
+            # axis_object[i].plot(time_axis, avgminusstd_trace, linestyle='--', color=line_color)
             axis_object[i].set_xlabel('time in ' + str(time_axis.units))
             axis_object[i].set_ylabel(str(rec_units[i]))
 

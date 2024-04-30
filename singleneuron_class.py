@@ -543,6 +543,8 @@ class SingleNeuron:
                                        )
             colorbar.ax.set_yticklabels(traces_names_list)
 
+            return figure, axes
+
 
 
     def plot_rawdatatraces_ttlaligned(self, *block_identifiers,
@@ -826,6 +828,8 @@ class SingleNeuron:
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
 
+        return figure, axis
+
     # plotting depolarizing events group averages
     def plot_depoleventsgroups_averages(self, *events_groups, group_labels=None, plt_title='group averages',
                                         plot_dvdt=True,
@@ -864,7 +868,7 @@ class SingleNeuron:
         for i, events_group in enumerate(events_groups):
             linecolor = colormap(cm_normalizer(i))
             events_group_avg, events_group_std, time_axis = snafs.get_events_average(self.blocks, self.depolarizing_events,
-                                                        self.rawdata_readingnotes['getdepolarizingevents_settings'],
+                                                        self.rawdata_readingnotes['getdepolarizingevents_settings'], self.recordingblocks_index,
                                                         events_group, **kwargs)
             axis.plot(time_axis, events_group_avg,
                       color=linecolor, linewidth=2.5)
@@ -933,7 +937,7 @@ class SingleNeuron:
                                        )
             colorbar.ax.set_yticklabels(group_labels)
         plt.suptitle(plt_title)
-        return axis, dvdt_axis
+        return figure, axis, dvdt_axis
 
     # plotting the event-detect trace that was used to find depolarizing events
     def plot_eventdetecttraces_forsegment(self, block_idx, segment_idx,

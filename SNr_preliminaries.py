@@ -162,47 +162,7 @@ singleneuron_data = SingleNeuron(neuron_name)
 #                                                 prettl_t_inms = 10, postttl_t_inms=100,color_lims=[-100, -70],
 #                                                 plt_title='drug washout')
 
-# %% figuring out a figure of averaged traces
-# First let's see what subthreshold responses may look like:
-singleneuron_data.ttlon_measures.plot.scatter('baselinev', 'response_maxamp')
-# there's a clear split: anything with response_maxamp < 30mV are subthreshold responses; 50mV or more are APs (I checked).
-
-
-subthreshold_responses_df = singleneuron_data.ttlon_measures[(singleneuron_data.ttlon_measures.response_maxamp < 30)]
-
-nodrug_sr_df = subthreshold_responses_df[~(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))]
-yesdrug_sr_df = subthreshold_responses_df[(subthreshold_responses_df.file_origin.str.contains('Sulpiride'))
-                                          & ~(subthreshold_responses_df.file_origin.str.contains('Washout'))]
-washoutdrug_sr_df = subthreshold_responses_df[(subthreshold_responses_df.file_origin.str.contains('Washout'))]
-
-figure1, axes1 = plot_ttlaligned(singleneuron_data.blocks, nodrug_sr_df,
-                                 do_baselining=False,
-                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
-figure1.suptitle('no drug')
-axes1[0].set_ylim([-100, -40])
-
-figure2, axes2 = plot_ttlaligned(singleneuron_data.blocks, yesdrug_sr_df,
-                                 do_baselining=False,
-                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
-figure2.suptitle('with drug')
-axes2[0].set_ylim([-100, -40])
-
-figure3, axes3 = plot_ttlaligned(singleneuron_data.blocks, washoutdrug_sr_df,
-                                 do_baselining=False,
-                                 plotdvdt=False, prettl_t_inms=10, postttl_t_inms=150)
-figure3.suptitle('with drug washout')
-axes3[0].set_ylim([-100, -40])
-
-figure, axes = plt.subplots(1, 1, squeeze=True)
-nodrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
-                          ax=axes)
-yesdrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
-                           c='red',
-                           ax=axes)
-washoutdrug_sr_df.plot.scatter('baselinev', 'response_maxamp',
-                               c='grey',
-                               ax=axes)
-figure.legend(['no drug', 'drug', 'washout'])
+## further plots can be found in a separate script for this neuron ##
 
 # %%
 neuron_name = '20240311F'

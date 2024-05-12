@@ -730,7 +730,7 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
     The function returns an average trace, a std-trace and a corresponding time axis.
     """
     # !!this code will fail miserably if there are blocks with different sampling frequency recorded for the same neuron
-    # TODO at least put in a warning or something for cases where neuron is recorded at varying sampling freqs
+    # TODO build something better than a straight rejection of calculating an average when traces are sampled at different frequencies
     eventmeasures_df = depolarizingevents_df[events_series]
     # determine whether all to-be-averaged events were recorded at the same sampling rate; if not, give error
     all_blocks_names = recordingblocks_index.file_origin

@@ -1,6 +1,7 @@
 # %% imports
 from singleneuron_class import SingleNeuron
 from singleneuron_plotting_functions import plot_ttlaligned
+import singleneuron_analyses_functions as snafs
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
@@ -152,4 +153,21 @@ for holding_current in holding_ranges:
     axis.set_ylim([-3, 30])
     figure, axis, _ = singleneuron_data.plot_depoleventsgroups_averages(beforedrug_eventstoplot, withdrug_eventstoplot, group_labels=['without', 'with'], plot_dvdt=False, prealignpoint_window_inms=10, plotwindow_inms=50, plt_title=('DC level = ' + str((holding_current[0] + 5))))
     axis.set_ylim([-3, 30])
+    holdinglevel_average_nodrug, _, _ = snafs.get_events_average(singleneuron_data.blocks,
+                                                                 singleneuron_data.depolarizing_events,
+                                                                 singleneuron_data.rawdata_readingnotes[
+                                                                     'getdepolarizingevents_settings'],
+                                                                 singleneuron_data.recordingblocks_index,
+                                                                 beforedrug_eventstoplot, )
+    holdinglevel_average_yesdrug, _, _ = snafs.get_events_average(singleneuron_data.blocks,
+                                                                  singleneuron_data.depolarizing_events,
+                                                                  singleneuron_data.rawdata_readingnotes[
+                                                                      'getdepolarizingevents_settings'],
+                                                                  singleneuron_data.recordingblocks_index,
+                                                                  withdrug_eventstoplot, )
+    print('at holding level ' + str(holding_current) + 'pA DC, the average response amplitude was ' + str(
+        np.max(holdinglevel_average_nodrug)) + 'mV without drug and ' + str(
+        np.max(holdinglevel_average_yesdrug)) + 'mV with drug; a ' + str(np.max(holdinglevel_average_yesdrug) / np.max(holdinglevel_average_nodrug)) + '-fold change')
+
+
 

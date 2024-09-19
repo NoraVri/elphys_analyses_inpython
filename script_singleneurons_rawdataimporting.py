@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 
-# criteria for excluding data:
+# in this script:
+# First look at recorded data, in raw format.
+# Applying cleanups where warranted (see criteria below).
+
+# general criteria for excluding data:
 # - bad baseline voltage (> -30mV without DC injection)
 # - bad AP amplitude (peakV < -10 mV)
 # - bad seal quality/bridge balance issues
@@ -2781,6 +2785,66 @@ cell20221229F.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 # removing seal formation:
 cell20221229F.rawdata_remove_nonrecordingsection('gapFree_0000.abf', trace_start_t=59)
 cell20221229F.write_results()
+
+# %%
+
+
+
+
+
+# %%
+cell20240508A = SingleNeuron('20240508A')
+cell20240508A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# just a single trace of spont. activity recorded from a mostly-dead cell (baselineV ~-20mV w/o -DC).
+cell20240508A.write_results()
+
+# %%
+cell20240509A = SingleNeuron('20240509A')
+cell20240509A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# spont.break-in from <<G seal, holding with way too much -DC to keep ~-60mV
+# shows compound light responses
+# optoStim intensity 100% throughout
+# most of recording seems to be in Vclamp mode
+cell20240509A.write_results()
+
+# %%
+cell20240509B = SingleNeuron('20240509B')
+cell20240509B.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# Vrest ~-20mV w/o DC on break-in; not the greatest recording all in all
+# light stimulus intensity 100%, then down to 5% during optoStim file#006
+# strong light seems to give artefact in voltage recording (recording in Vclamp mode)
+# _withSulpiride started just a few min. after switching solutions; effect might take longer to take hold
+
+# raw data cleanup:
+# removing GapFree_0000, clearly belongs to a different (very dead) cell:
+cell20240509B.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20240509B.write_results()
+
+# %%
+cell20240509C = SingleNeuron('20240509C')
+cell20240509C.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# spont.break-in, <1min. trace of spont. 'activity' in a cell that wants to be dead (Vrest ~-30mV w/-2nA DC).
+
+# raw data cleanup:
+# removing from dataset
+cell20240509C.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20240509C.write_results()
+
+# %%
+cell20240509D = SingleNeuron('20240509D')
+cell20240509D.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# looks like a bad break-in: cell has lots of spont.APs while getting sealed, but they stop soon after break-in
+# and Vrest goes to ~-20mV w/o DC.
+# light responses are weirdly giant, with visible artefact in voltage (V-clamp mode recording).
+
+cell20240509D.write_results()
+
+# %%
+
+
+
+
+
 
 # %% raw data import/cleanup template
 

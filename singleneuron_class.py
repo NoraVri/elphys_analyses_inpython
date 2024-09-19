@@ -89,7 +89,7 @@ class SingleNeuron:
             recordings_metadata.loc[recordings_metadata.name == self.name, 'total_t_recorded_in_s'] = time_recorded_ins
             os.chdir(self.path)
             recordings_metadata.to_csv('myData_recordings_metadata.csv', index=False)
-            print(self.name + ' total t recorded updated')
+            print(self.name + ' total t recorded updated to ' + str(time_recorded_ins) + 's')
 
 
         # saving to myResults folder
@@ -621,6 +621,79 @@ class SingleNeuron:
         else:
             figure, axes = plots.plot_ttlaligned(blocks_list, self.ttlon_measures, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
             figure.suptitle(plt_title + '; ' + str(len(blocks_list)) + ' blocks plotted together, cell ' + self.name)
+            return figure, axes
+
+    def plot_ttlaligned(self, ttlonmeasures_df=None,
+                        newplot_per_block=False, newplot_per_ttlduration=False,
+                        plt_title='',
+                        noisefilter_hpfreq='default',
+                        **kwargs):
+        """
+                This function plots raw data aligned to ttl onset, baselined to V in the ms before,
+                color-coded by baseline V.
+                kwargs:
+                - prettl_t_inms, postttl_t_inms: time before and after ttl-onset-time to be plotted.
+                    default: 2, 30
+                - do_baselining: default True, plots traces zeroed in V to baselinev (meanV in ms before ttl on)
+                - plotdvdt: default True, plots dVdt vs V in a second subplot.
+                - colorby_measure: default 'baselinev', values to use for distributing line colors.
+                - color_lims: [min max] of colorbar/traces to be plotted (traces falling outside are omitted).
+                    default: None - uses min and max baselinev values for colorbar
+                - plotlims: [minv maxv mindvdt maxdvdt] values for axes limits settings.
+                    default: None - default axes limits of matplotlib are used.
+                - skip_vtraces_idcs: can be a list of ints - segments with those indices will be skipped.
+                    default: None - all traces of the block are plotted.
+                - skip_vtraces_block: can be a list of block identifiers - if skip_vtraces is a list of ints, traces will be skipped only in the identified blocks.
+                - noisefilter_hpfreq: int - high-pass value for the filter getting the noise off the raw vtrace.
+                    default: 3000 Hz
+                """
+        # if no ttlon_measures df is passed in, put in the default one (if one is to be had; else, return):
+        if ttlonmeasures_df is None:
+            if not hasattr(self, 'ttlon_measures'):
+                self.get_ttlonmeasures_fromrawdata()
+            elif self.ttlon_measures.empty:
+                self.get_ttlonmeasures_fromrawdata()
+
+            if self.ttlon_measures.empty:
+                print('no ttl on found')
+                return
+            else:
+                ttlonmeasures_df = self.ttlon_measures
+        else: ttlonmeasures_df = ttlonmeasures_df
+
+        # updating noisefilter_hpfreq if set to 'default' but value for get_depolarizingevents is different from standard default
+        if noisefilter_hpfreq == 'default' and \
+                self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
+            noisefilter_hpfreq = self.rawdata_readingnotes['getdepolarizingevents_settings']['noisefilter_hpfreq']
+        elif not isinstance(noisefilter_hpfreq, int):
+            noisefilter_hpfreq = 3000
+
+        # plotting
+        blocknames_list = ttlonmeasures_df.file_origin.unique()
+        if newplot_per_block:
+            figures = []
+            axess = []
+            for blockname in blocknames_list:
+                block_ttlonmeasures_df = ttlonmeasures_df[ttlonmeasures_df.file_origin == blockname]
+                figure, axes = plots.plot_ttlaligned(self.blocks, block_ttlonmeasures_df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
+                figure.suptitle(plt_title + '; ' + self.name + ' block ' + blockname)
+                figures.append(figure)
+                axess.append(axes)
+            return figures, axess
+        if newplot_per_ttlduration:
+            ttldurations = ttlonmeasures_df.ttlon_duration_inms.unique()
+            figures = []
+            axess = []
+            for duration in ttldurations:
+                duration_ttlonmeasures_df = ttlonmeasures_df[ttlonmeasures_df.ttlon_duration_inms == duration]
+                figure, axes = plots.plot_ttlaligned(self.blocks, duration_ttlonmeasures_df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
+                figure.suptitle(plt_title + '; ' + self.name + ' ttlduration = ' + str(duration) + 'ms')
+                figures.append(figure)
+                axess.append(axes)
+            return figures, axess
+        else:
+            figure, axes = plots.plot_ttlaligned(self.blocks, ttlonmeasures_df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
+            figure.suptitle(plt_title + '; ' + str(len(blocknames_list)) + ' blocks plotted together, cell ' + self.name)
             return figure, axes
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed

@@ -71,7 +71,7 @@ for neuron in nolightresponse_neurons:
     # neuron_data.plot_rawdatablocks('longPulses_0001')
     # neuron_data.plot_rawdatablocks('optoStim_100')
 
-# %%
+# %% for visual comparison: EPSP from opto-evoked synaptic input in IO neuron
 
 neuron_name = '20201125B'
 neuron_data = SingleNeuron(neuron_name)

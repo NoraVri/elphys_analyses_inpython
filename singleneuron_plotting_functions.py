@@ -98,7 +98,7 @@ def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_trac
 # plotting traces aligned to TTL, in neat windows (including options for setting scales to be identical across neurons)
 def plot_ttlaligned(blockslist, ttlmeasures_df,
                     prettl_t_inms=2, postttl_t_inms=20,
-                    do_baselining=True, plotdvdt=True,
+                    do_baselining=True, plotdvdt=False,
                     colorby_measure='baselinev',
                     color_lims=None, plotlims=None,
                     skip_vtraces_block=None,

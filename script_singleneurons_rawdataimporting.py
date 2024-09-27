@@ -2843,8 +2843,15 @@ cell20240509D.write_results()
 
 
 
+# %%
+cell20240731A = SingleNeuron('20240731A')
+cell20240731A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+# looks like a pretty neat recording for the most part, although there is clearly some deterioration by the end
+# and it's not really easy to see where recording quality starts to fall.
 
-
+# gapFree_0000 is a break-in and recording of a different (mostly dead) neuron; removing data:
+cell20240731A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
+cell20240731A.write_results()
 
 # %% raw data import/cleanup template
 

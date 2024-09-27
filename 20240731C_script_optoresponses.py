@@ -77,7 +77,7 @@ sns.stripplot(data=ttlonmeasures, x='applied_current group', y='baselinev', hue=
 ttlonmeasures_sthr = ttlonmeasures[ttlonmeasures.response_maxamp < 20]
 
 
-# %% opto response sensitivity to light intensity
+# %% opto response sensitivity to light intensity & baseline voltage
 # getting ttlonmeasures_df for non-drug runs only:
 ttlonmeasures_sthr_nodrug = ttlonmeasures_sthr[(ttlonmeasures_sthr.drug_condition == 'no drug')]
 # plotting raw data traces: responses to light at each intensity level
@@ -96,6 +96,17 @@ plt.title('response amplitude by stimulus intensity (no drug applied)')
 # opto response amplitude clearly increases with stim.intensity,
 # although for 50 and 100% intensity this is obvious only with strong hyperpolarization (-200pA)
 
+# relationship between response amplitude and baselineV:
+plt.figure()
+sns.lineplot(data=ttlonmeasures_sthr_nodrug, x='binned_baselinev', y='response_maxamp', hue='stim_intensity_pct')
+
+for level in intensity_levels:
+    ttlonmeasures_sthr_nodrug_atlevel = ttlonmeasures_sthr_nodrug[ttlonmeasures_sthr_nodrug.stim_intensity_pct == level]
+    plt.figure()
+    plt.title('light intensity level = ' + str(level))
+    sns.lineplot(data=ttlonmeasures_sthr_nodrug_atlevel, x='binned_baselinev', y='response_maxamp', hue='applied_current group')
+# there seems to be no systematic relationship between baseline voltage and response amplitude.
+
 # %% opto response sensitivity to drug
 # opto experiments were all carried out at 100% light intensity. Whittling down the df to reflect this:
 ttlonmeasures_sthr_100pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
@@ -109,13 +120,15 @@ ttlonmeasures_sthr_100pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity
 #                                 plotlims=[-1, 12]
 #                                 )
 
-# plotting response amplitudes by drug conditions & baselineV/holding level:
-plt.figure()
-sns.stripplot(data=ttlonmeasures_sthr_100pct, x='drug_condition', y='response_maxamp', hue='applied_current group', order=drug_conditions, hue_order=holding_current_levels)
-sns.boxplot(data=ttlonmeasures_sthr_100pct, x='drug_condition', y='response_maxamp', hue='applied_current group', order=drug_conditions, hue_order=holding_current_levels)
+# plotting response amplitudes by drug conditions & baselineV
+# /holding level (no point in this really because holding changed with drug application):
+# plt.figure()
+# sns.stripplot(data=ttlonmeasures_sthr_100pct, x='drug_condition', y='response_maxamp', hue='applied_current group', order=drug_conditions, hue_order=holding_current_levels)
+# sns.boxplot(data=ttlonmeasures_sthr_100pct, x='drug_condition', y='response_maxamp', hue='applied_current group', order=drug_conditions, hue_order=holding_current_levels)
 
 plt.figure()
 sns.scatterplot(data=ttlonmeasures_sthr_100pct, x='baselinev', y='response_maxamp', hue='drug_condition')
 sns.lineplot(data=ttlonmeasures_sthr_100pct, x='binned_baselinev', y='response_maxamp', hue='drug_condition')
 # from the lineplot, it seems pretty clear that response amplitude goes up by ~2mV with drug (from 6 to 8mV on average).
+
 # No clear relationship between baselineV and response amplitude, regardless of drug condition

@@ -21,6 +21,24 @@ neuron_data = SingleNeuron(neuron_name)
 # After optoStim experiments, holding increased a bit to -150pA to keep ~-70mV and AP parameters look practically unchanged.
 # Active properties do seem to have deteriorated after longPulse experiments, will have to pay attention to that in analyses.
 
+# %% getting optoStim response measurements:
+# neuron_data.get_ttlonmeasures_fromrawdata()
+ttlonmeasures = neuron_data.ttlon_measures.copy()
+
+# check and see response_maxamp_postttl_t_inms - does it make sense?
+ttlonmeasures.plot.scatter('response_maxamp', 'response_maxamp_postttl_t_inms')
+ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=100)
+
+# Let's see some of the outliers:
+# First, on the side of too soon after the stimulus:
+# neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp_postttl_t_inms < 1])
+# two traces here: in one, the AP is already underway when the TTL turns on; in the other there just seems to be
+# no response at all (as reflected by response_maxamp = 0.07).
+# Next, on the side of too long after the stimulus:
+neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp_postttl_t_inms > 29])
+
+
+
 # %% notes on optoStim experiments:
 # neuron_data.get_ttlonmeasures_fromrawdata()
 ttlonmeasures = neuron_data.ttlon_measures.copy()

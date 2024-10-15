@@ -19,23 +19,71 @@ neuron_data = SingleNeuron(neuron_name)
 # Very nice sealing and break-in (@t=77.373s in gapFree_0000) while neuron spiking with freq just below 40Hz.
 # AP peakV ~+20mV, AHPmin ~-47mV initially, keeps at ~-70mV w/ -100pA DC;
 # After optoStim experiments, holding increased a bit to -150pA to keep ~-70mV and AP parameters look practically unchanged.
-# Active properties do seem to have deteriorated after longPulse experiments, will have to pay attention to that in analyses.
+# Active properties look to have deteriorated after longPulse experiments, which were performed at the end of recordings.
 
 # %% getting optoStim response measurements:
-# neuron_data.get_ttlonmeasures_fromrawdata()
+neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=150)
 ttlonmeasures = neuron_data.ttlon_measures.copy()
 
 # check and see response_maxamp_postttl_t_inms - does it make sense?
-ttlonmeasures.plot.scatter('response_maxamp', 'response_maxamp_postttl_t_inms')
-ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=100)
+ttlonmeasures.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures.hist(column='baselinev_range', bins=200)
+# yes, this looks mostly sensical.
+# By amplitude, there is a clear separation between subthreshold (<13mV) and AP responses (>40mV). Check to see:
+# neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp > 40],
+#                             postttl_t_inms=100)
+#                             indeed, these are all APs.
+# No response peaks were measured at the very end of the chosen 150ms response window.
 
-# Let's see some of the outliers:
+# %% Getting subthreshold responses only:
+ttlonmeasures_sthr = ttlonmeasures[ttlonmeasures.response_maxamp < 40]
+
+# %% examination of outliers
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinev_range', c='baselinev', colormap='Spectral')
+
+ttlonmeasures_sthr.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
+
 # First, on the side of too soon after the stimulus:
-# neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp_postttl_t_inms < 1])
-# two traces here: in one, the AP is already underway when the TTL turns on; in the other there just seems to be
-# no response at all (as reflected by response_maxamp = 0.07).
-# Next, on the side of too long after the stimulus:
-neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp_postttl_t_inms > 29])
+# the scatter plot is quite clear: the earliest peaks of subthreshold responses occur no less than 4.5ms post-stimulus,
+# meaning they are in good range to be monosynaptic responses to the stimulus.
+# On the side of too long after the stimulus:
+# the histogram shows one main peak at ~8ms post stimulus, another much smaller peak ~15ms and then a very long tail
+# that has a big gap in it between 35 and 59ms post stimulus.
+
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 40],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.baselinev_range > 0.5],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# having plotted various responses this way, I am convinced that responses with peaktime >40ms post ttl should be
+# excluded from analyses. Of these 12 traces, one is a complex response containing many depolarizations;
+# the others are traces where a small light response is followed by a large spontaneous depolarization ~100ms later.
+# Responses with baselinev_range > 0.5mV should also be excluded; in these traces, a spontaneous depolarization is already underway when the light is applied.
+# Whittling down the subthreshold responses DF accordingly:
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms < 40]
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.baselinev_range <= 0.5]
+# 442 recorded light responses remaining.
+
+# %% adding optoStim parameters to the dataframe:
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

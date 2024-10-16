@@ -15,133 +15,109 @@ neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
 # neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
-# Nice sealing (just under 2GOhm) and break-in (@t=85.415s in gapFree_0000) while neuron spiking with freq.<2mV.
+# Nice sealing (just under 2GOhm) and break-in (@t=85.415s in gapFree_0000) while neuron spiking with freq.<2Hz.
 # AP peakV and AHP vary with applied current, got just a handful spont.ones early on during recording then silent.
 # Keeps ~-60mV with -150pA DC; after optoStim experiments, no holding gives baselineV ~-55.
 # Looks like dopaminergic neuron from AP freq.&shape, and depolarization block hit early in longPulse experiments
 
-# %% notes on optoStim experiments:
-# neuron_data.get_ttlonmeasures_fromrawdata()
+# %% getting optoStim response measurements:
+neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=150)
 ttlonmeasures = neuron_data.ttlon_measures.copy()
-# ttlonmeasures.file_origin.unique()
-# ttlonmeasures.ttlon_duration_inms.unique()
-# ttlonmeasures.plot.scatter(x='applied_current', y='baselinev')
 
-# Light stim duration was varied (1, 10 ms)
-# Light intensity was varied (5% in one file, 100% in all 54 others)
-# Various levels of holding current applied to change baselineV; looks like recording conditions drifted:
-# there's a 5-25mV range of baselineV values at each holding level.
+# check and see response_maxamp_postttl_t_inms - does it make sense?
+ttlonmeasures.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures.hist(column='baselinev_range', bins=200)
+# yes, this looks mostly sensical.
+# All responses are subthreshold, reaching a maximum amplitude of 3mV.
+# No response peaks were measured at the very end of the chosen 150ms response window.
+# The histogram of response times looks rather interesting, with multiple distinct peaks in the range <20ms.
 
+# %% Getting subthreshold responses only:
+ttlonmeasures_sthr = ttlonmeasures
+
+# %% examining outliers and excluding bad measurements from the data:
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinev_range', c='baselinev', colormap='Spectral')
+
+ttlonmeasures_sthr.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
+
+# First, on the side of too soon after the stimulus:
+# There's one response that's measured right at the start of the search window, and registers as having no amplitude (because it's just a noisy-looking trace without a clear response).
+# On the side of too long after the stimulus:
+# It looks to me that any 'response' measured more than 20ms post ttl onset is really just noise or a
+# spontaneous depolarization - basically, really can't tell so much what happens because of the stimulus.
+# All these 59 'responses' are <1.5mV in amplitude, meaning excluding them may skew the response amplitudes distribution,
+# but they are noisy enough that I feel comfortable doing it anyway.
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms < 1],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 20],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# Having plotted various subsets of the data, I am convinced that response peak times up to 20ms reflect real responses;
+# !! However, it does also look like responses may regularly have multiple peaks, and it'll take some paying attention to ensure that comparisons are all fair.
+# Whittling down the subthreshold responses DF accordingly:
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms >= 1]
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms <= 20]
+# This dataset consists of 490 recorded subthreshold responses.
+
+# %% adding optoStim parameters to the dataframe:
+# First, getting the notes on experiments performed on this neuron:
+ttlonmeasures_sthr.file_origin.unique()
+ttlonmeasures_sthr.ttlon_duration_inms.unique()
+ttlonmeasures_sthr.plot.scatter(x='applied_current', y='baselinev')
+
+# Light stim duration was 1 or 10ms;
+# Drug applied: Quinpirole;
+# Light intensity 5% was used in one block; all others recorded at 100% intensity
+# Various levels of holding current applied
 
 # Adding drug conditions as a column to ttlonmeasures dataframe:
 drug_conditions = ['no drug', 'wash in', 'with drug']
-# ttlonmeasures.loc[:, 'drug_condition'] = 'no drug'
-# ttlonmeasures.loc[ttlonmeasures.file_origin.str.contains('WashIn'), 'drug_condition'] = 'wash in'
-# ttlonmeasures.loc[ttlonmeasures.file_origin.str.contains('withQuin'), 'drug_condition'] = 'with drug'
+ttlonmeasures_sthr.loc[:, 'drug_condition'] = 'no drug'
+ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('WashIn'), 'drug_condition'] = 'wash in'
+ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('withQuin'), 'drug_condition'] = 'with drug'
 
 # Adding light intensity as a column to ttlonmeasures dataframe:
 intensity_levels = [5, 100]
-# ttlonmeasures.loc[:,'stim_intensity_pct'] = ''
-# ttlonmeasures.loc[ttlonmeasures.file_origin.str.contains('5p'),'stim_intensity_pct'] = 5
-# ttlonmeasures.loc[ttlonmeasures.file_origin.str.contains('100p'),'stim_intensity_pct'] = 100
+ttlonmeasures_sthr.loc[:,'stim_intensity_pct'] = ''
+ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('5p'),'stim_intensity_pct'] = 5
+ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('100p'),'stim_intensity_pct'] = 100
 
-# Adding holding current as a categories-column to ttlonmeasures dataframe:
-holding_current_levels = ['-400pA', '-300pA', '-250pA', '-200pA', '-150pA', '-100pA', '-50pA', '0pA']
-# ttlonmeasures['applied_current group'] = pd.cut(ttlonmeasures['applied_current'],
-#                                                 bins=[-450, -350, -275, -225, -170, -120, -80, -25, 25],
-#                                                 labels=['-400pA', '-300pA', '-250pA', '-200pA', '-150pA', '-100pA', '-50pA', '0pA'])
+# plotting a quick overview of the recording conditions:
+sns.scatterplot(data=ttlonmeasures_sthr, x='applied_current', y='baselinev',
+                hue='drug_condition',
+                size='stim_intensity_pct',
+                style='ttlon_duration_inms')
 
-# Adding baselinev as a categorical variable to ttlonmeasures dataframe by rounding to no decimals:
-# baselinev = ttlonmeasures.baselinev
-# binned_baselinev = baselinev.round(decimals=0)
-# ttlonmeasures.loc[:, 'binned_baselinev'] = binned_baselinev
+# %% plots: response sensitivity to light intensity & baseline voltage
+# light intensity was varied in no-drug condition only. Getting the relevant subset of the dataframe:
+ttlonmeasures_sthr_nodrug = ttlonmeasures_sthr[ttlonmeasures_sthr.drug_condition == 'no drug']
 
+sns.lmplot(data=ttlonmeasures_sthr_nodrug, x='baselinev', y='response_maxamp',
+           hue='stim_intensity_pct',
+           row='ttlon_duration_inms',
+           )
+# insufficient data to make proper comparison. Looks like most 'responses' recorded for 1ms light duration were
+# filtered out already for not being real responses; this is especially true at 5% light intensity but also for 100%
 
-# Seeing whether drug and no-drug conditions are comparable in terms of holding current/baselineV relationship:
-plt.figure()
-sns.boxplot(data=ttlonmeasures, x='applied_current group', y='baselinev', hue='drug_condition', order=holding_current_levels)
-plt.figure()
-sns.stripplot(data=ttlonmeasures, x='applied_current group', y='baselinev', hue='drug_condition', order=holding_current_levels)
-# conclusion: nope, not at all: looks like baselineV shifts down by 10mV while drug getting applied and stays there
+# %% plots: response sensitivity to drug
+# drug recordings were done with 100% light intensity only. Getting the relevant subset of the dataframe:
+ttlonmeasures_sthr_maxintensity = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
+# next splitting out by ttlon_duration:
+ttlonmeasures_sthr_maxintensity_1ms = ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.ttlon_duration_inms == 1]
+ttlonmeasures_sthr_maxintensity_10ms = ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.ttlon_duration_inms == 10]
 
-# neuron_data.ttlon_measures = ttlonmeasures.copy()
-# neuron_data.write_results()
-
-# %% filtering for subthreshold responses
-# check and see: are APs and subthreshold responses easy to distinguish?
-# ttlonmeasures.plot.scatter('baselinev', 'response_maxamp')
-# No APs in the light responses: the largest one has amp just over 3mV
-ttlonmeasures_sthr = ttlonmeasures
-
-# %% opto response sensitivity to light intensity & baseline voltage
-# getting ttlonmeasures_df for non-drug runs only:
-ttlonmeasures_sthr_nodrug = ttlonmeasures_sthr[(ttlonmeasures_sthr.drug_condition == 'no drug')]
-
-# plotting raw data traces: responses to light at each intensity level & ttl duration
-# for level in intensity_levels:
-#     ttlonmeasures_nodrug_atlevel = ttlonmeasures_sthr_nodrug[ttlonmeasures_sthr_nodrug.stim_intensity_pct == level]
-#     neuron_data.plot_ttlaligned(ttlonmeasures_nodrug_atlevel, plt_title=('intensity=' + str(level)),
-#                                 newplot_per_ttlduration=True,
-#                                 newplot_per_block=True,
-#                                 prettl_t_inms=5, postttl_t_inms=70,
-#                                 # color_lims=[-90, -55],
-#                                 # plotlims=[-1, 10]
-#                                 )
-# three conditions:
-# 5% intensity/1ms - response barely even rises above the noise, if at all.
-# 100% intensity/1ms - largest response just over 1mV in amplitude; still no clearly distinguishable response in most traces
-# 100% intensity/10ms - largest response ~3mV in amplitude; lots (if not most) of the responses appear to have multiple peaks.
-# They may as well be GJ responses
-
-# comparing 5% and 100% intensity - getting only blocks where ttl duration is 1ms:
-ttlonmeasures_sthr_nodrug_1ms = ttlonmeasures_sthr_nodrug[ttlonmeasures_sthr_nodrug.ttlon_duration_inms == 1]
-plt.figure()
-sns.stripplot(data=ttlonmeasures_sthr_nodrug_1ms, x='applied_current group', y='response_maxamp', hue='stim_intensity_pct', order=holding_current_levels, hue_order=intensity_levels)
-sns.boxplot(data=ttlonmeasures_sthr_nodrug_1ms, x='applied_current group', y='response_maxamp', hue='stim_intensity_pct', order=holding_current_levels, hue_order=intensity_levels, fill=False)
-plt.title('response amplitude by stimulus intensity (no drug applied)')
-
-# comparing 1ms and 10ms light durations - getting only blocks where ttl intensity is 100%:
-ttlonmeasures_sthr_nodrug_100pct = ttlonmeasures_sthr_nodrug[ttlonmeasures_sthr_nodrug.stim_intensity_pct == 100]
-plt.figure()
-sns.stripplot(data=ttlonmeasures_sthr_nodrug_100pct, x='applied_current group', y='response_maxamp', hue='ttlon_duration_inms', order=holding_current_levels, )
-sns.boxplot(data=ttlonmeasures_sthr_nodrug_100pct, x='applied_current group', y='response_maxamp', hue='ttlon_duration_inms', order=holding_current_levels, fill=False)
-plt.title('response amplitude by stimulus duration (no drug applied)')
-
-# not much to compare: the 1ms stimulus just doesn't do much towards generating a response.
-# We do have some indication here that the response is synaptic: looks like the amplitude goes up significantly for increasing hyperpolarization.
-plt.figure()
-sns.lineplot(data=ttlonmeasures_sthr_nodrug_100pct, x='binned_baselinev', y='response_maxamp',
-             # hue='applied_current group'
-             )
-
-# %% opto response sensitivity to drug
-# opto experiments were all carried out at 100% light intensity; mostly with 10ms light duration
-ttlonmeasures_sthr_100pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
-
-# plotting raw data traces: responses to light in each drug condition
-# for condition in drug_conditions:
-#     ttlonmeasures_sthr_100pct_incondition = ttlonmeasures_sthr_100pct[ttlonmeasures_sthr_100pct.drug_condition == condition]
-#     neuron_data.plot_ttlaligned(ttlonmeasures_sthr_100pct_incondition, plt_title=condition,
-#                                 newplot_per_ttlduration=True,
-#                                 prettl_t_inms=5, postttl_t_inms=70,
-#                                 color_lims=[-90, -55],
-#                                 plotlims=[-1.5, 4]
-#                                 )
-
-# plotting comparisons: response amplitudes by drug conditions & baselineV, split out by ttl duration
-# for duration in ttlonmeasures_sthr_100pct.ttlon_duration_inms.unique():
-#     ttlonmeasures_sthr_100pct_atduration = ttlonmeasures_sthr_100pct[ttlonmeasures_sthr_100pct.ttlon_duration_inms == duration]
-#     plt.figure()
-#     plt.title('light duration = ' + str(duration))
-#     sns.scatterplot(data=ttlonmeasures_sthr_100pct_atduration, x='baselinev', y='response_maxamp', hue='drug_condition')
-#     sns.lineplot(data=ttlonmeasures_sthr_100pct_atduration, x='binned_baselinev', y='response_maxamp', hue='drug_condition')
-# response is small to begin with, but does seem to get significantly even smaller upon drug application
-# relationship between baselineV and response amp seems to get lost with drug:
-ttlonmeasures_sthr_100pct_10ms = ttlonmeasures_sthr_100pct[ttlonmeasures_sthr_100pct.ttlon_duration_inms == 10]
-plt.figure()
-sns.scatterplot(data=ttlonmeasures_sthr_100pct_10ms, x='baselinev', y='response_maxamp',
-             hue='drug_condition'
-             )
-sns.lineplot(data=ttlonmeasures_sthr_100pct_10ms, x='binned_baselinev', y='response_maxamp',
-             hue='drug_condition'
-             )
+sns.lmplot(data=ttlonmeasures_sthr_maxintensity_1ms, x='baselinev', y='response_maxamp', hue='drug_condition',)
+# no proper comparison to be made: without drug, only one baselinev level tested
+sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxamp', hue='drug_condition',)
+sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxamp_postttl_t_inms', hue='drug_condition')
+sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxdvdt', hue='drug_condition')
+# To me, what this data says is that the properties of the synapses getting the optoStim input did not change
+# due to the drug; whatever small differences there seem to be between drug and no-drug conditions are because of
+# the underlying baseline voltage change that occurred during drug application.
+# There may be some interesting stuff in there regarding single and double-peaked responses

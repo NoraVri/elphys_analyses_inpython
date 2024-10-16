@@ -20,6 +20,87 @@ neuron_data.get_recordingblocks_index()
 # Needs - 300pA to keep from spontaneously spiking at ~-50mV to start with; by the end of recordings -250pA keeps -60mV.
 
 # %% getting optoStim response measurements:
+neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=8)  # adjusted from default - see notes below
+ttlonmeasures = neuron_data.ttlon_measures.copy()
+
+# check and see response_maxamp_postttl_t_inms - does it make sense?
+ttlonmeasures.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures.hist(column='baselinev_range', bins=200)
+# yes, this looks mostly sensical.
+# By amplitude, there is a clear separation between subthreshold (<6mV) and AP responses (>30mV),
+# and one 'response' has amplitude -20mV - that's gonna be an AP. Check to see:
+# neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp > 20],  # [ttlonmeasures.response_maxamp < -1]
+#                             postttl_t_inms=100)
+#                             indeed, these are all APs.
+# They occur mostly in traces where neuron is spontaneously spiking (except lowest baselinev level).
+# A couple of them have bad baselinev because of that - not gonna deal with that here though, since we are interested in subthreshold responses only at the moment.
+# No response peaks were measured at the very end of the chosen 40ms response window, and just one at the start.
+# With the 8ms response window, there are 3 that are measured at the end of the window.
+
+# %% Getting subthreshold responses only:
+ttlonmeasures_sthr = ttlonmeasures[((ttlonmeasures.response_maxamp < 20) & (ttlonmeasures.response_maxamp > 0))]
+# %% examining outliers and excluding bad measurements from the data:
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
+ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinev_range', c='baselinev', colormap='Spectral')
+
+ttlonmeasures_sthr.hist(column='response_maxamp_postttl_t_inms', bins=200)
+ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
+
+# First, on the side of too soon after the stimulus:
+# There's one response that's measured <1ms post ttl, and it's in a trace where spontaneous depolarizations are occurring already before the stimulus.
+# it actually has a small negative amplitude and got filtered out when we filtered for subthreshold responses.
+# On the side of too long after the stimulus:
+# It looks to me that any response measured more than 40ms post ttl onset (45 traces) are really spontaneous
+# depolarizations that are larger than the stimulus-evoked response (which is also there in each of these traces).
+## Re-running get_ttlonmeasures_fromrawdata with 40ms response window
+# I'm seeing the same problem still: there is always a response and it's always within 8ms from the stimulus.
+# It's just very small sometimes, and depolarizations happening spontaneously and frequently are larger
+## Re-running get_ttlonmeasures_fromrawdata with 8ms response window
+# The three responses measured at 8ms post ttl are indeed mismeasurements: two APs, and one more prolonged (~10ms) depolarization.
+
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms < 1],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 7.8],
+#                             postttl_t_inms=150,
+#                             prettl_t_inms=25,
+#                             )
+# Having plotted various subsets of the data, I am convinced that the three 'responses' measured as having
+# their peak at the edge of the response window should be excluded.
+# Whittling down the DF accodingly:
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms <= 7.8]
+# This dataset consists of 753 recorded subthreshold responses.
+# %%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# %% getting optoStim response measurements:
 # neuron_data.get_ttlonmeasures_fromrawdata()
 # ttlonmeasures = neuron_data.ttlon_measures.copy()
 #

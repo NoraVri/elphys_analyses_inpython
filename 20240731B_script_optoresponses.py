@@ -67,8 +67,8 @@ ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postt
 
 # %% adding optoStim parameters to the dataframe:
 # First, getting the notes on experiments performed on this neuron:
-ttlonmeasures_sthr.file_origin.unique()
-ttlonmeasures_sthr.ttlon_duration_inms.unique()
+print(ttlonmeasures_sthr.file_origin.unique())
+print(ttlonmeasures_sthr.ttlon_duration_inms.unique())
 ttlonmeasures_sthr.plot.scatter(x='applied_current', y='baselinev')
 
 # Light stim duration was 1 or 10ms;

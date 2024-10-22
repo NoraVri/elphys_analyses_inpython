@@ -99,25 +99,24 @@ plt.title('recording conditions overview')
 # Light intensity was varied only in the no-drug condition.
 # Filtering down the DF for proper comparisons:
 ttlonmeasures_sthr_nodrug = ttlonmeasures_sthr[ttlonmeasures_sthr.drug_condition == 'no drug']
-
 sns.lmplot(data=ttlonmeasures_sthr_nodrug, x='baselinev', y='response_maxamp',
            hue='stim_intensity_pct',
            )
 # That looks like there is a systematic increase in response amp with increasing light intensity.
-# The changes are small, but look like they may be significant nonethelees.
+# The changes are small, but look like they may be significant nonetheless.
 
 # Note on relationship between baselineV and response amp: it looks like it might be there,
 # but being quite small to begin with and having a lot of jitter it looks not so significant.
 
 # %% plots: response sensitivity to drug
 # drug recordings were all done at 100% intensity. Getting the relevant subset of the DF:
-ttlonmeasures_sthr_stim5pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
+ttlonmeasures_sthr_stim100pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
 
-sns.lmplot(data=ttlonmeasures_sthr_stim5pct, x='baselinev', y='response_maxamp',
+sns.lmplot(data=ttlonmeasures_sthr_stim100pct, x='baselinev', y='response_maxamp',
            hue='drug_condition', hue_order=drug_conditions)
-sns.lmplot(data=ttlonmeasures_sthr_stim5pct, x='baselinev', y='response_maxamp_postttl_t_inms',
+sns.lmplot(data=ttlonmeasures_sthr_stim100pct, x='baselinev', y='response_maxamp_postttl_t_inms',
            hue='drug_condition', hue_order=drug_conditions)
-sns.lmplot(data=ttlonmeasures_sthr_stim5pct, x='baselinev', y='response_maxdvdt',
+sns.lmplot(data=ttlonmeasures_sthr_stim100pct, x='baselinev', y='response_maxdvdt',
            hue='drug_condition', hue_order=drug_conditions)
 
 # That looks like a slight but significant increase in response amp with drug, from ~2 to ~3.5mV.

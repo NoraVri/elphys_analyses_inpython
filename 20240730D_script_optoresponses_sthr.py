@@ -14,7 +14,7 @@ neuron_data = SingleNeuron(neuron_name)
 neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
-# neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
+neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
 # Pretty strange recording: neat sealing (~4GOhm) and break-in, yet AP peakVs highly variable from the start
 # AP freq is high yet irregular (that is: intervals between spont.APs usually very short, but behavior kinda bursty overall).
 # Needs - 300pA to keep from spontaneously spiking at ~-50mV to start with; by the end of recordings -250pA keeps -60mV.
@@ -110,8 +110,9 @@ sns.lmplot(data=ttlonmeasures_sthr_nodrug, x='baselinev', y='response_maxamp',
            hue='ttlon_duration_inms',
            )
 # Looks like increasing stimulus duration had no effect on the response.
-# Also, while it does look like larger (3-4mV) responses are more likely to occur at more depolarized Vm,
-# there does not appear to be any systematic relationship between Vm and response amplitude (~1.5mV on avg. for -90 < Vm < -50).
+# Note on relationship between response amp and baselineV: it seems like larger (3-4mV) responses are slightly more
+# likely to occur at more depolarized Vm; then again there does not appear to be any systematic relationship between
+# Vm and response amplitude (~1.5mV on avg. for -90 < Vm < -50).
 
 # %% plots: response sensitivity to drug
 # drug recordings were all done with 1ms light stim duration only. Getting the relevant subset of the dataframe:
@@ -126,8 +127,13 @@ sns.lmplot(data=ttlonmeasures_sthr_stim1ms, x='baselinev', y='response_maxdvdt',
 neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim1ms[ttlonmeasures_sthr_stim1ms.drug_condition == 'no drug'],
                             postttl_t_inms=150,
                             prettl_t_inms=25,
+                            plt_title='no drug'
                             )
 neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim1ms[ttlonmeasures_sthr_stim1ms.drug_condition == 'with drug'],
                             postttl_t_inms=150,
                             prettl_t_inms=25,
+                            plt_title='with drug'
                             )
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

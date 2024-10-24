@@ -118,3 +118,6 @@ neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stimhalfms[ttlonmeasures_sthr_sti
 # Well that's very interesting. Looks like response amplitude goes down by ~3mV with drug application
 # (from ~18mV @baselineV~-70mV w/o drug), but mostly because summation works somehow differently after drug
 # (as seen from max.dVdt increase after drug application).
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

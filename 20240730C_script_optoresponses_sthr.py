@@ -15,7 +15,7 @@ neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
 neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
-# Neat sealing (just under 2GOhm) and break-in, cell spiking with freq.~40Hz, quiet when held at ~-55mV w/-150pA DC
+# Neat sealing (just under 2GOhm) and break-in (@t=109.12 in gapFree_0000), cell spiking with freq.~40Hz, quiet when held at ~-55mV w/-150pA DC
 # baselineV seems to go down after application of quinpirole, but AP parameters look practically unchanged throughout recordings
 
 # %% getting optoStim response measurements:
@@ -35,7 +35,7 @@ ttlonmeasures.hist(column='baselinev_range', bins=200)
 # One response peak was measured at the very end of the chosen 40ms response window, and one at the start.
 
 # %% Getting subthreshold responses only:
-ttlonmeasures_sthr = ttlonmeasures[((ttlonmeasures.response_maxamp < 20) & (ttlonmeasures.response_maxamp > 0))]
+ttlonmeasures_sthr = ttlonmeasures[ttlonmeasures.response_maxamp < 20]
 # %% examining outliers and excluding bad measurements from the data:
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinev_range', c='baselinev', colormap='Spectral')
@@ -44,19 +44,24 @@ ttlonmeasures_sthr.hist(column='response_maxamp_postttl_t_inms', bins=200)
 ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
 
 # First, on the side of too soon after the stimulus:
-# No subthreshold responses got measured close to the stimulus, they all occur >3.5ms post
+neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms < 3],
+                            postttl_t_inms=150,
+                            prettl_t_inms=25,
+                            )
+# One subthreshold response got measured close to the stimulus; the stimulus hits on a spontaneous depolarization here.
 # On the side of too long after the stimulus:
 # There's 7 subthreshold responses that got measured as peaking >20ms; there is always a peak, and it's always <40ms from the stimulus.
 ## Re-running get_ttlonmeasures_fromrawdata with 40ms response window
-# There's just one response that got measured at the end of the 40ms window - it's in a trace where the neuron is spiking spontaneously, that's why voltage doesn't decay back down.
-
+# There's just one response that got measured at the end of the 40ms window - it's in a trace where the neuron is spiking spontaneously soon after, that's why voltage doesn't decay back down.
 neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 35],
                             postttl_t_inms=150,
                             prettl_t_inms=25,
                             )
-# Having plotted various subsets of the data, I am convinced that only the one response was mismeasured and needs to be excluded.
+# There's also one response with baselinev_range just over 0.5mV, but it's a 4mV amp response and does not look out of line.
+# Having plotted various subsets of the data, I am convinced that only those two response were mismeasured and need to be excluded.
 # Whittling down the DF accordingly:
 ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms <= 39]
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 3]
 # This dataset consists of 465 recorded subthreshold responses.
 
 # %% adding optoStim parameters to the dataframe:
@@ -87,7 +92,7 @@ sns.scatterplot(data=ttlonmeasures_sthr, x='applied_current', y='baselinev',
                 hue='drug_condition',
                 size='stim_intensity_pct',
                 style='ttlon_duration_inms')
-# Note: slight shift in baselineV following drug application (Vm down by ~2mV for the same DC)
+# Note: maybe slight shift in baselineV following drug application (Vm down by ~2mV for the same DC, does not look all that significant)
 
 # %% plots: response sensitivity to light intensity & baseline voltage
 # In the no drug condition, there is one block where stim.intensity was 5% (duration 1ms),
@@ -129,3 +134,6 @@ neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim100pct_1ms[ttlonmeasures_sthr
                             postttl_t_inms=150,
                             prettl_t_inms=25,
                             )
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

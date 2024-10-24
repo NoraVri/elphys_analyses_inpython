@@ -121,6 +121,29 @@ class SingleNeuron:
         else:
             print('no results folder found; results not saved')
 
+    def write_df_tocsv(self, dataframe, datatable_name='stored_data'):
+        '''
+        This function takes a Pandas dataframe and (optionally) a name, and saves the data as .csv
+        under the provided name, preceded by neuronname_, in the 'MyResults' folder specified for the project.
+        !! There should be only one folder with a name starting with 'myResults' on the path !!
+        '''
+        # saving to myResults folder
+        results_folder = [folder for folder in os.listdir(self.path)
+                          if folder.startswith('myResults')]
+        if results_folder:
+            results_path = self.path + '\\' + results_folder[0]
+            os.chdir(results_path)
+            if (type(dataframe) is pd.core.frame.DataFrame) and len(dataframe) > 0:
+                filename = self.name + '_' + datatable_name + '.csv'
+                dataframe.to_csv(filename)
+                print('file saved as ' + filename)
+            else:
+                print('bad data provided; no file saved')
+        else:
+            print('no results folder found; results not saved')
+            return
+
+
     # get all raw electrophysiology recordings associated with singleneuron
     def get_singleneuron_rawdata(self):
         """ This function uses singleneuron_name and path to find the

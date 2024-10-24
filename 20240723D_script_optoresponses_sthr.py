@@ -15,7 +15,8 @@ neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
 neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
-# gapFree_0000 (the first recording file) is a break-in into a dead neuron (confirmed with notes from experiment day). Removing:
+# gapFree_0000 (the first recording file) is a break-in into a dead neuron (confirmed with notes from experiment day).
+# Removing:
 # neuron_data.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 # neuron_data.write_results()
 # Nice seal (just under 2MOhm) and patch (@t=95.87 in gapFree_0001).
@@ -110,7 +111,7 @@ blocks_for_excluding = neuron_data.get_blocknames(printing='off')[44:50]
 ttlonmeasures_sthr_excl = ttlonmeasures_sthr
 for block in blocks_for_excluding:
     ttlonmeasures_sthr_excl = ttlonmeasures_sthr_excl[~(ttlonmeasures_sthr_excl.file_origin == block)]
-
+plt.figure()
 sns.scatterplot(data=ttlonmeasures_sthr_excl, x='applied_current', y='baselinev',
                 hue='drug_condition',
                 size='stim_intensity_pct',
@@ -142,3 +143,7 @@ sns.lmplot(data=ttlonmeasures_sthr_stim100pct, x='baselinev', y='response_maxamp
 plt.title('stim intensity 100%')
 
 # Looks like we get a small but significant increase in response amp. with drug, from ~4 to ~6mV.
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')
+

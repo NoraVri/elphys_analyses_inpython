@@ -21,7 +21,7 @@ neuron_data.get_recordingblocks_index()
 # Looks like dopaminergic neuron from AP freq.&shape, and depolarization block hit early in longPulse experiments
 
 # %% getting optoStim response measurements:
-neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=150)
+neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=25)  # re-set from default, see notes below (in 'examining outliers')
 ttlonmeasures = neuron_data.ttlon_measures.copy()
 
 # check and see response_maxamp_postttl_t_inms - does it make sense?
@@ -30,12 +30,11 @@ ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=200)
 ttlonmeasures.hist(column='baselinev_range', bins=200)
 # yes, this looks mostly sensical.
 # All responses are subthreshold, reaching a maximum amplitude of 3mV.
-# No response peaks were measured at the very end of the chosen 150ms response window.
+# No response peaks were measured at the very end of the chosen 150ms response window; two at the end of 25ms response window.
 # The histogram of response times looks rather interesting, with multiple distinct peaks in the range <20ms.
 
 # %% Getting subthreshold responses only:
 ttlonmeasures_sthr = ttlonmeasures
-
 # %% examining outliers and excluding bad measurements from the data:
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinev', colormap='Spectral')
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinev_range', c='baselinev', colormap='Spectral')
@@ -47,23 +46,25 @@ ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
 # There's one response that's measured right at the start of the search window, and registers as having no amplitude (because it's just a noisy-looking trace without a clear response).
 # On the side of too long after the stimulus:
 # It looks to me that any 'response' measured more than 20ms post ttl onset is really just noise or a
-# spontaneous depolarization - basically, really can't tell so much what happens because of the stimulus.
-# All these 59 'responses' are <1.5mV in amplitude, meaning excluding them may skew the response amplitudes distribution,
-# but they are noisy enough that I feel comfortable doing it anyway.
+# spontaneous depolarization - in fact, by 20ms some responses are on their second or third peak already, definitely
+# the first peak of the response occurs within 25ms from the stimulus.
+## Re-running get_ttlonmeasures_fromrawdata with 25ms response window.
+# There are now just two responses that got measured as having their peak at the very end of the search window;
+# these are both <1mV in amplitude and noisy, I feel OK excluding them from the dataset for being mismeasurements.
 # neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms < 1],
 #                             postttl_t_inms=150,
 #                             prettl_t_inms=25,
 #                             )
-# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 20],
+# neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 24],
 #                             postttl_t_inms=150,
 #                             prettl_t_inms=25,
 #                             )
-# Having plotted various subsets of the data, I am convinced that response peak times up to 20ms reflect real responses;
+# Having plotted various subsets of the data, I am convinced that response peak times up to 25ms reflect real response peaks;
 # !! However, it does also look like responses may regularly have multiple peaks, and it'll take some paying attention to ensure that comparisons are all fair.
 # Whittling down the subthreshold responses DF accordingly:
 ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms >= 1]
-ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms <= 20]
-# This dataset consists of 490 recorded subthreshold responses.
+ttlonmeasures_sthr = ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms <= 24]
+# This dataset consists of 546 recorded subthreshold responses.
 
 # %% adding optoStim parameters to the dataframe:
 # First, getting the notes on experiments performed on this neuron:
@@ -99,12 +100,13 @@ sns.scatterplot(data=ttlonmeasures_sthr, x='applied_current', y='baselinev',
 ttlonmeasures_sthr_nodrug = ttlonmeasures_sthr[ttlonmeasures_sthr.drug_condition == 'no drug']
 
 sns.lmplot(data=ttlonmeasures_sthr_nodrug, x='baselinev', y='response_maxamp',
-           hue='stim_intensity_pct',
-           row='ttlon_duration_inms',
+           hue='ttlon_duration_inms',
+           col='stim_intensity_pct',
            )
-# insufficient data to make proper comparison. Looks like most 'responses' recorded for 1ms light duration were
-# filtered out already for not being real responses; this is especially true at 5% light intensity but also for 100%
+# insufficient data to make proper comparison; responses for 1ms light duration are few and up to 1.5mV max.amp.
 
+# Note on relationship between response amp and baselineV: seems like it might be there, but small:
+# going from 0.5 to 1.5mV when hyperpolarizing from -55 to -80mV
 # %% plots: response sensitivity to drug
 # drug recordings were done with 100% light intensity only. Getting the relevant subset of the dataframe:
 ttlonmeasures_sthr_maxintensity = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
@@ -121,3 +123,6 @@ sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response
 # due to the drug; whatever small differences there seem to be between drug and no-drug conditions are because of
 # the underlying baseline voltage change that occurred during drug application.
 # There may be some interesting stuff in there regarding single and double-peaked responses
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

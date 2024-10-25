@@ -29,8 +29,8 @@ ttlonmeasures.hist(column='response_maxamp_postttl_t_inms', bins=200)
 ttlonmeasures.hist(column='baselinev_range', bins=200)
 # yes, this all looks perfectly sensical. Looks like responses were picked up very neatly; max. latency is ~13ms.
 # By amplitude, there is a clear separation between subthreshold (<28mV) and AP responses (>60mV). Check to see:
-# # neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp > 40],
-# #                             postttl_t_inms=100)
+# neuron_data.plot_ttlaligned(ttlonmeasures[ttlonmeasures.response_maxamp > 40],
+#                             postttl_t_inms=100)
 
 # Indeed, these are all APs.
 # Next looking at all subthreshold responses, at first glance they all look great; seems this neuron wasn't doing much else besides responding to light, i.e., no spontaneously occurring depolarizations to muck things up.
@@ -122,3 +122,6 @@ neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim5pct[ttlonmeasures_sthr_stim5
 # If there is any difference at all between these two conditions, it's that with drug, there aren't any
 # subthreshold responses recorded at Vm ~-70mV (the most depolarized potential).
 # Possibly, they're APs instead; would have to look into that.
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

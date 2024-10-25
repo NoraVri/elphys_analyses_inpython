@@ -9,10 +9,20 @@ import os
 import re
 import json
 
-neuron_name = '20240724A'
+neuron_name = '20240723C'
 neuron_data = SingleNeuron(neuron_name)
 neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
 neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
-# Not the greatest recording, and I'm not in the mood for this mess right now
+# Not a great recording
+# Has AP peakV <-20mV from the start (though not really deteriorating from there)
+# Has optoStim at 5 and 100%
+
+
+
+
+
+
+
+

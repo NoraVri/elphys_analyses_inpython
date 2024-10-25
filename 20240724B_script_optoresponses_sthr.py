@@ -124,5 +124,3 @@ neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim100pct[ttlonmeasures_sthr_sti
 
 # %% saving the data: subthreshold responses to optoStim
 neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')
-
-

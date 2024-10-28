@@ -126,14 +126,13 @@ sns.lmplot(data=ttlonmeasures_sthr_stim100pct_1ms, x='baselinev', y='response_ma
 sns.lmplot(data=ttlonmeasures_sthr_stim100pct_1ms, x='baselinev', y='response_maxdvdt', hue='drug_condition')
 # What this looks like is that applying the drug has no effect on the response to optoStim.
 # If there is any effect at all, it's on the decays of the responses: they look more neat and tight when drug is applied
-neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim100pct_1ms[ttlonmeasures_sthr_stim100pct_1ms.drug_condition == 'no drug'],
+for condition in drug_conditions:
+    neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim100pct_1ms[ttlonmeasures_sthr_stim100pct_1ms.drug_condition == condition],
                             postttl_t_inms=150,
                             prettl_t_inms=25,
+                            plt_title=condition
                             )
-neuron_data.plot_ttlaligned(ttlonmeasures_sthr_stim100pct_1ms[ttlonmeasures_sthr_stim100pct_1ms.drug_condition == 'with drug'],
-                            postttl_t_inms=150,
-                            prettl_t_inms=25,
-                            )
+
 
 # %% saving the data: subthreshold responses to optoStim
 neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

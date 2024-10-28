@@ -14,7 +14,7 @@ neuron_data = SingleNeuron(neuron_name)
 neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
-# neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
+neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
 # Nice sealing (just under 2GOhm) and break-in (@t=85.415s in gapFree_0000) while neuron spiking with freq.<2Hz.
 # AP peakV and AHP vary with applied current, got just a handful spont.ones early on during recording then silent.
 # Keeps ~-60mV with -150pA DC; after optoStim experiments, no holding gives baselineV ~-55.

@@ -18,6 +18,7 @@ neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
 # Nice seal (just over 2MOhm) and patch (@t=76.38 in gapFree_0000). AP frequency looks somewhat bursty/patterned.
 # While cell-attached, AP freq looks to be ~9-15Hz;
 # on break-in, AP freq is ~16Hz and falling; continues to be bursty until cell gets held subthreshold @-50mV with -50pA DC.
+# Definitely GABAergic neuron though, as seen from high frequency (>80Hz) spiking with depolarizing DC
 # At the end of recordings, cell needs no DC to keep subthreshold at -60mV.
 
 # %% getting optoStim response measurements:
@@ -93,7 +94,8 @@ sns.scatterplot(data=ttlonmeasures_sthr, x='applied_current', y='baselinev',
                 )
 plt.title('recording conditions overview')
 # Note: it looks like there may be a slight shift down in baselineV with drug application (~5mV);
-# but it also looks as though Vm may have been already falling steadily before drug was applied.
+# but it also looks as though Vm may have been already falling steadily before drug was applied,
+# and continues to do so as drug is washed out.
 
 # %% plots: response sensitivity to light intensity & baseline voltage
 # Light intensity was varied only in the no-drug condition.
@@ -121,3 +123,18 @@ sns.lmplot(data=ttlonmeasures_sthr_stim100pct, x='baselinev', y='response_maxdvd
 
 # That looks like a slight but significant increase in response amp with drug, from ~2 to ~3.5mV.
 # Not sure what's up with response looking to continue increasing with washout though.
+drug_conditions = ['no drug', 'with drug', 'wash out']
+for condition in drug_conditions:
+    neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.drug_condition == condition],
+                                postttl_t_inms=150,
+                                prettl_t_inms=25,
+                                plt_title=condition,
+                                plotlims=[-2, 8], color_lims=[-85, -58]
+                                )
+
+# It looks like quinpirole application also affected the frequency and amplitude of spontaneously occurring
+# depolarizations - they seem a lot more frequent in the drug condition than in no-drug or washout.
+
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')
+

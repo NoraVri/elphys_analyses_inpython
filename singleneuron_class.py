@@ -86,7 +86,7 @@ class SingleNeuron:
             print('no metadata for the recording were found; table not updated.')
         else:
             time_recorded_inmin = float(self.get_timespentrecording(unit='minute'))
-            time_recorded_inmin.__round__(1)
+            time_recorded_inmin = time_recorded_inmin.__round__(1)
             recordings_metadata.loc[recordings_metadata.name == self.name, 'total_t_recorded_in_min'] = time_recorded_inmin
             os.chdir(self.path)
             recordings_metadata.to_csv('myData_recordings_metadata.csv', index=False)

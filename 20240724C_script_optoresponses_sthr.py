@@ -15,7 +15,7 @@ neuron_data.get_recordingblocks_index()
 
 # notes on recording quality: checking out gapFree recordings
 neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
-# Nice seal (~3GOhm) and patch (@t=84.23s in gapFree_0000). Cell spiking with freq >30Hz,
+# Nice seal (~3GOhm) and patch (@t=84.23s in gapFree_0000). Cell spiking with freq ~40Hz as seen cell-attached, >35Hz on break-in,
 # then held subthreshold ~-65mV with -125pA DC. After drug application, cell needs -150pA to stay subthreshold ~-70mV,
 # and spontaneous firing freq. seems to have gone up to >50Hz.
 

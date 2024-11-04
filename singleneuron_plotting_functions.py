@@ -176,7 +176,7 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                              vtrace,
                              color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
                 if plotdvdt:  # make dvdt vs V plot, if requested
-                    vtrace_diff = np.diff(vtrace)
+                    vtrace_diff = snafs.take_derivative(vtrace)
                     axes[1].plot(vtrace[:-1:], vtrace_diff,
                                  color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
                     axes[1].set_xlabel(vaxis_label)

@@ -188,14 +188,22 @@ class SingleNeuron:
                     continue
 
         # getting metadata for the singleneuron experiment day & recording:
-        experiments_metadata = pd.read_csv(self.path + '\\myData_experimentDays_metadata.csv')
-        self.experiment_metadata = experiments_metadata.loc[
-                                    experiments_metadata.date == experiment_date]
+        experiments_metadata_path = self.path + '\\myData_experimentDays_metadata.csv'  # this file should be in the folder containing the folder(s) of raw data that are being called on
+        if os.path.isfile(experiments_metadata_path):
+            experiments_metadata = pd.read_csv(experiments_metadata_path)
+            self.experiment_metadata = experiments_metadata.loc[
+                                        experiments_metadata.date == experiment_date]
+        else:
+            print('no metadata file present: myData_experimentDays_metadata')
         if self.experiment_metadata.empty:
             print('no metadata for the experiment day were found.')
 
-        recordings_metadata = pd.read_csv(self.path + '\\myData_recordings_metadata.csv')
-        self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        recordings_metadata_path = self.path + '\\myData_recordings_metadata.csv'
+        if os.path.isfile(recordings_metadata_path):
+            recordings_metadata = pd.read_csv(recordings_metadata_path)
+            self.recording_metadata = recordings_metadata.loc[recordings_metadata.name == self.name]
+        else:
+            print('no metadata file present: myData_recordings_metadata')
         if self.recording_metadata.empty:
             print('no metadata for the recording were found.')
 
@@ -1168,31 +1176,34 @@ class SingleNeuron:
 
     # getting the depolarizing_events DataFrame
     def get_depolarizingevents_fromrawdata(self, **kwargs):
-        """This function goes over all voltage-traces in all raw-data blocks, and returns
+        """This function goes over all voltage traces in all raw-data blocks, and returns
         a Pandas dataframe containing action potentials and subthreshold depolarizing events.
         The dataframe contains a set of standard measures taken from each event, as well as
         all information needed to recover the location of the event in the original data trace.
         Default values for function parameters are read in from rawdata_readingnotes, and are
         updated there if non-default kwargs are used.
 
-        Inputs (all optional):
-        'min_depolspeed': minimal speed of increase (mV/ms) for detecting depolarizations.
-        'min_depolamp': minimal amplitude from baseline to a possible event peak.
-        'depol_to_peak_window': maximal time between a detected depolarization and an event peak (in ms),
-          and time after peak within which voltage should decay again to <80% of its amplitude.
-        'event_width_window': time after peak within which half-width, threshold and whole-width are measured
-            (if a measurement cannot be taken within the window, a NaN value is filled in instead).
-        'ahp_width_window': time after baseline-re-reached within which AHP end is measured.
-        'noisefilter_hpfreq': cutoff frequency for high-pass filter applied to reduce noise.
-        'oscfilter_lpfreq': cutoff frequency for low-pass filter applied to get sub-treshold STOs only.
-        'ttleffect_window': time after TTL pulse turns off but still has effects working through.
-        ('plot': if 'on', will plot each voltage trace, with scatters for baselinevs and peakvs.)
-        !! Any time this function runs, reading-notes are updated with any kwargs that are passed through.
+        Assumptions:
+        recording mode (cc/vc) does not change within a recording block;
+        voltage/primary recording channel is in mV
+
+        kwargs (all optional):
+        min_depolspeed: in mV/ms, default 0.1; threshold for detecting events in the 'cleaned' dV/dt trace.
+        min_depolamp: in mV, default 0.2; threshold for detecting events in the cleaned V trace.
+        depol_to_peak_window: in ms, default 5; max. time window within which an peak should occur following a detected depolarization.
+        event_width_window: in ms, default 40; time window after event peak for detecting event width measures.
+        ahp_width_window: in ms, default 150; time window after AP return to baselineV for detecting after-hyperpolarization measures.
+        noisefilter_hpfreq: in Hz, default 3000; cutoff frequency setting for high-pass filter applied to reduce noise.
+        oscfilter_lpfreq: in Hz, default 20; cutoff frequency setting for low-pass filter applied to get slow changes in baselineV.
+        ttleffect_window: in ms, default None; time after TTL pulse is off but its effects are still on.
+        plot: if 'on', voltage traces will be plotted with baseline- and peak-points of detected events marked.
+
+        !! Any time this function runs, reading-notes are updated with any kwargs that are passed through,
+        and updated results are saved.
 
         !! This function can take quite a long time to run for neuron recordings longer than just a few minutes.
         The recommended workflow is to use plot_eventdetecttraces_forsegment() on a (time_slice of a)
         single, representative segment first to find good settings for kwargs.
-        !! Once satisfied with the results, run self.write_results() to save the data !!
         """
         if not self.rawdata_readingnotes.get('getdepolarizingevents_settings'):
             self.rawdata_readingnotes['getdepolarizingevents_settings'] = {
@@ -1212,10 +1223,13 @@ class SingleNeuron:
 
         # initializing empty measures-dictionaries
         all_eventsmeasures_dictionary = snafs.make_eventsmeasures_dictionary()
-        # getting all events: looping over each block, and each trace within each block
+        # looping over each block, and each segment within each block:
         for block in self.blocks:
-            if ('Vclamp' or 'vclamp') in block.file_origin:
-                continue  # skip blocks recorded in Vclamp mode
+            # skipping blocks where the recorded primary signal is not in mV (i.e., blocks not recorded in cclamp mode):
+            block_primary_unit = block.channel_indexes[0].analogsignals[0].units
+            mV_unit = 1 * pq.mV
+            if not block_primary_unit == mV_unit:
+                continue
 
             for i, segment in enumerate(block.segments):
                 segment_eventmeasuresdict = snafs.get_depolarizingevents(
@@ -1228,10 +1242,11 @@ class SingleNeuron:
         # converting the results to a DataFrame and attaching to the class instance
         self.depolarizing_events = pd.DataFrame(all_eventsmeasures_dictionary).round(decimals=2)
         dtypes_dict = {}
-        for key in self.depolarizing_events.keys():  # converting columns containing idcs and missing values
-            if 'idx' in key:                         # to bypass their being cast to float
+        for key in self.depolarizing_events.keys():  # converting columns containing idcs and missing values to Int64 datatype
+            if 'idx' in key:                         # to bypass their being cast to floats
                 dtypes_dict[key] = 'Int64'
         self.depolarizing_events.astype(dtypes_dict)
+        self.write_results()
 
     # getting prepotentials for APs
     def get_ap_prepotentials(self, aps_series, tracesnippet_length_inms=5, baselinewindow_length_inms=2):

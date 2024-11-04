@@ -259,14 +259,14 @@ def plot_single_event(vtrace, sampling_period_inms, axis_object, plot_startidx,
 
     # optional: plotting dV/dt vs V onto a second axis object
     if dvdtaxis_object is not None:
-        diff_event_trace = np.diff(event_trace)
+        diff_event_trace = np.diff(event_trace) / sampling_period_inms
         dvdtaxis_object.plot(event_trace[:-1:], diff_event_trace,
                              color=linecolor, label=label)
         dvdtaxis_object.set_ylabel('dV/dt')
         dvdtaxis_object.set_xlabel('V')
         # optional: plotting ddV/dt vs V onto another axis object
         if ddvdtaxis_object is not None:
-            ddiff_event_trace = np.diff(diff_event_trace)
+            ddiff_event_trace = np.diff(diff_event_trace) / sampling_period_inms
             ddvdtaxis_object.plot(event_trace[:-2:], ddiff_event_trace,
                                   color=linecolor, label=label)
             ddvdtaxis_object.set_ylabel('ddV/dt')

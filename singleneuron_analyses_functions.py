@@ -164,15 +164,27 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                            plot='off'):
     """ This function finds depolarizing events, and constructs a dictionary containing
     the locations and measured parameters of all detected events.
-    It also returns a label for clearly identifiable events (all other events are labeled 'None').
+    Events are all given a label, which is set to be 'None' except for three types of clearly identifiable events:
+    currentpulsechanges, action potentials, and spikeshoulderpeaks (peaks occurring before AP returned to baselineV, common in IO neurons).
+
+    kwargs glossary:
+    min_depolspeed: in mV/ms, threshold for detecting events in the 'cleaned' dV/dt trace.
+    min_depolamp: in mV, threshold for detecting events in the cleaned V trace.
+    depol_to_peak_window: in ms, max. time window within which an peak should occur following a detected depolarization.
+    event_width_window: in ms, time window after event peak for detecting event width measures.
+    ahp_width_window: in ms, time window after AP return to baselineV for detecting after-hyperpolarization measures.
+    noisefilter_hpfreq: in Hz, cutoff frequency setting for high-pass filter applied to reduce noise.  NOTE: this is a crude way of getting rid of some noise in the recorded voltage; possibly using some smoothing may be better (though regardless, the applied 'cleaning' is going to affect the measured results a bit no matter what).
+    oscfilter_lpfreq: in Hz, cutoff frequency setting for low-pass filter applied to get slow changes in baselineV.
+    ttleffect_window: in ms, time after TTL pulse is off but its effects are still on.
+    plot: if 'on', voltage traces will be plotted with baseline- and peak-points of detected events marked.
+
     Depolarizations are detected and measured in multiple steps:
-    First, the event-detect- (ed-)trace is created by taking the the raw voltage trace and subtracting
-    oscillations (as gotten by low-pass filtering V) and noise (as gotten by high-pass filtering V) from it.
-    Then, points where the ms-by-ms derivative of the event-detect voltage
-    is larger than min_depolspeed are examined, and baseline- and peak-points marked if a peak
-    and then a decay in voltage after the peak are found.
+    First, the event-detect- (ed-)trace is created by taking the the raw voltage trace and subtracting any oscillations
+    /baselineV shifts (as gotten by low-pass filtering V) and noise (as gotten by high-pass filtering V) from it.
+    Then, points are examined where the ms-by-ms derivative of the event-detect voltage is larger than min_depolspeed,
+    and baseline- and peak-points marked if a peak and then a decay in voltage after the peak are found.
     Finally, the baseline- and peak-point are used to measure event parameters (as constrained by the relevant windows).
-    Measures are collected into one dictionary per segment.
+    Measures are collected into one dictionary per recording segment.
     If plot is 'on', all traces and points gotten along the way from raw data to detected events are plotted.
 
     This function assumes the following conventions:
@@ -185,8 +197,8 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
     time_axis = single_voltage_trace.times
     time_axis = time_axis.rescale('ms').magnitude
     sampling_period_inms = single_voltage_trace.sampling_period.rescale('ms')   # keeps its pq-properties for now
-    voltage_recording = np.array(np.squeeze(single_voltage_trace))              # !should be in mV
-    current_recording = np.array(np.squeeze(single_segment.analogsignals[1]))   # !should be in pA
+    voltage_recording = np.array(np.squeeze(single_voltage_trace))              # !should be in mV; loses pq-properties here
+    current_recording = np.array(np.squeeze(single_segment.analogsignals[1]))   # !should be in pA; loses pq-properties here
     if len(single_segment.analogsignals) == 3:
         auxttl_recording = np.array(np.squeeze(single_segment.analogsignals[2]))
     else:
@@ -217,20 +229,20 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
                      label='voltage, hp-filtered at ' + str(noisefilter_hpfreq) + 'Hz')
         axes[1].legend()
 
-    #taking the ms-by-ms derivative, and adjusting time axis accordingly
+    #taking the voltage derivative idx-by-idx (resulting trace unit: mV/ms)
+    voltage_derivative = take_derivative(voltage_eventdetecttrace, sampling_period_inms)
+    #taking the derivative ms-by-ms (resulting trace unit: mV/ms)
     voltage_permsderivative = make_derivative_per_ms(voltage_eventdetecttrace, ms_insamples)
 
     #step2] collecting points of interest:
     # peaks and baseline-points of 'proper' depolarizations (as determined by upstroke parameters,
     # and the presence of some voltage decay after a detected peak)
-    # (and all depolarizations that are picked up from the derivative-trace alone)
     (depolswithpeaks_idcs, peaks_idcs,
-     alldepols_idcs) = find_depols_with_peaks(voltage_eventdetecttrace,
-                                              voltage_permsderivative,
-                                              ms_insamples,
+     alldepols_idcs) = find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, voltage_permsderivative,
+                                              sampling_period_inms, ms_insamples,
                                               depol_to_peak_window,
                                               min_depolspeed, min_depolamp)
-    # plotting the data with scatters of detected depolarizations peaks and baselines
+    # plotting the data, marking detected depolarizations peaks and baselines
     if plot == 'on':
         figure,axes = plt.subplots(3,1,sharex='all')
         axes[0].plot(time_axis,voltage_recording,
@@ -257,9 +269,15 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
 
         axes[2].plot(time_axis[:len(voltage_permsderivative):],voltage_permsderivative,
                      color='black',
-                     label='event-detect trace derivative')
+                     label='event-detect trace per-ms derivative')
         axes[2].scatter(time_axis[alldepols_idcs], voltage_permsderivative[alldepols_idcs],
-                        color='blue',
+                        color='green',
+                        label='depolarizations-candidates')
+        axes[2].plot(time_axis[:len(voltage_derivative):], voltage_derivative,
+                     color='blue',
+                     label='event-detect trace derivative')
+        axes[2].scatter(time_axis[alldepols_idcs], voltage_derivative[alldepols_idcs],
+                        color='green',
                         label='depolarizations-candidates')
         axes[2].set_xlabel('time (ms)')
         axes[2].legend()
@@ -305,29 +323,31 @@ def get_depolarizingevents(block_file_origin, segment_idx, single_segment,
 # sub-functions:
 
 # finding depolarizing events that have a peak in voltage succeeding them
-def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
-                           ms_insamples, peakwindow,
+def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative, voltage_permsderivative,
+                           sampling_period_inms, ms_insamples,
+                           peakwindow,
                            min_depolspeed, min_depolamp):
     """ This function finds and returns points where depolarizations occur in the voltage derivative,
     as well as the baseline-points and peak-points of any depolarizations that are found to have these.
     """
-    peakwindow_insamples = peakwindow * ms_insamples
+    peakwindow_insamples = int(peakwindow * (1 / (sampling_period_inms)))
     depolarizations = []
     depols_with_peaks = []
     peaks_idcs = []
     for idx in range(ms_insamples, len(voltage_derivative) - peakwindow_insamples):
         if peaks_idcs and idx < peaks_idcs[-1]:
             continue  # skip points that refer to places on already-identified events
-        # 1. identify possible depolarizing event-start points:
-        # - dV/dt > 2 * min_depolspeed, or:
-        # - dV/dt > min_depolspeed
-        # AND dV/dt < 10% of min_depolspeed some time in the ms before idx
-        # AND dV/dt > min_depolspeed for a duration of at least 0.5ms after idx
-        elif voltage_derivative[idx] > 2 * min_depolspeed or \
-                (voltage_derivative[idx] >= min_depolspeed
-                    and np.min(voltage_derivative[idx-ms_insamples:idx]) < 0.1 * min_depolspeed
-                    and [v_diff >= min_depolspeed
-                         for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]]):
+        # 1. identify possible depolarizing-event start points:
+        # - dV//dt >= 2*min_depolspeed
+        #   AND perms_dV/dt >= min_depolspeed;
+        # or:
+        # - dV/dt >= min_depolspeed
+        #   AND dV/dt < 0.1*min_depolspeed in the ms before idx
+        #   AND dV/dt > min_depolspeed for >= 0.5ms after idx
+        elif ((voltage_derivative[idx] >= 2 * min_depolspeed) and (voltage_permsderivative[idx] >= min_depolspeed)) \
+            or ((voltage_derivative[idx] >= min_depolspeed)
+                and (np.min(voltage_derivative[idx-ms_insamples:idx]) < 0.1 * min_depolspeed)
+                and ([v_diff >= min_depolspeed for v_diff in voltage_derivative[idx:idx + int(ms_insamples/2)]])):
 
             depol_idx = idx  # depol_idx will mark the baseline_v point, if a proper peak can be found to go with it
             depolarizations.append(depol_idx)
@@ -336,7 +356,7 @@ def find_depols_with_peaks(voltage_eventdetecttrace, voltage_derivative,
             # points qualify if:
             # - peakv > baselinev + mindepolamp in the event-detect trace,
             # - maxv after peakv is smaller than peakv, and
-            # - minv after peakv goes back down to <90% of peak amp within peakwindow
+            # - minv after peakv goes back down by at least 10% of peak amp within peakwindow
             ed_baselinev = np.mean(voltage_eventdetecttrace[
                                    depol_idx - ms_insamples:depol_idx])
             ed_peakvtrace = voltage_eventdetecttrace[
@@ -466,14 +486,14 @@ def get_events_measures(peaks_idcs,
 # measures describing the rising phase of the event
         # max dV/dt between baseline and peak
         upstrokev = voltage_trace[baseline_idx:peak_idx + 1]
-        upstrokev_diff = np.diff(upstrokev)
+        upstrokev_diff = take_derivative(upstrokev, sampling_period_inms)
         maxdvdt = np.amax(upstrokev_diff)
         maxdvdt_idx = int(baseline_idx + np.argmax(upstrokev_diff))
         eventsmeasures_dictionary['maxdvdt'].append(maxdvdt)
         eventsmeasures_dictionary['maxdvdt_idx'].append(maxdvdt_idx)
 
         ed_upstrokev = voltage_eventdetecttrace[baseline_idx:peak_idx + 1]
-        ed_upstrokev_diff = np.diff(ed_upstrokev)
+        ed_upstrokev_diff = take_derivative(ed_upstrokev, sampling_period_inms)
         ed_maxdvdt = np.amax(ed_upstrokev_diff)
         ed_maxdvdt_idx = int(baseline_idx + np.argmax(ed_upstrokev_diff))
         eventsmeasures_dictionary['ed_maxdvdt'].append(ed_maxdvdt)
@@ -670,10 +690,11 @@ def get_events_measures(peaks_idcs,
         eventsmeasures_dictionary['ed_ahp_width'].append(ed_ahp_width)
         eventsmeasures_dictionary['ed_ahp_end_idx'].append(ed_ahpend_idx)
 
-# labeling three specific types of clearly identifyable cases:
+# labeling three specific types of clearly identifiable cases:
 # 1. action potentials (events with high peak v or large peak amplitude)
 # 2. spikeshoulderpeaks (events that occur before ahp_width_window on the previous event runs out)
-# 3. events on top of/evoked by current pulse change (diff(current) > 8 in the window from 20ms before until after the event);
+# 3. events on top of/evoked by current pulse change (dI/dt > 100pA/ms in the window from 20ms before until after the
+# event);
         # creating empty labels for all events
         event_label = None
         spikeshoulderpeaks = []
@@ -699,8 +720,8 @@ def get_events_measures(peaks_idcs,
         preevent_idx = int(baseline_idx - (20 * ms_insamples))
         if preevent_idx < 0:
             preevent_idx = 0
-        didt_around_event = np.diff(current_recording[preevent_idx:int(baseline_idx + ahpwindow_insamples)])
-        if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 8:
+        didt_around_event = take_derivative((current_recording[preevent_idx:int(baseline_idx + ahpwindow_insamples)]), sampling_period_inms)
+        if len(didt_around_event) > 2 and np.amax(np.abs(didt_around_event)) > 100:
             if event_label is None:
                 event_label = 'currentpulsechange'
             else:
@@ -729,68 +750,67 @@ def get_events_average(rawdata_blocks, depolarizingevents_df, getdepolarizingeve
     oscillation-subtracted.
     The function returns an average trace, a std-trace and a corresponding time axis.
     """
-    # !!this code will fail miserably if there are blocks with different sampling frequency recorded for the same neuron
-    # TODO build something better than a straight rejection of calculating an average when traces are sampled at different frequencies
+
+    #!!this code will fail miserably if there are blocks with different sampling frequency recorded for the same
+    # neuron; it will warn of this by not returning an averaged trace and printing an 'average not valid' statement
     eventmeasures_df = depolarizingevents_df[events_series]
-    # determine whether all to-be-averaged events were recorded at the same sampling rate; if not, give error
-    all_blocks_names = recordingblocks_index.file_origin
-    selected_blocks_names = all_blocks_names[all_blocks_names.isin(eventmeasures_df.file_origin)]
-    sampling_rates = recordingblocks_index.sampling_freq_inHz[recordingblocks_index.file_origin.isin(selected_blocks_names)]
-    if len(sampling_rates.unique()) > 1:
-        print('mismatching sampling frequencies; no average calcualted')
-        return
-    else:  # get all information to do the averaging
-        sampling_frequency = float(sampling_rates.unique())
-        sampling_period_inms = (1/sampling_frequency) * 1000
-        tracesnippet_length = int(plotwindow_inms / sampling_period_inms)
-        time_axis = np.linspace(start=0, stop=plotwindow_inms, num=tracesnippet_length)
-        # initializing array to collect all events-traces into
-        eventstraces_array = np.zeros((tracesnippet_length, len(eventmeasures_df)))
-        running_event_index = 0
-        for block in rawdata_blocks:
-            block_eventsmeasures = eventmeasures_df[(eventmeasures_df.file_origin == block.file_origin)]
-            if not block_eventsmeasures.empty:
-                segments_idcs = list(set(block_eventsmeasures['segment_idx']))
-                for segment_idx in segments_idcs:
-                    segment_eventsmeasures = block_eventsmeasures[(block_eventsmeasures.segment_idx == segment_idx)]
-                    vtrace_asanalogsignal = block.segments[segment_idx].analogsignals[0]
-                    vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
-                    # subtracting high-frequency noise from the raw voltage (as done for calculating depolevents measures)
-                    oscillationstrace, noisetrace = apply_filters_to_vtrace(
-                        vtrace,
-                        getdepolarizingevents_settings['oscfilter_lpfreq'],
-                        getdepolarizingevents_settings['noisefilter_hpfreq'],
-                        sampling_frequency,
-                        plot='off')
+    sampling_frequency = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_rate)
+    sampling_period_inms = float(rawdata_blocks[0].segments[0].analogsignals[0].sampling_period) * 1000
+    tracesnippet_length = int(plotwindow_inms / sampling_period_inms)
+    time_axis = np.linspace(start=0, stop=plotwindow_inms, num=tracesnippet_length)
+    # initializing array to collect all events-traces into
+    eventstraces_array = np.zeros((tracesnippet_length, len(eventmeasures_df)))
+    running_event_index = 0
+    # collecting sampling rates for each block where events occur, to put up a warning if they are not identical:
+    blocks_sampling_rates = []
+    for block in rawdata_blocks:
+        block_eventsmeasures = eventmeasures_df[(eventmeasures_df.file_origin == block.file_origin)]
+        if not block_eventsmeasures.empty:
+            segments_idcs = list(set(block_eventsmeasures['segment_idx']))
+            blocks_sampling_rates.append(float(block.channel_indexes[0].analogsignals[0].sampling_rate))
+            for segment_idx in segments_idcs:
+                segment_eventsmeasures = block_eventsmeasures[(block_eventsmeasures.segment_idx == segment_idx)]
+                vtrace_asanalogsignal = block.segments[segment_idx].analogsignals[0]
+                vtrace = np.squeeze(np.array(vtrace_asanalogsignal))
+                # subtracting high-frequency noise from the raw voltage (as done for calculating depolevents measures)
+                oscillationstrace, noisetrace = apply_filters_to_vtrace(
+                    vtrace,
+                    getdepolarizingevents_settings['oscfilter_lpfreq'],
+                    getdepolarizingevents_settings['noisefilter_hpfreq'],
+                    sampling_frequency,
+                    plot='off')
+                if get_measures_type == 'raw':
+                    vtrace = vtrace - noisetrace
+                else:
+                    vtrace = vtrace - noisetrace - oscillationstrace
+                # getting the event-traces of the segment
+                for _, eventmeasures in segment_eventsmeasures.iterrows():
+                    event_startidx = (eventmeasures[timealignto_measure]
+                                      - (int(prealignpoint_window_inms / sampling_period_inms)))
+                    event_trace = vtrace[event_startidx:event_startidx + tracesnippet_length]
+                    # padding with nans if the tracesnippet is too short (because it's at the end of vtrace)
+                    if tracesnippet_length > len(event_trace):
+                        event_trace = np.append(event_trace,
+                                                (np.zeros(((tracesnippet_length - len(event_trace)), 1)) + np.nan))
+                    # baselining and (optionally) normalizing
                     if get_measures_type == 'raw':
                         vtrace = vtrace - noisetrace
                     else:
-                        vtrace = vtrace - noisetrace - oscillationstrace
-                    # getting the event-traces of the segment
-                    for _, eventmeasures in segment_eventsmeasures.iterrows():
-                        event_startidx = (eventmeasures[timealignto_measure]
-                                          - (int(prealignpoint_window_inms / sampling_period_inms)))
-                        event_trace = vtrace[event_startidx:event_startidx + tracesnippet_length]
-                        # padding with nans if the tracesnippet is too short (because it's at the end of vtrace)
-                        if tracesnippet_length > len(event_trace):
-                            event_trace = np.append(event_trace,
-                                                    (np.zeros(((tracesnippet_length - len(event_trace)), 1)) + np.nan))
-                        # baselining and (optionally) normalizing
-                        if get_measures_type == 'raw':
-                            event_trace = event_trace - eventmeasures['baselinev']
-                        else:
-                            event_trace = event_trace - eventmeasures['ed_baselinev']
-                        if do_normalizing and (get_measures_type == 'raw'):
-                            event_trace = event_trace / eventmeasures['amplitude']
-                        elif do_normalizing:
-                            event_trace = event_trace / eventmeasures['ed_amplitude']
-                        # adding the event trace to the array collecting them for the block
-                        eventstraces_array[:,running_event_index] = event_trace
-                        running_event_index += 1
-        # do the averaging
-        average_trace = np.nanmean(eventstraces_array, axis=1)
-        standarddeviation_trace = np.nanstd(eventstraces_array, axis=1)
+
+                        event_trace = event_trace - eventmeasures['ed_baselinev']
+                    if do_normalizing and (get_measures_type == 'raw'):
+                        event_trace = event_trace / eventmeasures['amplitude']
+                    elif do_normalizing:
+                        event_trace = event_trace / eventmeasures['ed_amplitude']
+                    # adding the event trace to the array collecting them for the block
+                    eventstraces_array[:,running_event_index] = event_trace
+                    running_event_index += 1
+    average_trace = np.nanmean(eventstraces_array, axis=1)
+    standarddeviation_trace = np.nanstd(eventstraces_array, axis=1)
+    if (blocks_sampling_rates[0] == blocks_sampling_rates[i] for i in range(1, len(blocks_sampling_rates))):
         return average_trace, standarddeviation_trace, time_axis
+    else:
+        print('average not valid; recording blocks have varying sampling rates')
 
 
 # detecting prepotentials on APs and getting their amplitude if present
@@ -829,7 +849,7 @@ def get_ap_prepotentials(rawdata_blocks, rawdata_blocksnameslist, depolarizingev
                                                     sampling_frequency,
                                                     plot='off')
             vtrace = vtrace - noisetrace
-            ddvdt_trace = np.diff(np.diff(vtrace))
+            ddvdt_trace = take_derivative((take_derivative(vtrace, sampling_period_inms)), sampling_period_inms)
             segment_aps_df = block_aps_df[(block_aps_df.segment_idx == segment_idx)]
             for ap_idx, ap_measures in segment_aps_df.iterrows():
                 tracesnippet_start_idx = (ap_measures.maxdvdt_idx - tracesnippet_length_insamples)
@@ -929,6 +949,11 @@ def make_derivative_per_ms(recording_trace, ms_insamples):
         slope_approx = recording_trace[idx + ms_insamples] - recording_trace[idx]
         permsderivative.append(slope_approx)
     return np.array(permsderivative)
+
+def take_derivative(recording_trace, sampling_period):
+    difference_idxtoidx = np.diff(recording_trace)
+    derivative = difference_idxtoidx / sampling_period  ## difference adjusted to sampling rate to get derivative
+    return derivative
 
 
 # making empty dictionaries with keys for all events measures
@@ -1058,6 +1083,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
                 ttl_duration_inms = (ttloff_idx - ttlon_idx + 1) / ms_in_samples
                 # if it's a current-clamp recording, get also other measures surrounding ttl
                 if segment.analogsignals[0].units == pq.mV:
+                    sampling_period_inms = segment.analogsignals[0].sampling_period.rescale('ms')
                     sampling_rate = float(segment.analogsignals[0].sampling_rate.rescale('Hz'))
                     voltage_recording = np.array(np.squeeze(segment.analogsignals[0]))
                     current_recording = np.array(np.squeeze(segment.analogsignals[1]))
@@ -1079,7 +1105,7 @@ def get_ttlresponse_measures(block, noisefilter_hpfreq, ttlhigh_value=1, respons
                     maxamp_postttl_t = maxv_idx / ms_in_samples
                     response_maxamp = maxv - baselinev
                     # getting max.dV/dt
-                    dvdt = np.diff(noisecleaned_voltage_recording)
+                    dvdt = take_derivative(noisecleaned_voltage_recording, sampling_period_inms)
                     maxdvdt = np.max(dvdt[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
                     # getting applied current: mean, and max-min in [ms before ttl on : ttl off]
                     applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])

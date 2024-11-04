@@ -112,6 +112,9 @@ plt.title('drug applied')
 # (2-fold increase from ~6 to ~12mV amp), and the least for the 100% stimulus (~3mV increase from 14mV).
 
 # %% plots: response sensitivity to drug
+sns.lmplot(data=ttlonmeasures_sthr, x='baselinev', y='response_maxamp', hue='drug_condition',
+           col='stim_intensity_pct')
+
 # drug recordings were done at each of the three intensity levels. Splitting out the DF accordingly:
 ttlonmeasures_sthr_stim5pct = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 5]
 sns.lmplot(data=ttlonmeasures_sthr_stim5pct, x='baselinev', y='response_maxamp', hue='drug_condition')

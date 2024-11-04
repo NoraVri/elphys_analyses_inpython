@@ -110,12 +110,12 @@ sns.lmplot(data=ttlonmeasures_sthr_nodrug, x='baselinev', y='response_maxamp',
 # %% plots: response sensitivity to drug
 # drug recordings were done with 100% light intensity only. Getting the relevant subset of the dataframe:
 ttlonmeasures_sthr_maxintensity = ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100]
-# next splitting out by ttlon_duration:
-ttlonmeasures_sthr_maxintensity_1ms = ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.ttlon_duration_inms == 1]
-ttlonmeasures_sthr_maxintensity_10ms = ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.ttlon_duration_inms == 10]
+sns.lmplot(data=ttlonmeasures_sthr_maxintensity, x='baselinev', y='response_maxamp', hue='drug_condition',
+           col='ttlon_duration_inms')
+# no proper comparison to be made for 1ms ttl: without drug, only one baselinev level tested
 
-sns.lmplot(data=ttlonmeasures_sthr_maxintensity_1ms, x='baselinev', y='response_maxamp', hue='drug_condition',)
-# no proper comparison to be made: without drug, only one baselinev level tested
+# next splitting out by ttlon_duration:
+ttlonmeasures_sthr_maxintensity_10ms = ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.ttlon_duration_inms == 10]
 sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxamp', hue='drug_condition',)
 sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxamp_postttl_t_inms', hue='drug_condition')
 sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response_maxdvdt', hue='drug_condition')
@@ -124,5 +124,12 @@ sns.lmplot(data=ttlonmeasures_sthr_maxintensity_10ms, x='baselinev', y='response
 # the underlying baseline voltage change that occurred during drug application.
 # There may be some interesting stuff in there regarding single and double-peaked responses
 
+for drug_condition in drug_conditions:
+    neuron_data.plot_ttlaligned(ttlonmeasures_sthr_maxintensity[ttlonmeasures_sthr_maxintensity.drug_condition == drug_condition],
+                            postttl_t_inms=75,
+                            prettl_t_inms=25,
+                            newplot_per_ttlduration=True,
+                            plt_title=drug_condition
+                            )
 # %% saving the data: subthreshold responses to optoStim
 neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

@@ -16,7 +16,7 @@ neuron_data.get_recordingblocks_index()
 # notes on recording quality: checking out gapFree recordings
 neuron_data.plot_rawdatablocks('gapFree', time_axis_unit='s')
 # Neat sealing (just under 2GOhm) and break-in (@t=109.12 in gapFree_0000), cell spiking with freq.~40Hz, quiet when held at ~-55mV w/-150pA DC
-# baselineV seems to go down after application of quinpirole, but AP parameters look practically unchanged throughout recordings
+# baselineV may be going down a tiny bit after application of quinpirole, but AP parameters look practically unchanged throughout recordings
 
 # %% getting optoStim response measurements:
 neuron_data.get_ttlonmeasures_fromrawdata(response_window_inms=40)  # adjusted from default - see notes below

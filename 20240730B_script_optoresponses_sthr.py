@@ -99,7 +99,10 @@ sns.lmplot(data=ttlonmeasures_sthr, x='baselinev', y='response_maxamp',
            )
 # Neither manipulation seems to have had any effect on 'response' - everything that got picked up is <1mV in amplitude.
 # no information on response amp relative to baselineV; holding current levels not varied
-
+neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.stim_intensity_pct == 100],
+                            newplot_per_ttlduration=True,
+                            prettl_t_inms=50,
+                            postttl_t_inms=150)
 # My conclusion: this neuron did not respond to the light.
 
 # %% plots: response sensitivity to drug

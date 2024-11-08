@@ -23,10 +23,9 @@ def fill_singleneuron_recordings_index_dictionary(block):
     """This function creates an 'empty' dictionary with
     a key for each measure that will be taken for each ttlon-trace. """
     recordingblock_infos_dict = make_recordings_index_dictionary()
-    if block.segments[0].analogsignals[0].units == pq.mV:
-        ccrecording = True
-    else:
-        ccrecording = False
+
+    ch1_unit = str(block.segments[0].analogsignals[0].units)[-2:]
+    ch2_unit = str(block.segments[0].analogsignals[1].units)[-2:]
 
     if len(block.segments[0].analogsignals) == 3:
         ttl = True
@@ -47,7 +46,8 @@ def fill_singleneuron_recordings_index_dictionary(block):
     recordingblock_infos_dict['sampling_freq_inHz'].append(int(block.segments[0].analogsignals[0].sampling_rate))
     recordingblock_infos_dict['t_recorded_ins'].append(float(time_count))
     recordingblock_infos_dict['file_timestamp'].append(block_datetime)
-    recordingblock_infos_dict['cc_recording'].append(ccrecording)
+    recordingblock_infos_dict['ch1_unit'].append(ch1_unit)
+    recordingblock_infos_dict['ch2_unit'].append(ch2_unit)
     recordingblock_infos_dict['ttl_record'].append(ttl)
 
     return recordingblock_infos_dict
@@ -59,7 +59,8 @@ def make_recordings_index_dictionary():
         'sampling_freq_inHz': [],
         't_recorded_ins': [],
         'file_timestamp': [],
-        'cc_recording': [],
+        'ch1_unit': [],
+        'ch2_unit': [],
         'ttl_record': []
     }
     return recordingblock_infos

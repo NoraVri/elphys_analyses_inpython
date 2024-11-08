@@ -110,6 +110,8 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     Time axis is re-aligned so that ttl onset = 0ms.
     Skip_vtraces can be an int; if it is, every non-multiple vtrace will be omitted from the plot.
     !Note: all blocks passed to this function should have 3 channels: voltage, current and TTL.
+
+    TODO: update this function so that it can take the new ttlon_measures_df, and make this plot regardless of vclamp or cclamp rec
     """
     # getting figure and axes to plot on
     if plotdvdt:
@@ -122,8 +124,7 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
         vaxis_label = vaxis_label + ' (baselined)'
     # getting only the relevant ttl measures
     blocknames_list = [block.file_origin for block in blockslist]
-    blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list)
-                                            & (~ttlmeasures_df.baselinev.isna()))]  # by skipping traces where no baselinev value was calculated, we skip vclamp-recordings and traces where ttl wasn't actually on (even though 3rd channel was recorded)
+    blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list))]
     if maxamp_for_plotting is not None:
         blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df['response_maxamp'] < maxamp_for_plotting)]
     if color_lims is not None and colorby_measure is not None:

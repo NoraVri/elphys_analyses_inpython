@@ -661,7 +661,7 @@ class SingleNeuron:
                         noisefilter_hpfreq='default',
                         **kwargs):
         """
-                This function plots raw data aligned to ttl onset, baselined to V in the ms before,
+                This function plots raw data aligned to ttl onset, baselined to the ms before,
                 color-coded by baseline V.
                 kwargs:
                 - prettl_t_inms, postttl_t_inms: time before and after ttl-onset-time to be plotted.
@@ -682,9 +682,9 @@ class SingleNeuron:
         # if no ttlon_measures df is passed in, put in the default one (if one is to be had; else, return):
         if ttlonmeasures_df is None:
             if not hasattr(self, 'ttlon_measures'):
-                self.get_ttlonmeasures_fromrawdata()
+                self.get_singlepulse_ttlonmeasures_fromrawdata()
             elif self.ttlon_measures.empty:
-                self.get_ttlonmeasures_fromrawdata()
+                self.get_singlepulse_ttlonmeasures_fromrawdata()
 
             if self.ttlon_measures.empty:
                 print('no ttl on found')
@@ -1280,7 +1280,7 @@ class SingleNeuron:
                                                         events_group, **kwargs)
 
     # getting the ttlon_measures DataFrame
-    def get_ttlonmeasures_fromrawdata(self, **kwargs):
+    def get_singlepulse_ttlonmeasures_fromrawdata(self, **kwargs):
         # kwargs:
         # ttlhigh_value=1; sets the binary cutoff value for measuring ttl low/high
         # response_window_inms=30; time window since ttl on in which response max amp is calculated
@@ -1288,9 +1288,9 @@ class SingleNeuron:
             noisefilter_hpfreq = self.rawdata_readingnotes['getdepolarizingevents_settings']['noisefilter_hpfreq']
         else:
             noisefilter_hpfreq = 3000
-        all_ttlonmeasures_dictionary = snafs.make_ttlonmeasures_dictionary()
+        all_ttlonmeasures_dictionary = snafs.make_singlepulsettl_depolresponse_dictionary()
         for block in self.blocks:
-            ttlon_measures_dictionary = snafs.get_ttlresponse_measures(block, noisefilter_hpfreq, **kwargs)
+            ttlon_measures_dictionary = snafs.get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, **kwargs)
             if ttlon_measures_dictionary is not None:
                 for key in all_ttlonmeasures_dictionary.keys():
                     all_ttlonmeasures_dictionary[key] += ttlon_measures_dictionary[key]

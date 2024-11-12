@@ -10,7 +10,7 @@ import os
 path = "C:\\Users\\wgo5481\\OneDrive - Northwestern University\\Documents\\pCLAMP - copy\\Data_recordedByDeNard"
 neuron_recordings = os.listdir(path)
 
-
-
-
+for neuron in neuron_recordings:
+    neuron_data = SingleNeuron(neuron)
+    neuron_data.plot_ttlaligned()
 

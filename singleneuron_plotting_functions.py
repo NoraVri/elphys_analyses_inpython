@@ -11,6 +11,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import quantities as pq
 
 # imports of functions that I wrote
 import singleneuron_analyses_functions as snafs
@@ -101,17 +102,20 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                     do_baselining=True, plotdvdt=False,
                     colorby_measure='baselinev',
                     color_lims=None, plotlims=None,
-                    skip_vtraces_block=None,
-                    skip_vtraces_idcs=None,
+                    skip_traces_block=None,
+                    skip_traces_idcs=None,
                     maxamp_for_plotting=None,
                     noisefilter_hpfreq=3000,):
     """
-    This function takes a list of blocks, and plots vtraces aligned to ttl-onset (for those blocks that have ttl).
+    This function takes a list of blocks, and plots traces aligned to ttl-onset (for those blocks that have ttl).
     Time axis is re-aligned so that ttl onset = 0ms.
-    Skip_vtraces can be an int; if it is, every non-multiple vtrace will be omitted from the plot.
+    Skip_traces can be an int; if it is, every non-multiple vtrace will be omitted from the plot.
     !Note: all blocks passed to this function should have 3 channels: voltage, current and TTL.
+    !Note: the ttlmeasures_df that is passed into this function should contain EITHER vclamp OR cclamp measurements only;
+    this is usually handled by the plot_ttlaligned wrapper-function that exists on singleneuron_class.
 
     TODO: update this function so that it can take the new ttlon_measures_df, and make this plot regardless of vclamp or cclamp rec
+    done; now update wrapper function to split ttlmeasures_df based on rec_mode
     """
     # getting figure and axes to plot on
     if plotdvdt:
@@ -119,9 +123,22 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     else:
         figure, axes = plt.subplots(1, 1, squeeze=False)
         axes = axes.squeeze(axis=1)
-    vaxis_label = 'voltage (mV)'
+
+    # figuring out whether we're plotting voltage or current
+    baselining_measure = 'baselinev'
+    if ttlmeasures_df.loc[0,'response_maxamp_unit'] == 'pA':
+        yaxis_label = 'current'
+        baselining_measure = 'baselinec'
+        if colorby_measure == 'baselinev':  # baselinev is the default setting, should be updated if we're plotting current
+            colorby_measure = 'baselinec'
+    elif ttlmeasures_df.loc[0,'response_maxamp_unit'] == 'mV':
+        yaxis_label = 'voltage'
+    else:
+        print('could not figure out y-axis label; no data plotted')
+        return
     if do_baselining:
-        vaxis_label = vaxis_label + ' (baselined)'
+        yaxis_label = yaxis_label + ' (baselined)'
+
     # getting only the relevant ttl measures
     blocknames_list = [block.file_origin for block in blockslist]
     blocks_ttlmeasures_df = ttlmeasures_df[(ttlmeasures_df.file_origin.isin(blocknames_list))]
@@ -130,11 +147,11 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     if color_lims is not None and colorby_measure is not None:
         blocks_ttlmeasures_df = blocks_ttlmeasures_df[(blocks_ttlmeasures_df[colorby_measure] >= color_lims[0])
                                                     & (blocks_ttlmeasures_df[colorby_measure] <= color_lims[1])]
-    if skip_vtraces_block is None and isinstance(skip_vtraces_idcs, list):
-        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces_idcs)]
-    if skip_vtraces_block is not None and isinstance(skip_vtraces_idcs, list):
-        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~(blocks_ttlmeasures_df.file_origin.isin(skip_vtraces_block)
-                                                        & blocks_ttlmeasures_df.segment_idx.isin(skip_vtraces_idcs))]
+    if skip_traces_block is None and isinstance(skip_traces_idcs, list):
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~blocks_ttlmeasures_df.segment_idx.isin(skip_traces_idcs)]
+    if skip_traces_block is not None and isinstance(skip_traces_idcs, list):
+        blocks_ttlmeasures_df = blocks_ttlmeasures_df[~(blocks_ttlmeasures_df.file_origin.isin(skip_traces_block)
+                                                        & blocks_ttlmeasures_df.segment_idx.isin(skip_traces_idcs))]
     # getting colors for line plots
     if isinstance(color_lims, list) and (len(color_lims) == 2):
         colormap, cm_normalizer = get_colors_forlineplots(colorby_measure=None, data=color_lims)
@@ -148,13 +165,14 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
             continue
         else:
             for _, ttlmeasures_series in block_ttlmeasures_df.iterrows():
-                # getting a de-noised vtrace for plotting:
-                vtrace = block.channel_indexes[0].analogsignals[ttlmeasures_series['segment_idx']]
-                sampling_frequency = float(vtrace.sampling_rate.rescale('Hz'))
-                time_axis = vtrace.times
-                vtrace = np.squeeze(np.array(vtrace))
-                _, voltage_noisetrace = snafs.apply_filters_to_vtrace(vtrace, 5, noisefilter_hpfreq, float(sampling_frequency))
-                vtrace = vtrace - voltage_noisetrace
+                # getting the recording trace for plotting:
+                rec_trace = block.channel_indexes[0].analogsignals[ttlmeasures_series['segment_idx']]
+                sampling_frequency = float(rec_trace.sampling_rate.rescale('Hz'))
+                time_axis = rec_trace.times
+                rec_trace = np.squeeze(np.array(rec_trace))
+                if yaxis_label == 'voltage':  # if voltage recording, apply filtering to reduce noise
+                    _, voltage_noisetrace = snafs.apply_filters_to_vtrace(rec_trace, 0.5, noisefilter_hpfreq, float(sampling_frequency))
+                    rec_trace = rec_trace - voltage_noisetrace
                 # getting ttl on and off time
                 ttlfirston_idx = ttlmeasures_series['ttlon_idx']
                 ttllaston_idx = ttlmeasures_series['ttloff_idx']
@@ -170,21 +188,21 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
                 time_axis = time_axis - ttlfirston_time
                 plotwindow_startidx = ttlfirston_idx - int(onems_insamples * prettl_t_inms)
                 plotwindow_endidx = ttlfirston_idx + int(onems_insamples * postttl_t_inms)
-                vtrace = vtrace[plotwindow_startidx:plotwindow_endidx]
+                rec_trace = rec_trace[plotwindow_startidx:plotwindow_endidx]
                 if do_baselining:  # make baselinev = 0 for plotted line, if requested
-                    vtrace = vtrace - ttlmeasures_series['baselinev']
+                    rec_trace = rec_trace - ttlmeasures_series[baselining_measure]
                 axes[0].plot(time_axis[plotwindow_startidx:plotwindow_endidx],
-                             vtrace,
+                             rec_trace,
                              color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
                 if plotdvdt:  # make dvdt vs V plot, if requested
-                    vtrace_diff = snafs.take_derivative(vtrace)
-                    axes[1].plot(vtrace[:-1:], vtrace_diff,
+                    vtrace_diff = snafs.take_derivative(rec_trace, (1/sampling_frequency))
+                    axes[1].plot(rec_trace[:-1:], vtrace_diff,
                                  color=colormap(cm_normalizer(ttlmeasures_series[colorby_measure])))
-                    axes[1].set_xlabel(vaxis_label)
+                    axes[1].set_xlabel(yaxis_label)
                     axes[1].set_ylabel('dV/dt, mV/ms')
     # adding axes labels
     axes[0].set_xlabel('time (ms)')
-    axes[0].set_ylabel(vaxis_label)
+    axes[0].set_ylabel(yaxis_label)
 
     # setting axes lims
     axes[0].set_xlim((-1*prettl_t_inms, postttl_t_inms))

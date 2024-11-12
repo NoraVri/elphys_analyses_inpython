@@ -661,8 +661,9 @@ class SingleNeuron:
                         noisefilter_hpfreq='default',
                         **kwargs):
         """
-                This function plots raw data aligned to ttl onset, baselined to the ms before,
-                color-coded by baseline V.
+                This function plots raw data aligned to ttl onset.
+                By default, traces are voltage recordings baselined to the ms before TTL on,
+                and color-coded by baseline V.
                 kwargs:
                 - prettl_t_inms, postttl_t_inms: time before and after ttl-onset-time to be plotted.
                     default: 2, 30
@@ -718,15 +719,29 @@ class SingleNeuron:
             axess = []
             for duration in ttldurations:
                 duration_ttlonmeasures_df = ttlonmeasures_df[ttlonmeasures_df.ttlon_duration_inms == duration]
-                figure, axes = plots.plot_ttlaligned(self.blocks, duration_ttlonmeasures_df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
-                figure.suptitle(plt_title + '; ' + self.name + ' ttlduration = ' + str(duration) + 'ms')
-                figures.append(figure)
-                axess.append(axes)
+                vclamp_duration_ttlonmeasures_df = duration_ttlonmeasures_df[(duration_ttlonmeasures_df.response_maxamp_unit == 'pA')]
+                cclamp_duration_ttlonmeasures_df = duration_ttlonmeasures_df[(duration_ttlonmeasures_df.response_maxamp_unit == 'mV')]
+                dfs_list = [vclamp_duration_ttlonmeasures_df, cclamp_duration_ttlonmeasures_df]
+                for df in dfs_list:
+                    if not df.empty:
+                        figure, axes = plots.plot_ttlaligned(self.blocks, df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
+                        figure.suptitle(plt_title + '; ' + self.name + ' ttlduration = ' + str(duration) + 'ms')
+                        figures.append(figure)
+                        axess.append(axes)
             return figures, axess
         else:
-            figure, axes = plots.plot_ttlaligned(self.blocks, ttlonmeasures_df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
-            figure.suptitle(plt_title + '; ' + str(len(blocknames_list)) + ' blocks plotted together, cell ' + self.name)
-            return figure, axes
+            figures = []
+            axess = []
+            vclamp_ttlonmeasures_df = ttlonmeasures_df[(ttlonmeasures_df.response_maxamp_unit == 'pA')]
+            cclamp_ttlonmeasures_df = ttlonmeasures_df[(ttlonmeasures_df.response_maxamp_unit == 'mV')]
+            dfs_list = [vclamp_ttlonmeasures_df, cclamp_ttlonmeasures_df]
+            for df in dfs_list:
+                if not df.empty:
+                    figure, axes = plots.plot_ttlaligned(self.blocks, df, noisefilter_hpfreq=noisefilter_hpfreq, **kwargs)
+                    figure.suptitle(plt_title + '; ' + str(len(blocknames_list)) + ' blocks plotted together, cell ' + self.name)
+                    figures.append(figure)
+                    axess.append(axes)
+            return figures, axess
 
     # plotting (subsets of) action potentials or depolarizing events, overlayed
     def plot_depolevents(self, events_to_plot=pd.Series(), blocknames_list=None,

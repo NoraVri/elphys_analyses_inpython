@@ -1066,7 +1066,10 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
     """
     This function takes as input a single block; it checks whether the block has a ttl-recording,
     and if so it will determine where ttl is high, and add start_idx, end_idx and duration into a dictionary.
-    If it is a current-clamp recording, this function will also calculate baselinev in the ms before ttlon, and applied current parameters.
+    It then checks recording channel units to determine whether it's a (proper) cc or vc recording; if yes,
+    additional response parameters are calculated accordingly.
+    Note: baselinev/baselinec are calculated as mean(values) in the ms before stim.onset,
+    while applied_current/applied_voltage (range) are calculated over that same ms + response duration (these measures are for checking that there isn't something funny happening during the response).
     """
     if (len(block.channel_indexes) < 3) or (not (block.segments[0].analogsignals[2].units == pq.V)):
         print('no TTL signal found in block ' + block.file_origin + '; no responses measured')
@@ -1085,8 +1088,11 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
                 ttl_duration_inms = (ttloff_idx - ttlon_idx + 1) / ms_in_samples
                 sampling_period_inms = segment.analogsignals[0].sampling_period.rescale('ms')
                 sampling_rate = float(segment.analogsignals[0].sampling_rate.rescale('Hz'))
+                recording_primary_unit = str(segment.analogsignals[0].units)[-2:]
+                recording_secondary_unit = str(segment.analogsignals[1].units)[-2:]
+                response_unit = recording_primary_unit
 
-                if (segment.analogsignals[0].units == pq.mV) and (segment.analogsignals[1].units == pq.pA):  # current clamp recording
+                if recording_primary_unit.__contains__('V') and recording_secondary_unit.__contains__('A'):  # current clamp recording
                     voltage_recording = np.array(np.squeeze(segment.analogsignals[0]))
                     current_recording = np.array(np.squeeze(segment.analogsignals[1]))
                     # filtering v same as for event-detection (unless None passed through for noisefilter)
@@ -1107,7 +1113,6 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
                     maxv_idx = np.argmax(voltage_recording[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
                     maxamp_postttl_t = maxv_idx / ms_in_samples
                     response_maxamp = maxv - baselinev
-                    response_maxamp_unit = 'mV'
                     # getting max.dV/dt
                     dvdt = take_derivative(voltage_recording, sampling_period_inms)
                     maxdvdt = np.max(dvdt[ttlon_idx:(ttlon_idx + (response_window_inms*ms_in_samples))])
@@ -1119,10 +1124,12 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
                                             - np.min(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
                     if abs(applied_current_range) < 10:
                         applied_current_range = 0
-                    holding_voltage = None
+                    applied_voltage = None
+                    applied_voltage_range = None
                     baselinec = None
+                    baselinec_range = None
 
-                elif (segment.analogsignals[0].units == pq.pA) and (segment.analogsignals[1].units == pq.mV):  # voltage clamp recording
+                elif recording_primary_unit.__contains__('A') and recording_secondary_unit.__contains__('V'):  # voltage clamp recording
                     current_recording = np.array(np.squeeze(segment.analogsignals[0]))
                     voltage_recording = np.array(np.squeeze(segment.analogsignals[1]))
 
@@ -1137,28 +1144,29 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
                     minc_idx = np.argmin(current_recording[ttlon_idx:(ttlon_idx + (response_window_inms * ms_in_samples))])
                     maxamp_postttl_t = minc_idx / ms_in_samples
                     response_maxamp = baselinec - minc
-                    response_maxamp_unit = 'pA'
-
-                    applied_current = np.mean(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
-                    applied_current_range = np.max(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx]) \
-                                            - np.min(current_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
-                    holding_voltage = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
-                    baselinev_range = np.max(voltage_recording[(ttlon_idx-ms_in_samples):ttloff_idx]) \
+                    # getting applied voltage: mean, and max-min in [ms before ttl on : ttl off]
+                    applied_voltage = np.mean(voltage_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
+                    applied_voltage_range = np.max(voltage_recording[(ttlon_idx-ms_in_samples):ttloff_idx]) \
                                             - np.min(voltage_recording[(ttlon_idx-ms_in_samples):ttloff_idx])
+                    applied_current = None
+                    applied_current_range = None
                     baselinev = None
+                    baselinev_range = None
                     maxdvdt = None
 
                 else:  # recording could not be identified as either current- or voltage-clamp recording (as seen from recording channel units)
                     baselinev = None
                     baselinev_range = None
                     baselinec = None
+                    baselinec_range = None
                     response_maxamp = None
-                    response_maxamp_unit = None
+                    response_unit = None
                     maxamp_postttl_t = None
                     maxdvdt = None
                     applied_current = None
                     applied_current_range = None
-                    holding_voltage = None
+                    applied_voltage = None
+                    applied_voltage_range = None
             else:  # there is a ttl-trace in the recording but TTL wasn't actually high at any point
                 ttlon_idx = None
                 ttloff_idx = None
@@ -1166,13 +1174,15 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
                 baselinev = None
                 baselinec = None
                 baselinev_range = None
+                baselinec_range = None
                 response_maxamp = None
-                response_maxamp_unit = None
+                response_unit = None
                 maxamp_postttl_t = None
                 maxdvdt = None
                 applied_current = None
                 applied_current_range = None
-                holding_voltage = None
+                applied_voltage = None
+                applied_voltage_range = None
 
             ttlon_measures_dict['file_origin'].append(block.file_origin)
             ttlon_measures_dict['segment_idx'].append(idx)
@@ -1180,15 +1190,17 @@ def get_singlepulsettl_depolresponse_measures(block, noisefilter_hpfreq, ttlhigh
             ttlon_measures_dict['ttloff_idx'].append(ttloff_idx)
             ttlon_measures_dict['ttlon_duration_inms'].append(ttl_duration_inms)
             ttlon_measures_dict['baselinev'].append(baselinev)
-            ttlon_measures_dict['baselinec'].append(baselinec)
             ttlon_measures_dict['baselinev_range'].append(baselinev_range)
+            ttlon_measures_dict['baselinec'].append(baselinec)
+            ttlon_measures_dict['baselinec_range'].append(baselinec_range)
             ttlon_measures_dict['response_maxamp'].append(response_maxamp)
             ttlon_measures_dict['response_maxamp_postttl_t_inms'].append(maxamp_postttl_t)
-            ttlon_measures_dict['response_maxamp_unit'].append(response_maxamp_unit)
+            ttlon_measures_dict['response_maxamp_unit'].append(response_unit)
             ttlon_measures_dict['response_maxdvdt'].append(maxdvdt)
             ttlon_measures_dict['applied_current'].append(applied_current)
             ttlon_measures_dict['applied_current_range'].append(applied_current_range)
-            ttlon_measures_dict['holding_voltage'].append(holding_voltage)
+            ttlon_measures_dict['applied_voltage'].append(applied_voltage)
+            ttlon_measures_dict['applied_voltage_range'].append(applied_voltage_range)
 
         return ttlon_measures_dict
 
@@ -1208,13 +1220,14 @@ def make_singlepulsettl_depolresponse_dictionary():
         'ttloff_idx': [],
 
         'applied_current': [],
-        'holding_voltage': [],
-
-        'baselinev_range': [],
         'applied_current_range': [],
+        'applied_voltage': [],
+        'applied_voltage_range': [],
 
         'baselinev': [],
+        'baselinev_range': [],
         'baselinec': [],
+        'baselinec_range': [],
         'response_maxamp': [],
         'response_maxamp_postttl_t_inms': [],
         'response_maxamp_unit': [],

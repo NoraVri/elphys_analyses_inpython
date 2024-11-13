@@ -113,9 +113,6 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
     !Note: all blocks passed to this function should have 3 channels: voltage, current and TTL.
     !Note: the ttlmeasures_df that is passed into this function should contain EITHER vclamp OR cclamp measurements only;
     this is usually handled by the plot_ttlaligned wrapper-function that exists on singleneuron_class.
-
-    TODO: update this function so that it can take the new ttlon_measures_df, and make this plot regardless of vclamp or cclamp rec
-    done; now update wrapper function to split ttlmeasures_df based on rec_mode
     """
     # getting figure and axes to plot on
     if plotdvdt:
@@ -126,18 +123,19 @@ def plot_ttlaligned(blockslist, ttlmeasures_df,
 
     # figuring out whether we're plotting voltage or current
     baselining_measure = 'baselinev'
-    if ttlmeasures_df.loc[0,'response_maxamp_unit'] == 'pA':
-        yaxis_label = 'current'
+    unit = ttlmeasures_df['response_maxamp_unit'].iloc[0]
+    if unit.__contains__('A'):
+        yaxis_label = 'current (' + unit + ')'
         baselining_measure = 'baselinec'
         if colorby_measure == 'baselinev':  # baselinev is the default setting, should be updated if we're plotting current
             colorby_measure = 'baselinec'
-    elif ttlmeasures_df.loc[0,'response_maxamp_unit'] == 'mV':
-        yaxis_label = 'voltage'
+    elif unit.__contains__('V'):
+        yaxis_label = 'voltage (' + unit + ')'
     else:
         print('could not figure out y-axis label; no data plotted')
         return
     if do_baselining:
-        yaxis_label = yaxis_label + ' (baselined)'
+        yaxis_label = yaxis_label + ' baselined'
 
     # getting only the relevant ttl measures
     blocknames_list = [block.file_origin for block in blockslist]

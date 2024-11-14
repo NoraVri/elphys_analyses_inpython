@@ -50,7 +50,7 @@ ttlonmeasures_sthr = ttlonmeasures
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'response_maxamp', c='baselinec', colormap='Spectral')
 ttlonmeasures_sthr.plot.scatter('response_maxamp_postttl_t_inms', 'baselinec_range', c='baselinec', colormap='Spectral')
 ttlonmeasures_sthr.hist(column='response_maxamp_postttl_t_inms', bins=200)
-ttlonmeasures_sthr.hist(column='baselinev_range', bins=200)
+ttlonmeasures_sthr.hist(column='baselinec_range', bins=200)
 # In the response peak times there's two outliers: responses generally peak <3ms post stim., but there are two
 # measured much later than that. Let's see:
 neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.response_maxamp_postttl_t_inms > 5],
@@ -87,5 +87,10 @@ sns.boxplot(data=ttlonmeasures_sthr, x='ttlon_duration_inms', y='response_maxamp
 # my eye says: statistically no difference between no-drug and drug conditions. Mean looks to be up a tiny bit but
 # whiskers in no-drug condition fall entirely within drug-condition ones
 
-sns.lmplot(data=ttlonmeasures_sthr, x='response_maxamp_postttl_t_inms', y='response_maxamp', hue='drug_condition',)
+sns.lmplot(data=ttlonmeasures_sthr, x='response_maxamp', y='response_maxamp_postttl_t_inms', hue='drug_condition',)
+plt.figure()
+sns.boxplot(data=ttlonmeasures_sthr, x='ttlon_duration_inms', y='response_maxamp_postttl_t_inms', hue='drug_condition')
+# no difference here either.
 
+# %% saving the data: subthreshold responses to optoStim
+neuron_data.write_df_tocsv(ttlonmeasures_sthr, 'optostimresponses_sthr')

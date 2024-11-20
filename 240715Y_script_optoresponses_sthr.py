@@ -58,7 +58,7 @@ neuron_data.plot_ttlaligned(ttlonmeasures_sthr,
 # Light intensity was always the same (%intensity not noted)
 
 # Adding drug conditions as a column to ttlonmeasures dataframe: (from Notes0715.rtf, cell 2)
-drug_conditions = ['no drug', 'wash in', 'with drug']
+drug_conditions = ['no drug', 'wash in', 'with drug', 'wash out']
 ttlonmeasures_sthr.loc[:, 'drug_condition'] = 'no drug'
 ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('0007'), 'drug_condition'] = 'wash in/with drug' #!Note: blocks marked as having drug applied start at the time solution is switched, so the first ... segments should be considered 'wash in'.
 ttlonmeasures_sthr.loc[ttlonmeasures_sthr.file_origin.str.contains('0008'), 'drug_condition'] = 'with drug'

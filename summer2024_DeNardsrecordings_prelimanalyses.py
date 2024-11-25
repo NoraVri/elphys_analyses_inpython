@@ -33,6 +33,7 @@ for neuron in neuron_recordings:
     neuron_data.plot_ttlaligned(ttlonmeasures_sthr[ttlonmeasures_sthr.drug_condition == 'no drug'],
                                 postttl_t_inms=30,
                                 prettl_t_inms=5,
+                                colorby_measure='applied_voltage'
                                 )
     # collecting the response measures for each neuron
     ttlonmeasures_sthr.loc[:,'neuron_id'] = neuron

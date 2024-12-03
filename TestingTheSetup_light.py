@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
 import numpy as np
+import seaborn as sns
 
 # functions written just for this purpose
 def make_lightONmeasures_dict():
@@ -26,7 +27,7 @@ def make_lightONmeasures_dict():
     return lighton_measures
 
 
-def get_lightON_measures_perblock(block, ttlhigh_value=1, minlighton_value=0.03):
+def get_lightON_measures_perblock(block, ttlhigh_value=1, minlighton_value=0.007):
     lightonmeasures_dict = make_lightONmeasures_dict()
     for idx, segment in enumerate(block.segments):
         ttlout_rec = np.array(np.squeeze(segment.analogsignals[2]))
@@ -80,6 +81,7 @@ def get_lightON_measures_perblock(block, ttlhigh_value=1, minlighton_value=0.03)
 def get_lightON_measures(data, **kwargs):
     all_lighton_measures_dict = make_lightONmeasures_dict()
     for block in data.blocks:
+        print(block.file_origin)
         block_lighton_measures = get_lightON_measures_perblock(block, **kwargs)
         for key in all_lighton_measures_dict.keys():
             all_lighton_measures_dict[key] += block_lighton_measures[key]
@@ -153,3 +155,17 @@ plt.suptitle('10ms TTL pulse')
 
 # it looks too weird to be real, but let's plot the traces aligned to light onset to see:
 plot_alignedto_light_onset(data)
+
+
+
+# %% new light box
+data = SingleNeuron('20240419_newbox_testing_light')
+# data.plot_rawdatablocks()
+lighton_measures_df = get_lightON_measures(data)
+# whittle it down to blocks with detector on
+lighton_measures_df = lighton_measures_df[lighton_measures_df.file_origin.str.contains('detectorON')]
+
+lighton_measures_df.plot.scatter('ttlon_duration_inms', 'lighton_amplitude')
+# %%
+sns.scatterplot(data=lighton_measures_df[lighton_measures_df.file_origin.str.contains('100')],
+                x='ttlon_duration_inms', y='lighton_amplitude',)

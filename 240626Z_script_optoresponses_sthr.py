@@ -12,7 +12,7 @@ import json
 neuron_name = '240626Z'
 neuron_data = SingleNeuron(neuron_name)
 
-# neuron_data.plot_rawdatablocks(segments_overlayed=False)
+neuron_data.plot_rawdatablocks(segments_overlayed=False)
 # notes on recording quality:
 # Not the greatest recording: cell held with ~-2nA most of the time to keep -70mV
 # rec.file#0000 shows steep dropoff of recording conditions after ~150s (as seen from increased holding current and

@@ -9,12 +9,12 @@ import os
 import re
 import json
 
-neuron_name = '240626Y'
+neuron_name = '240626X'
 neuron_data = SingleNeuron(neuron_name)
 
 neuron_data.plot_rawdatablocks(segments_overlayed=False)
 # notes on recording quality:
 # BAD TELEGRAPHS: both primary and secondary are recorded as having units of pA.
-# Cell held with ~-1nA to keep -70mV (-1400pA), but holding quite variable especially during the first recording block
-# (the only one without drug). Holding current then stabilizes and decreases somewhat; clearly getting quite a lot of
-# spontaneously occurring activity at this point, too.
+# Otherwise, looks like a pretty nice recording: cell held with ~-200pA to keep -70mV (-1400pA); there are some
+# spontaneous depolarizations going on but they're relatively small.
+# Does look like optostim response amplitude is highly variable.

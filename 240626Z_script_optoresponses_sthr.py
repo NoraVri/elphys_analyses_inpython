@@ -18,6 +18,7 @@ neuron_data.plot_rawdatablocks(segments_overlayed=False)
 # rec.file#0000 shows steep dropoff of recording conditions after ~150s (as seen from increased holding current and
 # test pulse size); cell is then pretty stable for most of recordings, until dropping off further in rec.file#0004,
 # ~450s in (drug washout condition).
+# Also, I see quite a lot of spontaneously occurring depolarizations, despite this cell being patched with Cs-based intra
 
 # %% getting optoStim response measurements:
 neuron_data.get_singlepulse_ttlonmeasures_fromrawdata(response_window_inms=150)

@@ -83,66 +83,94 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
     return recordingblocks_index_df
 
 
-# %% spike detection in cell-attached recordings
+# %% spikes in cell-attached recordings
 
 
-def get_aps_from_cellattachedrecording(block_file_origin, segment_idx, single_segment,
-                                       getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
-                                       plot='off'):
-#     """ This function finds the peaks of action potentials/currents in cell-attached recordings.
-#     Workflow:
-#     - identify whether file is current- or voltage-clamp recording
-#         if vc, multiply by -1 to detect APs as peaks in the data (instead of valleys)
-#     - get baseline (by low-pass filtering) and noiselevel (by high-pass filtering)
-#         subtract these from the raw data to get clean trace centered around 0
-#     - detect peaks that go over noise/threshold value by at least ...
-#     - check that identified peaks aren't due to applied current/voltage steps
-#
-#     """
-#
+def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single_segment,
+                                          detection_noisemultiplier=3, detection_threshold=None,
+                                          getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
+                                          plot='off'):
+    """ This function finds the peaks of action potentials/currents in cell-attached recordings.
+    First, the recording trace is cleaned by subtracting the low-pass and high-pass filtered versions
+    (slow trends and fast noise, respectively). This trace is then thresholded (by noise-level, if so desired) and
+    places where the recording trace reaches above threshold for at least 0.2ms/4 samples are used to detect (putative)
+    spike peaks (one peak per trace-snippet).
+    This function returns a list of peak idcs.
+    """
+
     recording_primary = single_segment.analogsignals[0]
     recording_secondary = single_segment.analogsignals[1]
     time_axis = recording_primary.times
     sampling_frequency = float(recording_primary.sampling_rate.rescale('Hz'))  # cast to float gets rid of quantities
+    ms_in_samples = int(sampling_frequency * 0.001)  # sampling freq. was just set to be in Hz, so this math always works
+    primary_recording_unit = recording_primary.units
+    data_trace = np.array(np.squeeze(recording_primary))  # stripping pq-properties and getting an array of dimension 1x0
 
-    primary_recording_unit = str(recording_primary.units)[-2:]
-    data_trace = recording_primary.squeeze()
-
-    # # checking units on the primary; multiplying signal by -1 if it's current
-    # primary_recording_unit = recording_primary.units
-    # if primary_recording_unit == pq.pA:
-    #     data_trace = -1 * np.array(np.squeeze(recording_primary))
-    # elif primary_recording_unit == pq.mV:
-    #     data_trace = np.array(np.squeeze(recording_primary))
-    # else:
-    #     print('function requirements are not met by the data; no result produced')
-    #     return
-#
-    # getting a low-pass and a high-pass filtered version of data trace:
     data_trace_lpfiltered, data_trace_hpfiltered = apply_filters_to_vtrace(data_trace,
                                                                            getbaseline_lpfilter_freq,
                                                                            getnoise_hpfilterfreq,
                                                                            sampling_frequency,
                                                                            plot)
-    # if plot = 'on', make some plots of the raw and filtered data:
-    if plot == 'on':
-        figure, axes = plt.subplots(2, 1, sharex='all')
-        axes[0].plot(time_axis, data_trace, label='raw data')
-        # axes[0].set_title('raw recording')
-        axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
-        # axes[0].set_title('hp-filtered')
-        axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
-        # axes[1].set_title('lp-filtered')
-        axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered), label='raw - lp_filtered')
-        # axes[2].set_title('raw - lp-filtered')
-        axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered - data_trace_hpfiltered),
-                     label='raw - lp_filtered - hp_filtered')
-        # axes[2].set_title('raw - lp-filtered - hp-filtered')
-        axes[0].set_ylabel(primary_recording_unit)
-        axes[1].set_xlabel(str(time_axis.units))
-        axes[0].legend()
-        axes[1].legend()
-        figure.suptitle('segment idx = ' + segment_idx)
+    # cleaning up the data trace: subtracting lp-filtered and hp-filtered version
+    spikedetection_data_trace = data_trace - data_trace_lpfiltered - data_trace_hpfiltered
+
+    # getting the noise-level: mean value of abs(hp-filtered trace)
+    noise_value = np.mean(np.abs(data_trace_hpfiltered))
+
+    # spike peaks should be over threshold for at least 4 samples/0.2ms (whichever is longer)
+    min_peaktrace_length = int(0.2 * ms_in_samples)
+    if min_peaktrace_length < 4:
+        min_peaktrace_length = 4
+
+    # getting threshold value for spike detection: (default: 3x noise)
+    # TODO add some code to deal with VC/CC value conversions
+    if detection_threshold is None:
+        detection_threshold = detection_noisemultiplier * noise_value
+    else:
+        detection_threshold = detection_threshold
+
+    start_idcs = []
+    end_idcs = []
+    peaks_idcs = []
+
+    # get idcs in the raw data trace that go over/under (CC/VC recording) threshold value:  TODO change this to deal with vc/cc automatically
+    data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace < detection_threshold))
+    # differentiate this trace to get places where successive idcs are part of the same detected peak
+    pastthreshold_idcs_diff = np.squeeze(np.diff(data_trace_pastthreshold_idcs))
+    pastthreshold_idcs_diff_largevalues_idcs = np.squeeze(np.where(pastthreshold_idcs_diff > 1))
+
+    start_idcs.append(data_trace_pastthreshold_idcs[0])
+    # the first number in the data_trace_pastthreshold_idcs marks the place where the first spikepeak goes over threshold
+    for idx in pastthreshold_idcs_diff_largevalues_idcs:
+        end_idcs.append(data_trace_pastthreshold_idcs[idx])
+        # the first large number in the differentiated idcs-trace marks the place where the first spikepeak in the trace goes below detection threshold again
+        start_idcs.append(data_trace_pastthreshold_idcs[idx + 1])
+    end_idcs.append(data_trace_pastthreshold_idcs[-1])
+
+    for start_idx, end_idx in zip(start_idcs, end_idcs):
+        spikedetect_trace = spikedetection_data_trace[start_idx:end_idx]
+        spikepeak_idx_in_peaktrace = np.argmin(spikedetect_trace)
+        peaks_idcs.append((start_idx + spikepeak_idx_in_peaktrace))
+
+    # # if plot = 'on', make some plots of the raw and filtered data:
+    # if plot == 'on':
+    #     figure, axes = plt.subplots(2, 1, sharex='all')
+    #     axes[0].plot(time_axis, data_trace, label='raw data')
+    #     # axes[0].set_title('raw recording')
+    #     axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
+    #     # axes[0].set_title('hp-filtered')
+    #     axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
+    #     # axes[1].set_title('lp-filtered')
+    #     axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered), label='raw - lp_filtered')
+    #     # axes[2].set_title('raw - lp-filtered')
+    #     axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered - data_trace_hpfiltered),
+    #                  label='raw - lp_filtered - hp_filtered')
+    #     # axes[2].set_title('raw - lp-filtered - hp-filtered')
+    #     axes[0].set_ylabel(primary_recording_unit)
+    #     axes[1].set_xlabel(str(time_axis.units))
+    #     axes[0].legend()
+    #     axes[1].legend()
+    #     figure.suptitle('segment idx = ' + str(segment_idx))
 
 
 

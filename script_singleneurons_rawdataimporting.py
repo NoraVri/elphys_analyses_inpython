@@ -2853,6 +2853,59 @@ cell20240731A.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 cell20240731A.rawdata_remove_nonrecordingblock('gapFree_0000.abf')
 cell20240731A.write_results()
 
+
+# %%
+
+
+
+# %%
+cell20250217A1 = SingleNeuron('20250217A1')
+cell20250217A1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+blocknameslist = cell20250217A1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250217A1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250217A1.write_results()
+
+
+# %%
+cell20250217A2 = SingleNeuron('20250217A2')
+cell20250217A2.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+blocknameslist = cell20250217A2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250217A2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250217A2.write_results()
+
+
+# %%
+cell20250217B1 = SingleNeuron('20250217B1')
+# cell20250217B1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+blocknameslist = cell20250217B1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250217B1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250217B1.write_results()
+
+
+# %%
+cell20250217B2 = SingleNeuron('20250217B2')
+# cell20250217B2.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+blocknameslist = cell20250217B2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250217B2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250217B2.write_results()
+
+
+# %%
+cell20250217C1 = SingleNeuron('20250217C1')
+cell20250217C1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
+
+cell20250217C1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2, pairedrecording=False)
+cell20250217C1.write_results()
+
+
 # %% raw data import/cleanup template
 
 # cell.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)

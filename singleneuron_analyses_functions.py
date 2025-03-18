@@ -86,22 +86,25 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
 # %% spikes in cell-attached recordings
 
 
-def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single_segment,
-                                          detection_noisemultiplier=3, detection_threshold=None,
+def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_idx,
+                                          detection_noisemultiplier=10, detection_threshold=None,
                                           getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
                                           plot='off'):
     """ This function finds the peaks of action potentials/currents in cell-attached recordings.
     First, the recording trace is cleaned by subtracting the low-pass and high-pass filtered versions
     (slow trends and fast noise, respectively). This trace is then thresholded (by noise-level, if so desired) and
     places where the recording trace reaches above threshold for at least 0.2ms/4 samples are used to detect (putative)
-    spike peaks (one peak per trace-snippet).
-    This function returns a list of peak idcs.
+    spike peaks (one peak per trace-snippet). [Note: current recordings are inverted to detect spikes as peaks instead of troughs.]
+    The function technically works also for data recorded in current-clamp mode; however, using such data is not advised and results obtained in this way should be carefully checked.
+    In general, it is advised to check results and filter badly picked-up points where necessary.
+    This function returns a dictionary containing the peaks_idcs, peak amplitudes (from threshold, in cleaned trace),
+    peak-to-peak intervals (to previous peak in the segment) and more.
     """
 
     recording_primary = single_segment.analogsignals[0]
     recording_secondary = single_segment.analogsignals[1]
-    time_axis = recording_primary.times
-    sampling_frequency = float(recording_primary.sampling_rate.rescale('Hz'))  # cast to float gets rid of quantities
+    time_axis = recording_primary.times.rescale('ms')
+    sampling_frequency = float(recording_primary.sampling_rate.rescale('Hz'))  # cast to float gets rid of quantities-property
     ms_in_samples = int(sampling_frequency * 0.001)  # sampling freq. was just set to be in Hz, so this math always works
     primary_recording_unit = recording_primary.units
     data_trace = np.array(np.squeeze(recording_primary))  # stripping pq-properties and getting an array of dimension 1x0
@@ -110,70 +113,153 @@ def get_spikes_from_cellattachedrecording(block_file_origin, segment_idx, single
                                                                            getbaseline_lpfilter_freq,
                                                                            getnoise_hpfilterfreq,
                                                                            sampling_frequency,
-                                                                           plot)
+                                                                           plot='off')
     # cleaning up the data trace: subtracting lp-filtered and hp-filtered version
     spikedetection_data_trace = data_trace - data_trace_lpfiltered - data_trace_hpfiltered
-
-    # getting the noise-level: mean value of abs(hp-filtered trace)
-    noise_value = np.mean(np.abs(data_trace_hpfiltered))
 
     # spike peaks should be over threshold for at least 4 samples/0.2ms (whichever is longer)
     min_peaktrace_length = int(0.2 * ms_in_samples)
     if min_peaktrace_length < 4:
         min_peaktrace_length = 4
 
-    # getting threshold value for spike detection: (default: 3x noise)
-    # TODO add some code to deal with VC/CC value conversions
+    # getting threshold value for spike detection: (default: 10x noise) - and ensuring this value will always be positive (despite user perhaps filling in a negative number for detecting spike peaks as troughs in current-recording)
+    # getting the noise-level: mean value of abs(hp-filtered trace)
+    noise_value = np.mean(np.abs(data_trace_hpfiltered))
     if detection_threshold is None:
-        detection_threshold = detection_noisemultiplier * noise_value
+        detection_threshold = abs(detection_noisemultiplier) * noise_value
     else:
-        detection_threshold = detection_threshold
+        detection_threshold = abs(detection_threshold)
 
     start_idcs = []
     end_idcs = []
     peaks_idcs = []
 
-    # get idcs in the raw data trace that go over/under (CC/VC recording) threshold value:  TODO change this to deal with vc/cc automatically
-    data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace < detection_threshold))
+    # if VC recording, invert recording trace to detect spikes as peaks instead of troughs:
+    if str(primary_recording_unit).__contains__('A'):
+        spikedetection_data_trace = -1 * spikedetection_data_trace
+    # get idcs in the raw data trace that go over/under (CC/VC recording) threshold value:
+    data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace > detection_threshold))
     # differentiate this trace to get places where successive idcs are part of the same detected peak
     pastthreshold_idcs_diff = np.squeeze(np.diff(data_trace_pastthreshold_idcs))
     pastthreshold_idcs_diff_largevalues_idcs = np.squeeze(np.where(pastthreshold_idcs_diff > 1))
 
+    # the first number in the pastthreshold_idcs marks the place where the first spikepeak goes over threshold
     start_idcs.append(data_trace_pastthreshold_idcs[0])
-    # the first number in the data_trace_pastthreshold_idcs marks the place where the first spikepeak goes over threshold
+    # then, the first large number in the differentiated idcs-trace marks the place where the first spikepeak in the trace goes below detection threshold again; and the next number in this sequence marks the next spikepeak going over threshold again
     for idx in pastthreshold_idcs_diff_largevalues_idcs:
         end_idcs.append(data_trace_pastthreshold_idcs[idx])
-        # the first large number in the differentiated idcs-trace marks the place where the first spikepeak in the trace goes below detection threshold again
         start_idcs.append(data_trace_pastthreshold_idcs[idx + 1])
     end_idcs.append(data_trace_pastthreshold_idcs[-1])
-
+    # now, find the idx where the spikepeak-tracesnippet reaches its maximum value (i.e. the spike peak):
     for start_idx, end_idx in zip(start_idcs, end_idcs):
-        spikedetect_trace = spikedetection_data_trace[start_idx:end_idx]
-        spikepeak_idx_in_peaktrace = np.argmin(spikedetect_trace)
-        peaks_idcs.append((start_idx + spikepeak_idx_in_peaktrace))
+        if end_idx > start_idx:
+            spikedetect_trace = spikedetection_data_trace[start_idx:end_idx]
+            spikepeak_idx_in_peaktrace = np.argmax(spikedetect_trace)
+            peaks_idcs.append((start_idx + spikepeak_idx_in_peaktrace))
 
-    # # if plot = 'on', make some plots of the raw and filtered data:
-    # if plot == 'on':
-    #     figure, axes = plt.subplots(2, 1, sharex='all')
-    #     axes[0].plot(time_axis, data_trace, label='raw data')
-    #     # axes[0].set_title('raw recording')
-    #     axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
-    #     # axes[0].set_title('hp-filtered')
-    #     axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
-    #     # axes[1].set_title('lp-filtered')
-    #     axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered), label='raw - lp_filtered')
-    #     # axes[2].set_title('raw - lp-filtered')
-    #     axes[1].plot(time_axis, (data_trace - data_trace_lpfiltered - data_trace_hpfiltered),
-    #                  label='raw - lp_filtered - hp_filtered')
-    #     # axes[2].set_title('raw - lp-filtered - hp-filtered')
-    #     axes[0].set_ylabel(primary_recording_unit)
-    #     axes[1].set_xlabel(str(time_axis.units))
-    #     axes[0].legend()
-    #     axes[1].legend()
-    #     figure.suptitle('segment idx = ' + str(segment_idx))
+    # Collect detected peaks and associated information into dictionary:
+    segment_spikepeaksmeasures_dict = make_cellattachedspikepeaks_dictionary()
+    # adding spike peaks idcs:
+    segment_spikepeaksmeasures_dict['spikepeak_idx'] = peaks_idcs
+    # adding time intervals between detected spike peaks:
+    spikepeaks_times = time_axis[peaks_idcs]
+    intervals = []
+    for idx, timepoint in enumerate(spikepeaks_times):
+        if idx < (len(spikepeaks_times) - 1):
+            interval = spikepeaks_times[idx + 1] - spikepeaks_times[idx]
+            intervals.append(interval)
+        else:
+            intervals.append(float('nan'))  # adding a nan as the final value since there is no next peak in the sequence
+            continue
+    segment_spikepeaksmeasures_dict['timeinterval_tonextpeak_inms'] = intervals
+    # adding peakamp_from_baseline (in cleaned trace; baseline=lp-filtered trace):
+    spikepeaks_amps = spikedetection_data_trace[peaks_idcs]
+    segment_spikepeaksmeasures_dict['peakamp_from_baseline'] = spikepeaks_amps
+    # adding detection threshold value:
+    n_spikepeaks = len(peaks_idcs)
+    segment_spikepeaksmeasures_dict['detection_threshold'] = [detection_threshold] * n_spikepeaks
+    # adding file_origin and segment_idx (for indexing back into the whole raw data):
+    f_origin = [file_origin]
+    seg_idx = [segment_idx]
+    segment_spikepeaksmeasures_dict['file_origin'] = f_origin * n_spikepeaks
+    segment_spikepeaksmeasures_dict['segment_idx'] = seg_idx * n_spikepeaks
+    # adding applied and measured current/voltage values (as appropriate for vc/cc recording; NaN for the other value):
+    measured_current = []
+    measured_voltage = []
+    applied_current = []
+    applied_voltage = []
+    if str(recording_primary.units).__contains__('A') and str(recording_secondary.units).__contains__('V'):
+        for idx in peaks_idcs:
+            measured_current.append(recording_primary[idx])
+            applied_voltage.append(recording_secondary[idx])
+        measured_voltage = [float('nan')] * n_spikepeaks
+        applied_current = [float('nan')] * n_spikepeaks
+    elif str(recording_primary.units).__contains__('V') and str(recording_secondary.units).__contains__('A'):
+        for idx in peaks_idcs:
+            measured_voltage.append(recording_primary[idx])
+            applied_current.append(recording_secondary[idx])
+        measured_current = [float('nan')] * n_spikepeaks
+        applied_voltage = [float('nan')] * n_spikepeaks
+    else:  # in case something's wrong with telegraph values, fill in nan-values all around
+        measured_voltage = [float('nan')] * n_spikepeaks
+        applied_current = [float('nan')] * n_spikepeaks
+        measured_current = [float('nan')] * n_spikepeaks
+        applied_voltage = [float('nan')] * n_spikepeaks
+    segment_spikepeaksmeasures_dict['measured_voltage'] = measured_voltage
+    segment_spikepeaksmeasures_dict['measured_current'] = measured_current
+    segment_spikepeaksmeasures_dict['applied_voltage'] = applied_voltage
+    segment_spikepeaksmeasures_dict['applied_current'] = applied_current
 
 
+    # if plot = 'on', make some plots to visualize how spikes are detected:
+    if plot == 'on':
+        figure, axes = plt.subplots(2, 1, sharex='all')
+        # if VC recording, re-invert spikedetection trace, and set detection_threshold to negative value:
+        if str(primary_recording_unit).__contains__('A'):
+            spikedetection_data_trace = -1 * spikedetection_data_trace
+            detection_threshold = -1 * detection_threshold
+        # plotting the filtered/cleaned data traces in one figure, with detection threshold line:
+        axes[0].plot(time_axis, spikedetection_data_trace,
+                     label='raw - lp_filtered - hp_filtered')
+        axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
+        axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
+        axes[0].hlines(detection_threshold, time_axis[0], time_axis[-1],
+                       color='r', label='detection threshold')
+        # plotting the raw data, detected peaks:
+        axes[1].plot(time_axis, data_trace, label='raw data')
+        axes[1].scatter(time_axis[data_trace_pastthreshold_idcs],
+                        data_trace[data_trace_pastthreshold_idcs],
+                        color='y', label='spikepeaktrace-points')
+        axes[1].scatter(time_axis[peaks_idcs], data_trace[peaks_idcs],
+                        color='b', label='detected peaks')
 
+        axes[0].set_ylabel(str(primary_recording_unit))
+        axes[1].set_xlabel(str(time_axis.units))
+        axes[0].legend()
+        axes[1].legend()
+
+    return segment_spikepeaksmeasures_dict
+
+
+# helper-functions:
+def make_cellattachedspikepeaks_dictionary():
+    """This function creates an 'empty' dictionary with
+    a key for each measure that will be taken for each spike peak. """
+
+    spikepeaks_measures = {
+        'spikepeak_idx': [],
+        'timeinterval_tonextpeak_inms': [],
+        'peakamp_from_baseline': [],
+        'detection_threshold': [],
+        'file_origin': [],
+        'segment_idx': [],
+        'measured_current': [],
+        'measured_voltage': [],
+        'applied_current': [],
+        'applied_voltage': [],
+    }
+
+    return spikepeaks_measures
 
 # %% averaging traces
 def get_blocks_average(blockslist, indexing_df=None):

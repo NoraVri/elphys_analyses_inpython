@@ -10,30 +10,31 @@ import re
 import json
 
 from detecta import detect_peaks
-from singleneuron_analyses_functions import get_aps_from_cellattachedrecording
-from singleneuron_analyses_functions import apply_filters_to_vtrace
+from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
+from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictionary
 
 # %% importing some data
 cell20250217A1 = SingleNeuron('20250217A1')
 cell20250217B2 = SingleNeuron('20250217B2')
 cell20250217C1 = SingleNeuron('20250217C1')
+cell230608A = SingleNeuron('230608A')
 
 recording_segment = cell20250217A1.blocks[3].segments[0]
-sampling_frequency = float(recording_segment.analogsignals[0].sampling_rate.rescale('Hz'))
-recording_segment_datatrace = recording_segment.analogsignals[0].squeeze()
+# sampling_frequency = float(recording_segment.analogsignals[0].sampling_rate.rescale('Hz'))
+# recording_segment_datatrace = recording_segment.analogsignals[0].squeeze()
+#
+# plt.plot(recording_segment_datatrace)
+#
+# data_trace_lpfiltered, data_trace_hpfiltered = apply_filters_to_vtrace(recording_segment_datatrace,
+#                                                                        0.5,
+#                                                                        5000,
+#                                                                        sampling_frequency,
+#                                                                        plot='off')
+#
+# eventdetect_trace = np.array(recording_segment_datatrace) - data_trace_lpfiltered - data_trace_hpfiltered
 
-plt.plot(recording_segment_datatrace)
-
-data_trace_lpfiltered, data_trace_hpfiltered = apply_filters_to_vtrace(recording_segment_datatrace,
-                                                                       0.5,
-                                                                       5000,
-                                                                       sampling_frequency,
-                                                                       plot='off')
-
-eventdetect_trace = np.array(recording_segment_datatrace) - data_trace_lpfiltered - data_trace_hpfiltered
-
-get_aps_from_cellattachedrecording('block', 0, recording_segment,
-                                   plot='on')
+spikes_dict = get_spikes_from_cellattachedrecording(recording_segment, 'file', 0,
+                                   plot='off')
 
 # single_segment = recording_segment
 # recording_primary = single_segment.analogsignals[0]
@@ -43,4 +44,10 @@ get_aps_from_cellattachedrecording('block', 0, recording_segment,
 #
 # primary_recording_unit = str(recording_primary.units)[-2:]
 # data_trace = recording_primary.squeeze()
-
+empty_dict = make_cellattachedspikepeaks_dictionary()
+for block in cell20250217B2.blocks:
+    for i, segment in enumerate(block.segments):
+        dict = get_spikes_from_cellattachedrecording(segment, block.file_origin, i,
+                                                     plot='off')
+        for key in empty_dict:
+            empty_dict[key] += list(dict[key])

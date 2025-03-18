@@ -143,7 +143,12 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     pastthreshold_idcs_diff = np.squeeze(np.diff(data_trace_pastthreshold_idcs))
     pastthreshold_idcs_diff_largevalues_idcs = np.squeeze(np.where(pastthreshold_idcs_diff > 1))
 
-    # the first number in the pastthreshold_idcs marks the place where the first spikepeak goes over threshold
+    # if there are no numbers in this list, print warning message and return empty dict
+    if len(data_trace_pastthreshold_idcs) == 0:
+        print('no spikes detected for given threshold in block ' + file_origin + ' segment ' + str(segment_idx))
+        segment_spikepeaksmeasures_dict = make_cellattachedspikepeaks_dictionary()
+        return segment_spikepeaksmeasures_dict
+    # otherwise, the first number in the pastthreshold_idcs marks the place where the first spikepeak goes over threshold
     start_idcs.append(data_trace_pastthreshold_idcs[0])
     # then, the first large number in the differentiated idcs-trace marks the place where the first spikepeak in the trace goes below detection threshold again; and the next number in this sequence marks the next spikepeak going over threshold again
     for idx in pastthreshold_idcs_diff_largevalues_idcs:
@@ -162,7 +167,7 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     # adding spike peaks idcs:
     segment_spikepeaksmeasures_dict['spikepeak_idx'] = peaks_idcs
     # adding time intervals between detected spike peaks:
-    spikepeaks_times = time_axis[peaks_idcs]
+    spikepeaks_times = np.array(time_axis[peaks_idcs])
     intervals = []
     for idx, timepoint in enumerate(spikepeaks_times):
         if idx < (len(spikepeaks_times) - 1):

@@ -19,6 +19,15 @@ cell20250217B2 = SingleNeuron('20250217B2')
 cell20250217C1 = SingleNeuron('20250217C1')
 cell230608A = SingleNeuron('230608A')
 
+cell20250217A1_spikes_df = cell20250217A1.get_spikes_fromcellattachedrecording()
+cell20250217B2_spikes_df = cell20250217B2.get_spikes_fromcellattachedrecording()
+cell20250217C1_spikes_df = cell20250217C1.get_spikes_fromcellattachedrecording()
+# %%
+
+
+
+
+
 recording_segment = cell20250217A1.blocks[3].segments[0]
 # sampling_frequency = float(recording_segment.analogsignals[0].sampling_rate.rescale('Hz'))
 # recording_segment_datatrace = recording_segment.analogsignals[0].squeeze()

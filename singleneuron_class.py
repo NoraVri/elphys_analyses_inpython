@@ -1347,6 +1347,26 @@ class SingleNeuron:
 
         self.longpulse_measures = pd.DataFrame(all_longpulsesmeasures).round(decimals=2)
 
+    # getting spikes from cell-attached recordings
+    def get_spikes_fromcellattachedrecording(self, blocks_list=None, **kwargs):
+        if blocks_list is None:
+            blocks_list = self.blocks
+        else:
+            blocks_list = blocks_list  # TODO: change this so that a string or a list of strings will index onto blocks from self.blocks
+
+        all_cellattachedspikes_dict = snafs.make_cellattachedspikepeaks_dictionary()
+        for block in blocks_list:
+            for i, segment in enumerate(block.segments):
+                segment_cellattachedspikes_dict = snafs.get_spikes_from_cellattachedrecording(segment, block.file_origin, i,
+                                                                                         **kwargs)
+                for key in all_cellattachedspikes_dict:
+                    all_cellattachedspikes_dict[key] += list(segment_cellattachedspikes_dict[key])
+
+        cellattachedspikes = pd.DataFrame(all_cellattachedspikes_dict).round(decimals=2)
+
+        return cellattachedspikes
+
+
 # %% the actual reading in of raw data from files
 
 

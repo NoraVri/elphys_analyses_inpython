@@ -69,6 +69,68 @@ def plot_block(block, depolarizingevents_df,
         axes[i].set_ylabel(str(trace_unit))
     return figure, axes
 
+def plot_block_witheventsmarked(block, events_df,
+                                events_to_mark=None, eventattributes_to_mark='peak_idx',
+                                time_axis_unit='ms', segments_overlayed=True):
+    """ Takes a block and plots all analogsignals (voltage/current/aux (if applicable)),
+    one subplot per channel_index.
+    Optional arguments:
+    - events_to_mark: should be a pd boolean series for indexing into an events DataFrame.
+    - eventattributes_to_mark: should be a string or a list of strings, for identifying the event attributes to be marked.
+    - time_axis_unit: 'ms' by default, can be changed to 's' (or any other time unit understood by quantities).
+    - segments_overlayed: True by default, so that consecutive segments of the same block are
+        plotted overlayed. If False, consecutive segments are plotted consecutively in the same plot.
+    Note: if events_to_mark are passed through, segments_overlayed is set to False and time_axis_unit to ms.
+    """
+    # making one subplot per active recording channel
+    nsubplots = len(block.channel_indexes)
+    figure, axes = plt.subplots(nrows=nsubplots, ncols=1, sharex='all')
+    figure.suptitle(block.file_origin)
+    # marking event baselines and peaks, if applicable
+    if (events_to_mark is not None) and (not events_to_mark.empty): #TODO insert here: if events_to_mark='by_label'
+        blockevents_to_mark = (events_to_mark & (events_df.file_origin == block.file_origin))
+        block_events_df = events_df[blockevents_to_mark]
+        for idx, signal in enumerate(block.channel_indexes[0].analogsignals):
+            time_axis = signal.times.rescale('ms')
+            primary_trace = np.squeeze(np.array(signal))
+            trace_events = block_events_df.loc[block_events_df['segment_idx'] == idx]
+            if isinstance(eventattributes_to_mark, str):
+                attributes_keys = [key for key in events_df.keys() if key.__contains__(eventattributes_to_mark)]
+            elif isinstance(eventattributes_to_mark, list):
+                attributes_keys = []
+                for item in eventattributes_to_mark:
+                    keys = [key for key in events_df.keys() if key.__contains__(item)]
+                    for key in keys:
+                        attributes_keys.append(key)
+            else:
+                print('event attributes to mark could not be resolved for block ' + block.file_origin)
+                return
+            print(attributes_keys)
+            for key in attributes_keys:
+                axes[0].scatter(time_axis[list(trace_events[key])],
+                                primary_trace[list(trace_events[key])],
+                                label=key, color='r')
+                axes[0].legend()
+
+        # setting plot settings so that points will be in the right place
+        time_axis_unit = 'ms'
+        segments_overlayed = False
+
+    # plotting all the traces of the block
+    for i in range(nsubplots):
+        analogsignals = block.channel_indexes[i].analogsignals
+        trace_unit = analogsignals[0].units
+        for analogsignal in analogsignals:
+            if segments_overlayed:
+                time_axis = analogsignals[0].times
+            else:
+                time_axis = analogsignal.times
+            time_axis = time_axis.rescale(time_axis_unit)
+            trace_forplotting = np.squeeze(np.array(analogsignal))
+            axes[i].plot(time_axis, trace_forplotting)
+        axes[i].set_xlabel('time  in ' + time_axis_unit)
+        axes[i].set_ylabel(str(trace_unit))
+    return figure, axes
 
 def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_traces_arrays, traces_labels, rec_units):
     """

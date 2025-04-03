@@ -87,7 +87,7 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
 
 
 def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_idx,
-                                          detection_noisemultiplier=10, detection_threshold=None,
+                                          detection_noisemultiplier=5, detection_threshold=None,
                                           getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
                                           plot='off'):
     """ This function finds the peaks of action potentials/currents in cell-attached recordings.
@@ -249,6 +249,7 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
         axes[1].set_xlabel(str(time_axis.units))
         axes[0].legend(loc='upper right')
         axes[1].legend(loc='upper right')
+        figure.suptitle(file_origin)
 
     return segment_spikepeaksmeasures_dict
 

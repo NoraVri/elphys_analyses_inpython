@@ -65,6 +65,7 @@ class SingleNeuron:
         self.subthreshold_oscillations = []
         self.longpulse_measures = []
         self.passive_decay = []
+        self.cellattachedspikes = pd.DataFrame()
         self.get_singleneuron_rawdata()
         self.get_singleneuron_storedresults()
 
@@ -116,6 +117,9 @@ class SingleNeuron:
             # saving ttlon-measures:
             if len(self.ttlon_measures) > 0:
                 self.ttlon_measures.to_csv(self.name + '_ttlon_measures.csv')
+            # saving cell-attached spikes table:
+            if len(self.cellattachedspikes) > 0:
+                self.cellattachedspikes.to_csv(self.name + '_cellattachedspikes.csv')
 
             print(self.name + ' results have been saved.')
 
@@ -1186,6 +1190,35 @@ class SingleNeuron:
                                               ax=axis)
         plt.suptitle(plt_title)
 
+    def plot_rawdatatraces_with_cellattachedspikes(self, *block_identifiers):
+
+        # check that cell-attached spikes have been extraced; if not, print warning message and exit function
+        if not hasattr(self, 'cellattachedspikes'):
+            print('no cell-attached spikes-table has been made for this neuron')
+            return
+
+        events_to_mark = self.cellattachedspikes.spikepeak_idx > 0
+
+        # get the list of blocks for which to plot
+        allblocknames_list = self.get_blocknames(printing='off')
+        if not block_identifiers:
+            blocknames_list = allblocknames_list
+        else:
+            blocknames_list = []
+            for identifier in block_identifiers:
+                blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
+                for block in blocks:
+                    blocknames_list.append(block)
+
+        for blockname in blocknames_list:
+            block = self.blocks[allblocknames_list.index(blockname)]
+            plots.plot_block_witheventsmarked(block, self.cellattachedspikes,
+                                              events_to_mark=events_to_mark)
+
+
+
+
+
 # %% functions for analyzing raw data
 
 
@@ -1362,9 +1395,8 @@ class SingleNeuron:
                 for key in all_cellattachedspikes_dict:
                     all_cellattachedspikes_dict[key] += list(segment_cellattachedspikes_dict[key])
 
-        cellattachedspikes = pd.DataFrame(all_cellattachedspikes_dict).round(decimals=2)
-
-        return cellattachedspikes
+        self.cellattachedspikes = pd.DataFrame(all_cellattachedspikes_dict).round(decimals=2)
+        self.write_results()
 
 
 # %% the actual reading in of raw data from files

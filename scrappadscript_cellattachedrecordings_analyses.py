@@ -15,8 +15,9 @@ from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictiona
 
 # %% importing some data
 cell20250217A1 = SingleNeuron('20250217A1')
-cell20250217A1_spikes_df = cell20250217A1.get_spikes_fromcellattachedrecording(plot='on')
-
+cell20250217A1.get_spikes_fromcellattachedrecording(plot='off')
+cell20250217A1_spikes_df = cell20250217A1.cellattachedspikes
+cell20250217A1.plot_rawdatatraces_with_cellattachedspikes()
 # %%
 
 cell20250217B2 = SingleNeuron('20250217B2')

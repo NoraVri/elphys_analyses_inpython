@@ -13,6 +13,76 @@ from detecta import detect_peaks
 from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
 from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictionary
 
+# %% scrappad analysis of spiking frequency in 20250401 recordings
+# %% importing the data
+# neuron_name = '20250401A1'
+# neuron_name = '20250401A2'
+neuron_name = '20250401B1'
+# neuron_name = '20250401B2'
+# neuron_name = '20250401C1'
+# neuron_name = '20250401C2'
+# neuron_name = '20250401D1'
+# neuron_name = '20250401D2'
+
+# getting cell-attached spikes, in a df sorted by file timestamp
+neuron_data = SingleNeuron(neuron_name)
+neuron_data.get_spikes_fromcellattachedrecording()
+cellattachedspikes_df = neuron_data.cellattachedspikes.copy()
+file_order = list(neuron_data.recordingblocks_index.file_origin)
+sorted_df = cellattachedspikes_df.sort_values(by="file_origin", key=lambda x:x.map(file_order.index))
+# plotting an overview of the data (time interval between spikepeaks, by recording file)
+sns.boxplot(sorted_df, x="file_origin", y="timeinterval_tonextpeak_inms")
+plt.xticks(rotation=80)
+plt.show()
+plt.tight_layout(pad=1)
+
+
+plt.figure()
+sns.stripplot(sorted_df, x="file_origin", y="timeinterval_tonextpeak_inms")
+sns.violinplot(sorted_df, x="file_origin", y="timeinterval_tonextpeak_inms")
+plt.xticks(rotation=80)
+plt.show()
+plt.tight_layout(pad=1)
+
+
+# %% notes
+# 20250401A1: according to plots, may be speeding up with each drug - LOTs of larger ISIs get categorized as outliers.
+
+
+
+
+
+
+
+
+
+
+
+# %%
+neuron_data.get_recordingblocks_index()
+sampling_freq = float(neuron_data.recordingblocks_index.sampling_freq_inHz.unique())
+blocks_to_plot = list(neuron_data.recordingblocks_index.file_origin[neuron_data.recordingblocks_index.t_recorded_ins > 30])
+
+# neuron_data.plot_rawdatatraces_with_cellattachedspikes(blocks_to_plot)
+
+baseline_recblock = 'gapFree_0003.abf'
+baseline_recblock_df = cellattachedspikes_df[cellattachedspikes_df.file_origin == baseline_recblock]
+baseline_t_start = 100
+baseline_t_end = 200
+tsnippet_baseline_recblock_df = baseline_recblock_df[((baseline_recblock_df.spikepeak_idx > (sampling_freq * baseline_t_start)) & (baseline_recblock_df.spikepeak_idx < (sampling_freq * baseline_t_end)))]
+
+
+
+drug_gabazine_recblock = 'gapFree_with_gabazine_0000.abf'
+drug_gabazine_t_start = 100
+drug_gabazine_t_end = 200
+
+
+
+
+
+
+
 # %% importing some data
 cell20250217A1 = SingleNeuron('20250217A1')
 cell20250217A1.get_spikes_fromcellattachedrecording(plot='off')

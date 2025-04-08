@@ -1190,7 +1190,7 @@ class SingleNeuron:
                                               ax=axis)
         plt.suptitle(plt_title)
 
-    def plot_rawdatatraces_with_cellattachedspikes(self, *block_identifiers):
+    def plot_rawdatatraces_with_cellattachedspikes(self, block_identifiers):
 
         # check that cell-attached spikes have been extraced; if not, print warning message and exit function
         if not hasattr(self, 'cellattachedspikes'):

@@ -110,7 +110,7 @@ def plot_block_witheventsmarked(block, events_df,
                 axes[0].scatter(time_axis[list(trace_events[key])],
                                 primary_trace[list(trace_events[key])],
                                 label=key, color='r')
-                axes[0].legend()
+                axes[0].legend(loc='upper right')
 
         # setting plot settings so that points will be in the right place
         time_axis_unit = 'ms'

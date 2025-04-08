@@ -2905,6 +2905,65 @@ cell20250217C1.plot_rawdatablocks(time_axis_unit='s', segments_overlayed=False)
 cell20250217C1.rawdata_remove_nonrecordingchannel('gapFree_0000.abf', 2, pairedrecording=False)
 cell20250217C1.write_results()
 
+# %%
+cell20250401A1 = SingleNeuron('20250401A1')
+blocknameslist = cell20250401A1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401A1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250401A1.write_results()
+
+# %%
+cell20250401A2 = SingleNeuron('20250401A2')
+blocknameslist = cell20250401A2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401A2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250401A2.write_results()
+
+# %%
+cell20250401B1 = SingleNeuron('20250401B1')
+blocknameslist = cell20250401B1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401B1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250401B1.write_results()
+
+# %%
+cell20250401B2 = SingleNeuron('20250401B2')
+blocknameslist = cell20250401B2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401B2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250401B2.write_results()
+
+# %%
+cell20250401C1 = SingleNeuron('20250401C1')
+blocknameslist = cell20250401C1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401C1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250401C1.write_results()
+
+# %%
+cell20250401C2 = SingleNeuron('20250401C2')
+blocknameslist = cell20250401C2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401C2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250401C2.write_results()
+
+# %%
+cell20250401D1 = SingleNeuron('20250401D1')
+blocknameslist = cell20250401D1.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401D1.rawdata_remove_nonrecordingchannel(block, 2, pairedrecording=True)
+cell20250401D1.write_results()
+
+# %%
+cell20250401D2 = SingleNeuron('20250401D2')
+blocknameslist = cell20250401D2.get_blocknames(printing='off')
+for block in blocknameslist:
+    cell20250401D2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
+cell20250401D2.write_results()
+
+
+
+
 
 # %% raw data import/cleanup template
 

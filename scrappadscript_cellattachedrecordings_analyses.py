@@ -18,11 +18,13 @@ from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictiona
 # neuron_name = '20250401A1'
 # neuron_name = '20250401A2'
 neuron_name = '20250401B1'
+
 # neuron_name = '20250401B2'
 # neuron_name = '20250401C1'
 # neuron_name = '20250401C2'
 # neuron_name = '20250401D1'
 # neuron_name = '20250401D2'
+# neuron_name = '20250407A1'
 
 # getting cell-attached spikes, in a df sorted by file timestamp
 neuron_data = SingleNeuron(neuron_name)
@@ -30,7 +32,16 @@ neuron_data.get_spikes_fromcellattachedrecording()
 cellattachedspikes_df = neuron_data.cellattachedspikes.copy()
 file_order = list(neuron_data.recordingblocks_index.file_origin)
 sorted_df = cellattachedspikes_df.sort_values(by="file_origin", key=lambda x:x.map(file_order.index))
+
+# %%
+weirdspikes = (cellattachedspikes_df.timeinterval_tonextpeak_inms < 3)
+weirdspikes_df = cellattachedspikes_df[weirdspikes]
+neuron_data.plot_rawdatatraces_with_cellattachedspikes(cellattachedspikes_df=weirdspikes_df)
+# neuron_data.plot_rawdatatraces_with_cellattachedspikes('gabazine')
+
+# %%
 # plotting an overview of the data (time interval between spikepeaks, by recording file)
+plt.figure()
 sns.boxplot(sorted_df, x="file_origin", y="timeinterval_tonextpeak_inms")
 plt.xticks(rotation=80)
 plt.show()

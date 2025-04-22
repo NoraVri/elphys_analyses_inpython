@@ -1190,19 +1190,21 @@ class SingleNeuron:
                                               ax=axis)
         plt.suptitle(plt_title)
 
-    def plot_rawdatatraces_with_cellattachedspikes(self, block_identifiers):
+    def plot_rawdatatraces_with_cellattachedspikes(self, *block_identifiers,
+                                                   cellattachedspikes_df=None):
 
-        # check that cell-attached spikes have been extraced; if not, print warning message and exit function
-        if not hasattr(self, 'cellattachedspikes'):
-            print('no cell-attached spikes-table has been made for this neuron')
+        # check for cell-attached spikes; if not found, print warning message and exit function
+        if (cellattachedspikes_df is None) and (not hasattr(self, 'cellattachedspikes')):
+            print('no cell-attached-spikes df found')
             return
+        elif (cellattachedspikes_df is None) and (hasattr(self, 'cellattachedspikes')):
+            cellattachedspikes_df = self.cellattachedspikes
+        else:
+            cellattachedspikes_df = cellattachedspikes_df
 
-        events_to_mark = self.cellattachedspikes.spikepeak_idx > 0
-
-        # get the list of blocks for which to plot
         allblocknames_list = self.get_blocknames(printing='off')
         if not block_identifiers:
-            blocknames_list = allblocknames_list
+            blocknames_list = list(cellattachedspikes_df.file_origin.unique())
         else:
             blocknames_list = []
             for identifier in block_identifiers:
@@ -1212,10 +1214,10 @@ class SingleNeuron:
 
         for blockname in blocknames_list:
             block = self.blocks[allblocknames_list.index(blockname)]
-            plots.plot_block_witheventsmarked(block, self.cellattachedspikes,
-                                              events_to_mark=events_to_mark)
-
-
+            figure, axes = plots.plot_block_withspikepeaksmarked(block, cellattachedspikes_df)
+            plt.suptitle(self.name + ' raw data file ' + block.file_origin)
+        if len(blocknames_list) == 1:
+            return figure, axes
 
 
 

@@ -89,6 +89,7 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
 def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_idx,
                                           detection_noisemultiplier=5, detection_threshold=None,
                                           getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
+                                          t_start_inms=None, t_end_inms=None,
                                           plot='off'):
     """ This function finds the peaks of action potentials/currents in cell-attached recordings.
     First, the recording trace is cleaned by subtracting the low-pass and high-pass filtered versions
@@ -100,6 +101,18 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     This function returns a dictionary containing the peaks_idcs, peak amplitudes (from threshold, in cleaned trace),
     peak-to-peak intervals (to previous peak in the segment) and more.
     """
+
+    if (t_start_inms is not None) or (t_end_inms is not None):
+        if t_start_inms is not None:
+            t_end_inms = t_start_inms + 30000
+        elif t_end_inms is not None:
+            t_start_inms = t_end_inms - 30000
+        else:
+            print('logic broke; returning empty')
+            return
+        t_start_inms = t_start_inms * pq.ms
+        t_end_inms = t_end_inms * pq.ms
+        single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
 
     recording_primary = single_segment.analogsignals[0]
     recording_secondary = single_segment.analogsignals[1]

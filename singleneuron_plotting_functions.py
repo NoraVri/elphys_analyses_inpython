@@ -112,6 +112,55 @@ def plot_block_withspikepeaksmarked(block, spikes_df):
         axes[i].set_ylabel(str(trace_unit))
     return figure, axes
 
+
+def qad_basic_plot_for_spike_detection(primary_recording_unit,
+                                   spikedetection_data_trace,
+                                   detection_threshold,
+                                   time_axis,
+                                   data_trace_hpfiltered,
+                                   data_trace_lpfiltered,
+                                   data_trace,
+                                   data_trace_pastthreshold_idcs,
+                                   peaks_idcs,
+                                   file_origin):
+    """
+    quick-and-dirty plotting code for getting a figure depicting all that goes on when doing spike detection.
+    """
+    figure, axes = plt.subplots(2, 1, sharex='all')
+    # if VC recording, re-invert spikedetection trace, and set detection_threshold to negative value:
+    if str(primary_recording_unit).__contains__('A'):
+        spikedetection_data_trace = -1 * spikedetection_data_trace
+        detection_threshold = -1 * detection_threshold
+    # plotting the filtered/cleaned data traces in one figure, with detection threshold line:
+    axes[0].plot(time_axis, spikedetection_data_trace,
+                 label='raw - lp_filtered - hp_filtered')
+    axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
+    axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered')
+    axes[0].hlines(detection_threshold, time_axis[0], time_axis[-1],
+                   color='r', label='detection threshold')
+    # plotting the raw data, detected peaks:
+    axes[1].plot(time_axis, data_trace, label='raw data')
+    # plotting the detected peaks on top (if there are any):
+    if (data_trace_pastthreshold_idcs.size >= 1):
+        axes[1].scatter(time_axis[data_trace_pastthreshold_idcs],
+                        data_trace[data_trace_pastthreshold_idcs],
+                        color='y', label='spikepeaktrace-points')
+    if (peaks_idcs.size >= 1):
+        axes[0].scatter(time_axis[data_trace_pastthreshold_idcs],
+                        spikedetection_data_trace[data_trace_pastthreshold_idcs],
+                        color='b', label='detected peaks')
+        axes[1].scatter(time_axis[peaks_idcs], data_trace[peaks_idcs],
+                        color='b', label='detected peaks')
+
+    axes[0].set_ylabel(str(primary_recording_unit))
+    axes[1].set_xlabel(str(time_axis.units))
+    axes[0].legend(loc='upper right')
+    axes[1].legend(loc='upper right')
+    figure.suptitle(file_origin)
+
+    return figure
+
+
 def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_traces_arrays, traces_labels, rec_units):
     """
     This function takes as inputs a list of axes, a list of averaged traces and std traces, a list of labels for these traces, and a list of recording units.

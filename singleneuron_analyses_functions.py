@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 import quantities as pq
+import singleneuron_plotting_functions as plots
 
 # %% index of recording files
 
@@ -100,9 +101,10 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     In general, it is advised to check results and filter badly picked-up points where necessary.
     This function returns a dictionary containing the peaks_idcs, peak amplitudes (from threshold, in cleaned trace),
     peak-to-peak intervals (to previous peak in the segment) and more.
+    NOTE: this function is under construction; it currently includes some quick-and-dirty solutions for getting ISIs from 30s worth of continuous recording.
     """
 
-    if (t_start_inms is not None) or (t_end_inms is not None):
+    if (t_start_inms is not None) or (t_end_inms is not None):  ## NOTE: this is part of the quick-and-dirty code for getting ISIs from 30s of recording at the time.
         if t_start_inms is not None:
             t_end_inms = t_start_inms + 30000
         elif t_end_inms is not None:
@@ -114,6 +116,7 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
         t_end_inms = t_end_inms * pq.ms
         single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
 
+    # getting the data
     recording_primary = single_segment.analogsignals[0]
     recording_secondary = single_segment.analogsignals[1]
     time_axis = recording_primary.times.rescale('ms')
@@ -150,30 +153,59 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     peaks_idcs = []
     # get idcs in the raw data trace where data-values go over/under (CC/VC recording) threshold value:
     data_trace_pastthreshold_idcs = np.squeeze(np.where(spikedetection_data_trace >= detection_threshold))
-    # check that there are (enough) values in this array - if not, print warning message and return empty dict
-    if (len(data_trace_pastthreshold_idcs) <= 2):
-        print('no spikes detected for given threshold in block ' + file_origin + ' segment ' + str(segment_idx))
+
+
+    # check that there are (enough) values in this array - if not, return empty dict and figure without labeled peaks
+    if (data_trace_pastthreshold_idcs.size <= 2):
+        figure = plots.qad_basic_plot_for_spike_detection(primary_recording_unit,
+                                                          spikedetection_data_trace,
+                                                          detection_threshold,
+                                                          time_axis,
+                                                          data_trace_hpfiltered,
+                                                          data_trace_lpfiltered,
+                                                          data_trace,
+                                                          data_trace_pastthreshold_idcs,
+                                                          peaks_idcs,
+                                                          file_origin)
         segment_spikepeaksmeasures_dict = make_cellattachedspikepeaks_dictionary()
-        return segment_spikepeaksmeasures_dict
+        return segment_spikepeaksmeasures_dict, figure
 
     # to find sequential indices, differentiate the trace:
     data_trace_pastthreshold_idcs_diff = np.squeeze(np.diff(data_trace_pastthreshold_idcs))
     # values > 1 mark places where indices were non-sequential; i.e., the ends of spikepeak-traces
     trace_breaks_idcs = np.squeeze(np.where(data_trace_pastthreshold_idcs_diff > 1))
     # check that there are (enough) values in this array - if not, print warning message and return empty dict
-    if (len(trace_breaks_idcs) <= 2):
-        print('no spikes detected for given threshold in block ' + file_origin + ' segment ' + str(segment_idx))
+    if (trace_breaks_idcs.size <= 2):
+        figure = plots.qad_basic_plot_for_spike_detection(primary_recording_unit,
+                                                          spikedetection_data_trace,
+                                                          detection_threshold,
+                                                          time_axis,
+                                                          data_trace_hpfiltered,
+                                                          data_trace_lpfiltered,
+                                                          data_trace,
+                                                          data_trace_pastthreshold_idcs,
+                                                          peaks_idcs,
+                                                          file_origin)
         segment_spikepeaksmeasures_dict = make_cellattachedspikepeaks_dictionary()
-        return segment_spikepeaksmeasures_dict
+        return segment_spikepeaksmeasures_dict, figure
     # differentiate again to get n idcs between breaks
     trace_breaks_idcs_diff = np.squeeze(np.diff(trace_breaks_idcs))
     trace_ends_idcs = data_trace_pastthreshold_idcs[trace_breaks_idcs]
 
     # before iterating over things, check that there is what to iterate over - if not, print warning message and return empty dict
     if (len(trace_breaks_idcs_diff) == 0) or (len(trace_ends_idcs[1:]) == 0):
-        print('no spikes detected for given threshold in block ' + file_origin + ' segment ' + str(segment_idx))
+        figure = plots.qad_basic_plot_for_spike_detection(primary_recording_unit,
+                                                          spikedetection_data_trace,
+                                                          detection_threshold,
+                                                          time_axis,
+                                                          data_trace_hpfiltered,
+                                                          data_trace_lpfiltered,
+                                                          data_trace,
+                                                          data_trace_pastthreshold_idcs,
+                                                          peaks_idcs,
+                                                          file_origin)
         segment_spikepeaksmeasures_dict = make_cellattachedspikepeaks_dictionary()
-        return segment_spikepeaksmeasures_dict
+        return segment_spikepeaksmeasures_dict, figure
 
     # iterate over trace breaks, get spike peak idx where relevant:
     for n, i in zip(trace_breaks_idcs_diff, trace_ends_idcs[1:]):
@@ -235,37 +267,26 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     segment_spikepeaksmeasures_dict['applied_voltage'] = applied_voltage
     segment_spikepeaksmeasures_dict['applied_current'] = applied_current
 
+    # quick-and-dirty: get mean, std and CoV of ISIs to return:
+    isi_mean = np.nanmean(intervals)
+    isi_std = np.nanstd(intervals)
+    isi_cov = isi_std / isi_mean
+    mean_freq = 1 / (isi_mean / 1000)
 
     # if plot = 'on', make some plots to visualize how spikes are detected:
     if plot == 'on':
-        
-        figure, axes = plt.subplots(2, 1, sharex='all')
-        # if VC recording, re-invert spikedetection trace, and set detection_threshold to negative value:
-        if str(primary_recording_unit).__contains__('A'):
-            spikedetection_data_trace = -1 * spikedetection_data_trace
-            detection_threshold = -1 * detection_threshold
-        # plotting the filtered/cleaned data traces in one figure, with detection threshold line:
-        axes[0].plot(time_axis, spikedetection_data_trace,
-                     label='raw - lp_filtered - hp_filtered')
-        axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
-        axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered trace')
-        axes[0].hlines(detection_threshold, time_axis[0], time_axis[-1],
-                       color='r', label='detection threshold')
-        # plotting the raw data, detected peaks:
-        axes[1].plot(time_axis, data_trace, label='raw data')
-        axes[1].scatter(time_axis[data_trace_pastthreshold_idcs],
-                        data_trace[data_trace_pastthreshold_idcs],
-                        color='y', label='spikepeaktrace-points')
-        axes[1].scatter(time_axis[peaks_idcs], data_trace[peaks_idcs],
-                        color='b', label='detected peaks')
+        figure = plots.qad_basic_plot_for_spike_detection(primary_recording_unit,
+                                       spikedetection_data_trace,
+                                       detection_threshold,
+                                       time_axis,
+                                       data_trace_hpfiltered,
+                                       data_trace_lpfiltered,
+                                       data_trace,
+                                       data_trace_pastthreshold_idcs,
+                                       peaks_idcs,
+                                       file_origin)
 
-        axes[0].set_ylabel(str(primary_recording_unit))
-        axes[1].set_xlabel(str(time_axis.units))
-        axes[0].legend(loc='upper right')
-        axes[1].legend(loc='upper right')
-        figure.suptitle(file_origin)
-
-        return segment_spikepeaksmeasures_dict, figure
+        return segment_spikepeaksmeasures_dict, figure, mean_freq, isi_cov
     return segment_spikepeaksmeasures_dict, None
 
 

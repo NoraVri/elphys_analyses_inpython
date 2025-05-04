@@ -196,6 +196,7 @@ class BlockPlotterApp:
             self.variance = data[3]
         except IndexError:
             pass
+
         self.df_data.append(df_dict_result)
         # Save result for export
         self.results[self.current_block.file_origin] = result

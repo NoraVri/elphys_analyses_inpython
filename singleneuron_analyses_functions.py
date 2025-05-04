@@ -238,7 +238,7 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
 
     # if plot = 'on', make some plots to visualize how spikes are detected:
     if plot == 'on':
-        plt.style.use('dark_background')
+        
         figure, axes = plt.subplots(2, 1, sharex='all')
         # if VC recording, re-invert spikedetection trace, and set detection_threshold to negative value:
         if str(primary_recording_unit).__contains__('A'):

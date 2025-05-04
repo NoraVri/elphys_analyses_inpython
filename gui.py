@@ -32,7 +32,7 @@ class BlockPlotterApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Block Plotter")
-
+        self.style = tk.Style("darkly")
         self.current_block = None
         self.results = {}
         self.df_data = []
@@ -61,13 +61,20 @@ class BlockPlotterApp:
 
         self.root.config(cursor="")
         self.root.update()
-
+    
+    def toggle_theme(self):
+        new_theme = "litera" if self.style.theme.name == "darkly" else "darkly"
+        plt_theme = "dark_background" if new_theme == "darkly" else "default"
+        plt.style.use(plt_theme)
+        self.style.theme_use(new_theme)
+    
     def build_interface(self):
         # --- Top Menu ---
         top_frame = tk.Frame(self.root)
         top_frame.pack(fill="x", padx=10, pady=5)
 
         tk.Button(top_frame, text="Select Folder", command=self.select_folder).pack(side="left")
+        tk.Button(top_frame, text="Dark/Light mode", command=self.toggle_theme).pack(side="left")
         tk.Button(top_frame, text="Export CSV", command=self.export_csv).pack(side="right")
         tk.Button(top_frame, text="Export JSON", command=self.export_json).pack(side="right")
 

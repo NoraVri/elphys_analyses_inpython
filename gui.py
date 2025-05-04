@@ -10,20 +10,13 @@ import singleneuron_analyses_functions as snafs
 from singleneuron_class import SingleNeuron
 import ttkbootstrap as tk
 from ttkbootstrap.constants import *
-
+from gui_components.clipboard_copier import ClipboardCopier
 
 # --- Helper Functions ---  
 
-def load_block_data(block_id):
-    # Replace with actual block loading logic
-    return f"Data for {block_id}"
-
 def create_plot(block_data,**kwargs):
-    kwargs_copy = {key:value for key, value in kwargs.items() if value != "None"}
-    
-    func_kwargs = {key: float(value) for key, value in kwargs_copy.items()}
-    block_data.segments[0]
-    data = snafs.get_spikes_from_cellattachedrecording(block_data.segments[0], block_data.file_origin, 0, plot="on", **func_kwargs)
+    kwargs_copy = {key:float(value) for key, value in kwargs.items() if value != "None"}
+    data = snafs.get_spikes_from_cellattachedrecording(block_data.segments[0], block_data.file_origin, 0, plot="on", **kwargs_copy)
     return data, kwargs
 
 # --- Main App ---
@@ -36,6 +29,8 @@ class BlockPlotterApp:
         self.current_block = None
         self.results = {}
         self.df_data = []
+        self.mean = 0
+        self.variance = 0
         self.build_interface()
 
     def load_neuron(self, neuron_id):
@@ -121,7 +116,8 @@ class BlockPlotterApp:
             self.slider_vars[i] = var
             self.slider_vars[i].set(self.params[i])  # Set default value
             self.sliders.append(entry)
-
+        ClipboardCopier(button_frame, value=self.mean, label="Mean").pack(side="left", padx=5)
+        ClipboardCopier(button_frame, value=self.variance, label="Varience").pack(side="left", padx=5)
         # --- Create Plot Button ---
         self.plot_btn = tk.Button(self.right_panel, text="Create Plot", command=self.create_plot_for_block)
         self.plot_btn.pack(pady=5)
@@ -166,8 +162,6 @@ class BlockPlotterApp:
 
         self.current_block = self.neuron.blocks[int(selected[0])]
 
-        # Load data for new block
-        block_data = load_block_data(self.current_block)
 
         # Reset sliders to default (optional: keep per-block values)
         for param, default_val in self.params.items():
@@ -193,11 +187,15 @@ class BlockPlotterApp:
         if not self.current_block:
             return
 
-        block_data = load_block_data(self.current_block)
         values = {param:var.get() for param, var in self.slider_vars.items()}
 
         data, result = create_plot(self.current_block, **values)
-        df_dict_result, self.fig = data 
+        df_dict_result, self.fig = data[:2]
+        try:
+            self.mean = data[2]
+            self.variance = data[3]
+        except IndexError:
+            pass
         self.df_data.append(df_dict_result)
         # Save result for export
         self.results[self.current_block.file_origin] = result

@@ -1393,7 +1393,7 @@ class SingleNeuron:
         for block in blocks_list:
             for i, segment in enumerate(block.segments):
                 segment_cellattachedspikes_dict = snafs.get_spikes_from_cellattachedrecording(segment, block.file_origin, i,
-                                                                                         **kwargs)
+                                                                                         **kwargs)[0]
                 for key in all_cellattachedspikes_dict:
                     all_cellattachedspikes_dict[key] += list(segment_cellattachedspikes_dict[key])
 

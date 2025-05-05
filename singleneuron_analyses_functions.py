@@ -133,10 +133,10 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     # cleaning up the data trace: subtracting lp-filtered and hp-filtered version
     spikedetection_data_trace = data_trace - data_trace_lpfiltered - data_trace_hpfiltered
 
-    # spike peaks should be over threshold for at least 4 samples/0.2ms (whichever is longer)
-    min_peaktrace_length = int(0.2 * ms_in_samples)
-    if min_peaktrace_length < 4:
-        min_peaktrace_length = 4
+    # spike peaks should be over threshold for at least 2 samples/0.1ms (whichever is longer)
+    min_peaktrace_length = int(0.1 * ms_in_samples)
+    if min_peaktrace_length < 2:
+        min_peaktrace_length = 2
 
     # getting threshold value for spike detection: (default: 10x noise) - and ensuring this value will always be positive (despite user perhaps filling in a negative number for detecting spike peaks as troughs in current-recording)
     # getting the noise-level: mean value of abs(hp-filtered trace)

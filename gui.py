@@ -203,6 +203,8 @@ class BlockPlotterApp:
             self.variance = data[3]
             self.mean_label.variable_value.config(text=self.mean)
             self.variance_label.variable_value.config(text=self.variance)
+            self.mean_label.value = self.mean
+            self.variance_label.value = self.variance
 
         except IndexError:
             pass

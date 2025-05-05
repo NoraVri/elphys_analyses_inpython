@@ -29,8 +29,6 @@ class BlockPlotterApp:
         self.current_block = None
         self.results = {}
         self.df_data = []
-        self.mean = 0
-        self.variance = 0
         self.build_interface()
 
     def load_neuron(self, neuron_id):
@@ -116,8 +114,15 @@ class BlockPlotterApp:
             self.slider_vars[i] = var
             self.slider_vars[i].set(self.params[i])  # Set default value
             self.sliders.append(entry)
-        ClipboardCopier(button_frame, value=self.mean, label="Mean").pack(side="left", padx=5)
-        ClipboardCopier(button_frame, value=self.variance, label="Varience").pack(side="left", padx=5)
+
+        # --- Create Mean and Variance Labels ---
+        self.mean = 0
+        self.variance = 0
+
+        self.mean_label = ClipboardCopier(button_frame, value=self.mean, label="Mean")
+        self.mean_label.pack(side="left", padx=5)
+        self.variance_label = ClipboardCopier(button_frame, value=self.variance, label="Variance")
+        self.variance_label.pack(side="left", padx=5)
         # --- Create Plot Button ---
         self.plot_btn = tk.Button(self.right_panel, text="Create Plot", command=self.create_plot_for_block)
         self.plot_btn.pack(pady=5)
@@ -127,6 +132,7 @@ class BlockPlotterApp:
         self.plot_frame.pack(fill='both', expand=True)
         self.plot_frame.grid_rowconfigure(0, weight=1)
         self.plot_frame.grid_columnconfigure(0, weight=1)
+
     
     def process_folder(self, folder_path):
         neuron_id = os.path.basename(folder_path)
@@ -183,6 +189,7 @@ class BlockPlotterApp:
             height_in = event.height / self.fig.dpi
             self.fig.set_size_inches(width_in, height_in, forward=True)
             self.canvas.draw()
+    
     def create_plot_for_block(self):
         if not self.current_block:
             return
@@ -194,6 +201,9 @@ class BlockPlotterApp:
         try:
             self.mean = data[2]
             self.variance = data[3]
+            self.mean_label.variable_value.config(text=self.mean)
+            self.variance_label.variable_value.config(text=self.variance)
+
         except IndexError:
             pass
 

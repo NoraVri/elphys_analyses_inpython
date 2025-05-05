@@ -145,7 +145,7 @@ def qad_basic_plot_for_spike_detection(primary_recording_unit,
         axes[1].scatter(time_axis[data_trace_pastthreshold_idcs],
                         data_trace[data_trace_pastthreshold_idcs],
                         color='y', label='spikepeaktrace-points')
-    if (peaks_idcs.size >= 1):
+    if (len(peaks_idcs) >= 1):
         axes[0].scatter(time_axis[data_trace_pastthreshold_idcs],
                         spikedetection_data_trace[data_trace_pastthreshold_idcs],
                         color='b', label='detected peaks')

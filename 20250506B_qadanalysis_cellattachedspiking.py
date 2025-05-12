@@ -11,7 +11,7 @@ import re
 import json
 
 # quick-and-dirty analysis steps:
-# import data, cleanup where necessary (i.e., remove channels not belonging to neuron and/or any blocks where neuron not actually alive)
+# import data, cleanup where necessary (i.e., remove channels not belonging to neuron and/or any sections recorded in the wrong mode)
 # identify unique recording conditions (temperature, drug) and collect all files per condition
 # per condition, pick a 30s trace to get numbers from and (manually) place these in excel table
 

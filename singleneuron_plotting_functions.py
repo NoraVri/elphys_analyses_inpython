@@ -132,7 +132,7 @@ def qad_basic_plot_for_spike_detection(primary_recording_unit,
         spikedetection_data_trace = -1 * spikedetection_data_trace
         detection_threshold = -1 * detection_threshold
     # plotting the filtered/cleaned data traces in one figure, with detection threshold line:
-    axes[0].plot(time_axis, data_trace_hpfiltered, label='hp-filtered')
+    axes[0].plot(time_axis, data_trace_hpfiltered, linewidth=0.5, color='black', label='hp-filtered')
     axes[0].plot(time_axis, data_trace_lpfiltered, linewidth=2, label='lp-filtered')
     axes[0].hlines(detection_threshold, time_axis[0], time_axis[-1],
                    color='r', label='detection threshold')

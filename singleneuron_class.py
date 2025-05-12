@@ -511,7 +511,10 @@ class SingleNeuron:
         time_axis_unit='ms',     # has to be ms if events_to_mark are passed down (or they'll end up in the wrong place)
         segments_overlayed=True  # works only for data recorded as abf at the moment
         """
-        allblocknames_list = self.get_blocknames(printing='off')
+        if self.recordingblocks_index.empty:
+            self.get_recordingblocks_index()
+        allblocknames_list = list(self.recordingblocks_index['file_origin'])
+
         if not block_identifiers:
             blocknames_list = allblocknames_list
         else:
@@ -520,13 +523,14 @@ class SingleNeuron:
                 blocks = [blockname for blockname in allblocknames_list if identifier in blockname]
                 for block in blocks:
                     blocknames_list.append(block)
-
+        figures, axess = [], []
         for blockname in blocknames_list:
             block = self.blocks[allblocknames_list.index(blockname)]
             figure, axes = plots.plot_block(block, self.depolarizing_events, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
-        if len(blocknames_list) == 1:
-            return figure, axes
+            figures.append(figure)
+            axess.append(axes)
+        return figures, axess
 
 
     def plot_average_trace(self, block_identifier):

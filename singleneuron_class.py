@@ -513,7 +513,8 @@ class SingleNeuron:
         """
         if self.recordingblocks_index.empty:
             self.get_recordingblocks_index()
-        allblocknames_list = list(self.recordingblocks_index['file_origin'])
+        allblocknames_list = list(self.recordingblocks_index['file_origin'])  # list of blocknames, ordered by recording timestamp
+        allblocknames_list_byreadingorder = self.get_blocknames(printing='off')  # list of blocknames, ordered by file reading-in order (usually alphabetic)
 
         if not block_identifiers:
             blocknames_list = allblocknames_list
@@ -525,7 +526,7 @@ class SingleNeuron:
                     blocknames_list.append(block)
         figures, axess = [], []
         for blockname in blocknames_list:
-            block = self.blocks[allblocknames_list.index(blockname)]
+            block = self.blocks[allblocknames_list_byreadingorder.index(blockname)]
             figure, axes = plots.plot_block(block, self.depolarizing_events, **kwargs)
             plt.suptitle(self.name + ' raw data file ' + block.file_origin)
             figures.append(figure)

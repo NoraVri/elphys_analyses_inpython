@@ -124,7 +124,7 @@ def qad_basic_plot_for_spike_detection(primary_recording_unit,
                                    peaks_idcs,
                                    file_origin):
     """
-    quick-and-dirty plotting code for getting a figure depicting all that goes on when doing spike detection.
+    quick-and-dirty plotting code for getting a figure depicting all that goes on when doing spike detection in cell-attached recordings.
     """
     figure, axes = plt.subplots(2, 1, sharex='all')
     # if VC recording, re-invert spikedetection trace, and set detection_threshold to negative value:
@@ -160,6 +160,23 @@ def qad_basic_plot_for_spike_detection(primary_recording_unit,
 
     return figure
 
+def plot_cellattachedspikes_instantaneous_frequency(cellattachedspikes_df, sampling_frequency):
+    figure, axes = plt.subplots(1, 1)
+    recording_filenames = list(cellattachedspikes_df.file_origin.unique())
+    for filename in recording_filenames:
+        block_cellattachedspikes_df = cellattachedspikes_df[(cellattachedspikes_df.file_origin == filename)]
+        timeintervals_inms = block_cellattachedspikes_df.timeinterval_tonextpeak_inms
+        spikepeaks_idcs = block_cellattachedspikes_df.spikepeak_idx
+
+        timeintervals_as_instfreqs = 1000 / timeintervals_inms
+        spikepeaks_times = (1/float(sampling_frequency)) * spikepeaks_idcs
+
+        axes.plot(spikepeaks_times, timeintervals_as_instfreqs, label=filename)
+    axes.set_xlabel('time (s)')
+    axes.set_ylabel('instantaneous frequency (= 1/isi)')
+    axes.legend(loc='upper right')
+
+    return figure
 
 def plot_averaged_traces(axis_object, time_axis, average_traces_arrays, std_traces_arrays, traces_labels, rec_units):
     """

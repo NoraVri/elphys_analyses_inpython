@@ -174,6 +174,7 @@ def plot_cellattachedspikes_instantaneous_frequency(cellattachedspikes_df, sampl
         axes.plot(spikepeaks_times, timeintervals_as_instfreqs, label=filename)
     axes.set_xlabel('time (s)')
     axes.set_ylabel('instantaneous frequency (= 1/isi)')
+    axes.set_ylim([-1, 100])
     axes.legend(loc='upper right')
 
     return figure

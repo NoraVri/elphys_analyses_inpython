@@ -25,6 +25,8 @@ neuron_data.plot_rawdatablocks()
 # closed circulation loop after 25min. of washing then went to have lunch; 40min. later cell still there (S/N got worse but looks still OK).
 # Data mostly very nice, spikes are >100pA above detection threshold for much of it
 
+## used gui to find spikes
+
 # recording condition: gabazine @ PT
 # use file gapFree_with_gabazine_0002
 # t_start: 0; mean freq.=30.729979117658363, CoV=0.0769507661060932 (first 30s of this file; ~-300pA baseline applied to keep V)

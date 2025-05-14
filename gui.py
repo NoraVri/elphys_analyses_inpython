@@ -1,6 +1,7 @@
+import random
 import json
 import threading
-from tkinter import filedialog, messagebox
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import os
@@ -11,6 +12,7 @@ from singleneuron_class import SingleNeuron
 import ttkbootstrap as tk
 from ttkbootstrap.constants import *
 from gui_components.clipboard_copier import ClipboardCopier
+import re
 
 # --- Helper Functions ---  
 
@@ -18,7 +20,28 @@ def create_plot(block_data,**kwargs):
     kwargs_copy = {key:float(value) for key, value in kwargs.items() if value != "None"}
     data = snafs.get_spikes_from_cellattachedrecording(block_data.segments[0], block_data.file_origin, 0, plot="on", **kwargs_copy)
     return data, kwargs
-
+loading_messages = [
+        "Depolarizing neurons...",
+        "Calculating action potentials...",
+        "Synapsing with your data...",
+        "Firing up those dendrites...",
+        "Axon-ally transferring information...",
+        "Myelin-ating your requests...",
+        "Stimulating the prefrontal cortex...",
+        "Waiting for neurotransmitter release...",
+        "Crossing the synaptic cleft...",
+        "Recruiting more glial cells...",
+        "Neural network in training...",
+        "Increasing membrane potential...",
+        "Propagating signals...",
+        "Brain storm in progress...",
+        "Connecting neuronal pathways...",
+        "Generating spike trains...",
+        "Patching those ion channels...",
+        "Calculating resting potential...",
+        "Summating post-synaptic potentials...",
+        "Waiting for refractory period to end..."
+    ]
 # --- Main App ---
 
 class BlockPlotterApp:
@@ -26,6 +49,7 @@ class BlockPlotterApp:
         self.root = root
         self.root.title("Block Plotter")
         self.style = tk.Style("darkly")
+        plt.style.use('dark_background')
         self.current_block = None
         self.results = {}
         self.df_data = []
@@ -37,54 +61,82 @@ class BlockPlotterApp:
     
 
     def show_loading(self, message="Loading..."):
-        if hasattr(self, "right_panel"):
-            self.right_panel.pack_forget()
-
+        # Store current panes and remove them from the paned window
+        if message == "Loading...":
+            message = random.choice(loading_messages)
+        self.paned_window.forget(self.left_panel)
+        self.paned_window.forget(self.right_panel)
+        
+        # Create and show the loading message in the main frame
         self.loading_label = tk.Label(self.main_frame, text=message, font=("Arial", 12))
-        self.loading_label.pack(pady=20)
-
+        self.loading_label.pack(expand=True, pady=20)
+        
         self.root.config(cursor="watch")
         self.root.update()
 
     def hide_loading(self):
+        # Remove the loading message
         if hasattr(self, "loading_label"):
             self.loading_label.destroy()
-
-        self.right_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-
+        
+        # Add the panels back to the paned window
+        self.paned_window.add(self.left_panel, weight=1)
+        self.paned_window.add(self.right_panel, weight=3)
+        
         self.root.config(cursor="")
         self.root.update()
     
+    def finish_loading_folder(self):
+        # Clear existing items in the treeview
+        for item in self.block_listbox.get_children():
+            self.block_listbox.delete(item)
+            
+        # Add new items
+        for idx, block in enumerate(self.neuron.blocks):
+            self.block_listbox.insert('', 'end', iid=str(idx), text=block.file_origin)
+        
+        # Reset results for the new neuron
+        self.results = {}
+        self.df_data = []
+        self.current_block = None
+        self.hide_loading()
+
     def toggle_theme(self):
         new_theme = "litera" if self.style.theme.name == "darkly" else "darkly"
         plt_theme = "dark_background" if new_theme == "darkly" else "default"
         plt.style.use(plt_theme)
         self.style.theme_use(new_theme)
+        # Redraw the current plot with the new theme if one exists
+        if hasattr(self, 'current_block') and self.current_block:
+            self.create_plot_for_block()
     
     def build_interface(self):
         # --- Top Menu ---
         top_frame = tk.Frame(self.root)
         top_frame.pack(fill="x", padx=10, pady=5)
 
-        tk.Button(top_frame, text="Select Folder", command=self.select_folder).pack(side="left")
+        tk.Button(top_frame, text="Load Neuron", command=self.select_folder).pack(side="left")
         tk.Button(top_frame, text="Dark/Light mode", command=self.toggle_theme).pack(side="left")
         tk.Button(top_frame, text="Export CSV", command=self.export_csv).pack(side="right")
         tk.Button(top_frame, text="Export JSON", command=self.export_json).pack(side="right")
 
         # --- Main Split View ---
-        main_frame = tk.Frame(self.root)
-        self.main_frame = main_frame
-        main_frame.pack(fill="both", expand=True)
-
+        self.main_frame = tk.Frame(self.root)
+        
+        self.main_frame.pack(fill="both", expand=True)
+        # --- Paned Window ---
+        self.paned_window = tk.PanedWindow(self.main_frame, orient="horizontal")
+        self.paned_window.pack(fill="both", expand=True)
         # --- Left Block List ---
-        self.block_listbox = tk.Treeview(main_frame)
-        self.block_listbox.pack(side="left", fill="y", padx=5, pady=5)
+        self.left_panel = tk.Frame(self.paned_window)
+        self.block_listbox = tk.Treeview(self.left_panel)
+        self.block_listbox.pack(fill="both", expand=True, padx=5, pady=5)
         self.block_listbox.bind("<<TreeviewSelect>>", self.on_block_select)
 
         # --- Right Panel ---
-        self.right_panel = tk.Frame(main_frame)
-        self.right_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-
+        self.right_panel = tk.Frame(self.paned_window)
+        self.paned_window.add(self.left_panel, weight=1)
+        self.paned_window.add(self.right_panel, weight=3)
         # --- Sliders ---
         self.slider_vars = {}
         self.sliders = []
@@ -111,6 +163,7 @@ class BlockPlotterApp:
             var = tk.StringVar()
             entry = tk.Entry(frame, textvariable=var, width=10)
             entry.pack(side="top")
+            entry.bind("<Return>", lambda event: self.create_plot_for_block())
             self.slider_vars[i] = var
             self.slider_vars[i].set(self.params[i])  # Set default value
             self.sliders.append(entry)
@@ -134,27 +187,65 @@ class BlockPlotterApp:
         self.plot_frame.grid_columnconfigure(0, weight=1)
 
     
-    def process_folder(self, folder_path):
+    def process_neuron(self, folder_path):
         neuron_id = os.path.basename(folder_path)
         self.neuron = self.load_neuron(neuron_id)
     
     def select_folder(self):
-        folder = filedialog.askdirectory()
-        if not folder:
-            return
+        # Create and show QueryDialog
+        dialog = tk.dialogs.QueryDialog(
+            parent=self.root,
+            title="Neuron Intake", 
+            prompt="Enter the Neuron ID:",
+            initialvalue=""
+        )
+        dialog.show()
+        neuron_name = dialog.result
 
         
-        self.show_loading("Processing folder...")
+        # Check if user cancelled or entered empty string
+        if neuron_name is None or neuron_name.strip() == "":
+            tk.MessageDialog(
+                parent=self.root,
+                title="No Input", 
+                message="Please enter a Neuron ID.",
+                alert=True
+            )
+            return
+
+        # Validate neuron name format
+        if not re.match(r"^\d{8}[A-Za-z](\d)?$", neuron_name):
+            tk.MessageDialog(
+                parent=self.root,
+                title="Invalid Neuron ID", 
+                message="Neuron ID must be in the format 'YYYYMMDD' followed by a letter or a letter and a number.",
+                alert=True
+            )
+            return
+        
+        # Proceed with loading
+        self.show_loading()
+
+        
 
         def task():
-            self.process_folder(folder)
+            self.process_neuron(neuron_name)
             self.root.after(0, self.finish_loading_folder)
 
         threading.Thread(target=task).start()
     def finish_loading_folder(self):
+    # Clear existing items in the treeview
+        for item in self.block_listbox.get_children():
+            self.block_listbox.delete(item)
+            
+        # Add new items
         for idx, block in enumerate(self.neuron.blocks):
-            self.block_listbox.insert('', 'end', iid=idx, text=block.file_origin)
+            self.block_listbox.insert('', 'end', iid=str(idx), text=block.file_origin)
+        
+        # Reset results for the new neuron
         self.results = {}
+        self.df_data = []
+        self.current_block = None
         self.hide_loading()
 
     def on_block_select(self, event):
@@ -166,20 +257,25 @@ class BlockPlotterApp:
         if self.current_block:
             self.save_current_block_results()
 
-        self.current_block = self.neuron.blocks[int(selected[0])]
-
+        # Convert string ID back to integer index
+        idx = int(selected[0])
+        self.current_block = self.neuron.blocks[idx]
 
         # Reset sliders to default (optional: keep per-block values)
         for param, default_val in self.params.items():
             self.slider_vars[param].set(default_val)
+        
         # Clear previous plot
         self.clear_plot()
-
+        # Create new plot
+        self.create_plot_for_block()
         # Show simple text placeholder until "Create Plot" is clicked
         tk.Label(self.plot_frame, text=f"Loaded: {self.current_block.file_origin}", font=("Arial", 12)).pack()
+
     def clear_plot(self):
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
+
     def bind_plot_resizing(self):
         self.plot_frame.bind("<Configure>", self.resize_figure)
 
@@ -193,7 +289,8 @@ class BlockPlotterApp:
     def create_plot_for_block(self):
         if not self.current_block:
             return
-
+        plt_theme = "dark_background" if self.style.theme.name == "darkly" else "default"
+        plt.style.use(plt_theme)
         values = {param:var.get() for param, var in self.slider_vars.items()}
 
         data, result = create_plot(self.current_block, **values)
@@ -201,10 +298,8 @@ class BlockPlotterApp:
         try:
             self.mean = data[2]
             self.variance = data[3]
-            self.mean_label.variable_value.config(text=self.mean)
-            self.variance_label.variable_value.config(text=self.variance)
-            self.mean_label.value = self.mean
-            self.variance_label.value = self.variance
+            self.mean_label.set_value(self.mean)
+            self.variance_label.set_value(self.variance)
 
         except IndexError:
             pass

@@ -205,22 +205,22 @@ class BlockPlotterApp:
         
         # Check if user cancelled or entered empty string
         if neuron_name is None or neuron_name.strip() == "":
-            tk.MessageDialog(
+            tk.dialogs.MessageDialog(
                 parent=self.root,
                 title="No Input", 
                 message="Please enter a Neuron ID.",
                 alert=True
-            )
+            ).show()
             return
 
         # Validate neuron name format
         if not re.match(r"^\d{8}[A-Za-z](\d)?$", neuron_name):
-            tk.MessageDialog(
+            tk.dialogs.MessageDialog(
                 parent=self.root,
                 title="Invalid Neuron ID", 
                 message="Neuron ID must be in the format 'YYYYMMDD' followed by a letter or a letter and a number.",
                 alert=True
-            )
+            ).show()
             return
         
         # Proceed with loading
@@ -248,6 +248,17 @@ class BlockPlotterApp:
         self.current_block = None
         self.hide_loading()
 
+    def finalize_block_selection(self):
+        # Hide loading state
+        
+        
+        # Clear previous plot
+        self.clear_plot()
+        
+        # Create new plot
+        self.create_plot_for_block()
+        self.hide_loading()
+
     def on_block_select(self, event):
         selected = self.block_listbox.selection()
         if not selected:
@@ -257,20 +268,23 @@ class BlockPlotterApp:
         if self.current_block:
             self.save_current_block_results()
 
+        # Show loading state
+        self.show_loading("Loading block data...")
+
         # Convert string ID back to integer index
         idx = int(selected[0])
         self.current_block = self.neuron.blocks[idx]
 
-        # Reset sliders to default (optional: keep per-block values)
-        for param, default_val in self.params.items():
-            self.slider_vars[param].set(default_val)
-        
-        # Clear previous plot
-        self.clear_plot()
-        # Create new plot
-        self.create_plot_for_block()
-        # Show simple text placeholder until "Create Plot" is clicked
-        tk.Label(self.plot_frame, text=f"Loaded: {self.current_block.file_origin}", font=("Arial", 12)).pack()
+        # Process the block in a separate thread
+        def process_block():
+            # Reset sliders to default (optional: keep per-block values)
+            for param, default_val in self.params.items():
+                self.slider_vars[param].set(default_val)
+            
+            # Schedule UI updates on the main thread
+            self.root.after(0, lambda: self.finalize_block_selection())
+
+        threading.Thread(target=process_block).start()
 
     def clear_plot(self):
         for widget in self.plot_frame.winfo_children():

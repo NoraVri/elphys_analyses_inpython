@@ -45,7 +45,7 @@ neuron_data = SingleNeuron(neuron_name)
 # recording condition: gabazine wash in
 # use file gapFree_GabazineWashIn_0000
 # t_start: 0; mean freq.=15.144239648358143, CoV=0.053794835312377436 (no gabazine effect yet)
-# t_end: 91000; mean freq.=17.577050544083505, CoV=0.06586854768420272 (gabazine should have taken effect by now)
+# t_end: 91000; mean freq.=17.577050544083505, CoV=0.06586854768420272 (gabazine may just about be taking effect)
 
 # recording condition: gabazine applied
 # use file gapFree_withGabazine_0000
@@ -54,16 +54,14 @@ neuron_data = SingleNeuron(neuron_name)
 # t_start: 150000; mean freq.=20.359165140287363, CoV=0.04398544433394519
 # t_end: 358000; mean freq.=21.16884160883191, CoV=0.047855168076744566
 
-# recording condition: gabazine applied, quinpirole wash in
-# use file gapFree_withGabazine_quinpiroleWashIn_0000 NOTE: spike shapes start to change over the course of this block: increasingly large % of spikes have double waves, with the second waveform getting bigger as time goes on (and these get picked up as two peaks if parameter settings aren't chosen carefully)
-# t_start: 0; mean freq.=21.741642951302403; CoV=0.04823544637438149
-# t_end: 287000; mean freq.=24.52020244199841, CoV=0.20255400299651669 (detection threshold = 175)
+# recording condition: gabazine applied, quinpirole washin (>5min. of recording; drug should be in effect by the end)
+# use file gapFree_withGabazine_quinpiroleWashIn_0000
+# t_start: 0; mean freq.=21.741642951302403, CoV=0.04823544637438149 (detection threshold = 150)
+# t_end: 288000; mean freq.=26.14365974461456, CoV=0.299859344400282 (just before neuron seems to abruptly stop spiking; detection threshold = 200)
 
 # recording condition: gabazine and quinpirole applied
-# use file gapFree_withGabazine_with_quinpirole_0000
-# Actually, I'm gonna say this block is no good: starts off with cell not spiking, then spiking seems to come back
-# but it's highly variable and irregular (both in timing and amplitude) - not hallmarks of healthy cells...
-
-
-
-
+# I'm gonna say this block is no good; yes, it looks like cell goes back to spiking about halfway through but the pattern looks very ugly (both in amplitudes and over time) - not hallmarks of a healthy cell.
+neuron_data.rawdata_remove_nonrecordingblock('gapFree_tempUp_withGabazine_with_quinpirole_0000.abf')
+neuron_data.rawdata_remove_nonrecordingblock('gapFree_tempUp_drugsWashOut_0000.abf')
+neuron_data.rawdata_remove_nonrecordingblock('gapFree_tempDown_drugsWashOut_0000.abf')
+neuron_data.write_results()

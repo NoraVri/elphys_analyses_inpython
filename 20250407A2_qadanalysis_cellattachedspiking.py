@@ -60,6 +60,8 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
 print('recording condition: baseline @ RT')
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# mean freq. = 19.416889675848605
+# isi CoV = 0.05297397605762597
 
 # %% recording condition: baseline with glu-blockers @ RT
 # neuron_data.plot_rawdatablocks('gapFree_GluBlockers')
@@ -77,6 +79,8 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
 print('recording condition: baseline with glu-blockers @ RT')
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# mean freq. = 19.455742379135394
+# isi CoV = 0.048800849134231265
 
 # %% recording condition: glu-blockers and gabazine @ RT
 # neuron_data.plot_rawdatablocks('Blockers_with_gabazine_0')
@@ -92,9 +96,11 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 # getnoise_hpfilterfreq=5000,
                                                 t_start_inms=segment_30s_start_inms,
                                                 plot='on')
-print('recording condition: ')
+print('recording condition: RT with glu-block and gabazine')
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# mean freq. = 19.053168049611905
+# isi CoV = 0.04954040684304817
 
 # %% @ RT with glu-blockers and gabazine and quinpirole
 # neuron_data.plot_rawdatablocks('gabazine_with_quinpirole_0')
@@ -111,120 +117,54 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 t_start_inms=segment_30s_start_inms,
                                                 t_end_inms=segment_30s_end_inms,
                                                 plot='on')
-print('recording condition: ')
+print('recording condition: with_GluBlockers_with_gabazine_with_quinpirole')
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 
 # %% @ RT with glu-blockers and other drugs washed off
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_0001.abf
+# t_start: 100; mean freq.=20.70722893382901, CoV=0.058416379472712956
+# t_end: 705000; mean freq.=20.180959281651543, CoV=0.073083196336888
+
 
 # %% @ PT with glu-blockers and other drugs washed off
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_tempUp_0003.abf
+# t_start: 0; mean freq.=11.582199102716261, CoV=0.1300147047262907
+# t_end: 234000; mean freq.=7.534623792517405, CoV=0.18405421879565764
+
 
 # %% @ PT with glu-blockers and gabazine (washed on again)
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_tempUp_with_gabazine_0000.abf
+# t_start: 0; mean freq.=11.41096021055062; CoV=0.16075407892351676
+# t_end: 510000; mean freq.=11.425172679723856, CoV=0.1571213947220336
+
 
 # %% @ PT with glu-blockers and gabazine washed off again
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_tempUp_gabazineWashOut_0000.abf
+# t_start: 0; mean freq.=7.82487128592653; CoV=0.2565642704278419 (gabazine still in effect)
+# t_end: 1351000; mean freq.=14.640206843289347, CoV=0.08378842388554827  (detection threshold = 0.2)
+
+
 
 # %% @ PT with glu-blockers and gabazine washed on again again
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_tempUp_gabazineWashInAgain_0000.abf
+# t_start: ; mean freq.=16.63514039253565; CoV=0.0787722598723838
+# t_end: 683000; mean freq.=23.60693943564348, CoV=0.056527561451367725
+
 
 # %% @ PT with glu-blockers and gabazine washed off again again
-# neuron_data.plot_rawdatablocks()
-# #
-# block_idx =
-# segment = neuron_data.blocks[block_idx].segments[0]
-# segment_file_origin = neuron_data.blocks[block_idx].file_origin
-# segment_30s_start_inms = None
-# segment_30s_end_inms = None
-# results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-#                                                 # detection_threshold=None,
-#                                                 # getbaseline_lpfilter_freq=0.5,
-#                                                 # getnoise_hpfilterfreq=5000,
-#                                                 t_start_inms=segment_30s_start_inms,
-#                                                 t_end_inms=segment_30s_end_inms,
-#                                                 plot='on')
-# print('recording condition: ')
-# print('mean freq. = ' + str(results[2]))
-# print('isi CoV = ' + str(results[3]))
+## use gui.py to detect spikes
+
+# use file gapFree_with_GluBlockers_otherdrugsWashOut_tempUp_gabazineWashOutAgain_0000.abf
+# t_start: ; mean freq.=25.14556637793351; CoV=0.1778063887581394
+# t_end: 1305000; mean freq.=16.929833383619968, CoV=0.10270413696999167

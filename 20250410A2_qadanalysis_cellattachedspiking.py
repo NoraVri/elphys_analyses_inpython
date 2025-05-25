@@ -16,9 +16,9 @@ import json
 # per condition, pick a 30s trace to get numbers from and (manually) place these in excel table
 
 ## importing the data
-neuron_name = '20250410A1'
+neuron_name = '20250410A2'
 neuron_data = SingleNeuron(neuron_name)
-neuron_data.plot_rawdatablocks()
+# neuron_data.plot_rawdatablocks()
 
 # notes on raw data:
 # decent recording; signal not great (especially in VC) even though nice loose seal
@@ -27,23 +27,23 @@ neuron_data.plot_rawdatablocks()
 # removing recording channel not belonging to this neuron:
 # blocknameslist = neuron_data.get_blocknames(printing='off')
 # for blockname in blocknameslist:
-#     neuron_data.rawdata_remove_nonrecordingchannel(blockname, 2, pairedrecording=True)
+#     neuron_data.rawdata_remove_nonrecordingchannel(blockname, 1, pairedrecording=True)
 
 
 ## used gui to find spikes
 
 # recording condition: baseline @ RT
 # use file gapFree_0000
-# t_start: 116000; mean freq.=1.8561551174553526, CoV=0.020165592855637293 (recording file start right after tuning pulses turned off)
-# t_end: 150000; mean freq.=1.859946061564214, CoV=0.02020819134183493
+# t_start: 116000; mean freq.=17.30765360542574, CoV=0.0756757589014902 (recording file start right after tuning pulses turned off; detection threshold = 2, lpfilter=10, hpfilter=1000)
+# t_end: 150000; mean freq.=17.302459397062947, CoV=0.07531552056803585
 
 # recording condition: baseline @ PT
 # use file gapFree_tempUp_0000
-# t_end: 1270000; mean freq.=3.478392638205849, CoV=0.023289079672569782  (lp filter=1.5, hp filter = 1000, detection threshold = 4)
+# t_end: 1270000; mean freq.=16.555181704848668, CoV=0.12695053996790118  (detection threshold = 50)
 
 # recording condition: gabazine applied @ PT
 # use file gapFree_tempUp_GabazineWashIn_0000
-# t_end: 343000; mean freq.=3.533393138013305, CoV=0.02223717378907998 (lp filter=1.5, hp filter=800, detection threshold=5)
+# t_end: 343000; mean freq.=20.009485233368597, CoV=0.09342930855146879 (detection threshold=40)
 
 # use file gapFree_tempUp_withGabazine_0000
-# t_start: 0; mean freq.=3.525960310695299, CoV=0.023646897744039035
+# t_start: 0; mean freq.=19.297096557511882, CoV=0.08052419024818148 (detection threshold = 40)

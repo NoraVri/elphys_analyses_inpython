@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import quantities as pq
+import seaborn as sns
 
 # imports of functions that I wrote
 import singleneuron_analyses_functions as snafs
@@ -159,6 +160,22 @@ def qad_basic_plot_for_spike_detection(primary_recording_unit,
     figure.suptitle(file_origin)
 
     return figure
+
+
+def qad_scatter_isis_fromdict(segment_spikepeaksmeasures_dict):
+    isis = segment_spikepeaksmeasures_dict['timeinterval_tonextpeak_inms']
+
+    isis_shiftedbyone = isis[1:]
+    isis_shortenedbyone = isis[:-1]
+
+    # figure, axes = plt.subplots(1, 1)
+    figure = sns.jointplot(x=isis_shiftedbyone, y=isis_shortenedbyone)
+    # axes.scatter(isis_shiftedbyone, isis_shortenedbyone)
+    # axes.set_xlabel('isi (t); in ms')
+    # axes.set_ylabel('isi (t-1), in ms')
+
+    return figure
+
 
 def plot_cellattachedspikes_instantaneous_frequency(cellattachedspikes_df, sampling_frequency):
     figure, axes = plt.subplots(1, 1)

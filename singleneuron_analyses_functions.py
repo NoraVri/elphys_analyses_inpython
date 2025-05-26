@@ -90,7 +90,7 @@ def add_events_frequencies_torecordingblocksindex(recordingblocks_index_df, depo
 def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_idx,
                                           detection_noisemultiplier=5, detection_threshold=None,
                                           getbaseline_lpfilter_freq=0.5, getnoise_hpfilterfreq=5000,
-                                          t_start_inms=None, t_end_inms=None,
+                                          t_start_inms=None, t_end_inms=None, tracelength_30s=True,
                                           plot='off'):
     """ This function finds the peaks of action potentials/currents in cell-attached recordings.
     First, the recording trace is cleaned by subtracting the low-pass and high-pass filtered versions
@@ -103,18 +103,35 @@ def get_spikes_from_cellattachedrecording(single_segment, file_origin, segment_i
     peak-to-peak intervals (to previous peak in the segment) and more.
     NOTE: this function is under construction; it currently includes some quick-and-dirty solutions for getting ISIs from 30s worth of continuous recording.
     """
-
-    if (t_start_inms is not None) or (t_end_inms is not None):  ## NOTE: this is part of the quick-and-dirty code for getting ISIs from 30s of recording at the time.
-        if t_start_inms is not None:
-            t_end_inms = t_start_inms + 30000
-        elif t_end_inms is not None:
-            t_start_inms = t_end_inms - 30000
+    # this is a not fully logal mess but it works for what I need it to do for now.
+    if tracelength_30s is True:
+        if (t_start_inms is not None) or (t_end_inms is not None):  ## NOTE: this is part of the quick-and-dirty code for getting ISIs from 30s of recording at the time; it will take t_start as reference unless t_start is None and t_end is filled in.
+            if t_start_inms is not None:
+                t_end_inms = t_start_inms + 30000
+            elif t_end_inms is not None:
+                t_start_inms = t_end_inms - 30000
+            else:
+                print('logic broke; returning empty')
+                return
+            t_start_inms = t_start_inms * pq.ms
+            t_end_inms = t_end_inms * pq.ms
+            single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
+        elif (t_start_inms is None) and (t_end_inms is None):
+            single_segment = single_segment
+    else:  # if tracelength_30s deliberately set to False
+        if (t_start_inms is not None) and (t_end_inms is not None):
+            t_start_inms = t_start_inms * pq.ms
+            t_end_inms = t_end_inms * pq.ms
+            single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
+        elif (t_start_inms is not None) and (t_end_inms is None):
+            t_start_inms = t_start_inms * pq.ms
+            single_segment = single_segment.time_slice(t_start=t_start_inms)
+        elif (t_start_inms is None) and (t_end_inms is not None):
+            t_start_inms = single_segment.t_start.rescale(pq.ms)
+            t_end_inms = t_end_inms * pq.ms
+            single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
         else:
-            print('logic broke; returning empty')
-            return
-        t_start_inms = t_start_inms * pq.ms
-        t_end_inms = t_end_inms * pq.ms
-        single_segment = single_segment.time_slice(t_start=t_start_inms, t_stop=t_end_inms)
+            single_segment = single_segment
 
     # getting the data
     recording_primary = single_segment.analogsignals[0]

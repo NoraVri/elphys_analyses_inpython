@@ -18,12 +18,12 @@ import json
 # per condition, pick a 30s trace to get numbers from and (manually) place these in excel table
 
 ## importing the data
-neuron_name = '20250401A1'
+neuron_name = '20250401D1'
 neuron_data = SingleNeuron(neuron_name)
 # neuron_data.plot_rawdatablocks()
 
 # notes on raw data:
-# looks very nice and usable all throughout, at least by eye; massive signal initially (>1nA) but goes down pretty soon to ~150pA - S/N looking decent throughout though
+# S/N not great especially in VC recordings, but overall looks like there should be enough good data for analysis
 
 # raw data cleanups
 # removing recording channel not belonging to this neuron:
@@ -34,153 +34,233 @@ neuron_data = SingleNeuron(neuron_name)
 
 # %% going over data by recording condition
 # %% recording condition: baseline @ RT
-block_idx = 2  # the first two blocks are tuning pulses/switches between VC and CC
+block_idx = 2
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
-segment_t_end_inms = 32000  # just up until a test with turning holding V down (by -30mV holding, no more spiking seen)
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                t_end_inms=segment_t_end_inms,
+                                                detection_threshold=40,
                                                 tracelength_30s=False,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# mostly very steady freq. ~6Hz
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 # recording block gapFree_0002.abf
-# mean freq. = 3.8499303615537546
-# isi CoV = 0.2880632062297765
+# mean freq. = 6.462767243040441
+# isi CoV = 0.09485001045265956
 
-segment_t_start_inms = 46000  # once holding V back up to 0
-results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                t_start_inms=segment_t_start_inms,
-                                                tracelength_30s=False,
-                                                plot='on')
-qad_scatter_isis_fromdict(results[0])
-plt.title(segment.file_origin)
-spikes_df = pd.DataFrame(results[0])
-plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
-print('recording block ' + segment.file_origin)
-print('mean freq. = ' + str(results[2]))
-print('isi CoV = ' + str(results[3]))
-# recording block gapFree_0002.abf
-# mean freq. = 3.3047379325696475
-# isi CoV = 0.3354489350497854
-#
 block_idx = 3
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_end_inms = 155400  # cutting off switch to VC mode
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=0.7,
                                                 tracelength_30s=False,
+                                                getbaseline_lpfilter_freq=5,
+                                                t_end_inms=t_end_inms,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+#
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 # recording block gapFree_0003.abf
-# mean freq. = 3.244161345979447
-# isi CoV = 0.38588872170428956
+# mean freq. = 6.736176951553777
+# isi CoV = 0.1772559705231886
 
-# %% recording condition: gabazine wash in
-block_idx = 6
+block_idx = 4
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=40,
                                                 tracelength_30s=False,
-                                                detection_threshold=80,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
-# this might be a good 'best representative example': freq trending up and down at first, then steadily up starting ~120s into this block (right as gabazine getting to the bath)
+#
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results[2]))
+print('isi CoV = ' + str(results[3]))
+# recording block gapFree_0004.abf
+# mean freq. = 6.800563180838309
+# isi CoV = 0.13401662960394592
+
+block_idx = 5
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=0.5,
+                                                tracelength_30s=False,
+                                                getbaseline_lpfilter_freq=5,
+                                                plot='on')
+qad_scatter_isis_fromdict(results[0])
+plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+#  frequency becoming more variable overall, while also increasing on average
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results[2]))
+print('isi CoV = ' + str(results[3]))
+# recording block gapFree_0005.abf
+# mean freq. = 7.392278601935308
+# isi CoV = 0.1545456005527785
+
+block_idx = 6
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=0.7,
+                                                tracelength_30s=False,
+                                                getbaseline_lpfilter_freq=10,
+                                                plot='on')
+qad_scatter_isis_fromdict(results[0])
+plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+#
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results[2]))
+print('isi CoV = ' + str(results[3]))
+# recording block gapFree_0006.abf
+# mean freq. = 7.595154335059472
+# isi CoV = 0.12712917691478218
+
+# overall, it looks like spike frequency went up by 1Hz, from ~6.5 to 7.5, since the start of recording (~7 minutes)
+
+# %% recording condition: gabazine wash in
+block_idx = 10
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_start_inms = 72000  # in between two episodes where baselineV too unstable for easy and accurate spike extraction
+t_end_inms = 239000
+results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=0.8,
+                                                tracelength_30s=False,
+                                                t_start_inms=t_start_inms,
+                                                t_end_inms=t_end_inms,
+                                                getbaseline_lpfilter_freq=10,
+                                                plot='on')
+qad_scatter_isis_fromdict(results[0])
+plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# seems like if the neuron is changing its frequency at all, it's doing so in jumps (up and down)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 
 # %% recording condition: gabazine applied
-block_idx = 7
+block_idx = 11
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_end_inms = 62000  # after this, baselineV too unstable for easy and accurate spike extraction
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                detection_threshold=75,
+                                                detection_threshold=0.8,
                                                 tracelength_30s=False,
-                                                plot='on')
-qad_scatter_isis_fromdict(results[0])  # those ultra-short isis, they come from things that I'm not sure whether they are a weird noise-thing or the cell doing some sort of complex spike
-plt.title(segment.file_origin)
-spikes_df = pd.DataFrame(results[0])
-plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
-# it doesn't look significant, but this gives me the feeling that frequency trending down again by the end of 5 minutes recording in thos condition (peak ~1min. in)
-print('recording block ' + segment.file_origin)
-print('mean freq. = ' + str(results[2]))
-print('isi CoV = ' + str(results[3]))
-# recording block gapFree_with_gabazine_0000.abf
-# mean freq. = 6.87611652627418
-# isi CoV = 0.15671877849741234
-
-# %% recording condition: gabazine applied, quinpirole wash in
-block_idx = 8
-segment = neuron_data.blocks[block_idx].segments[0]
-segment_file_origin = neuron_data.blocks[block_idx].file_origin
-results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                detection_threshold=60,
-                                                tracelength_30s=False,
+                                                t_end_inms=t_end_inms,
+                                                getbaseline_lpfilter_freq=10,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
-# again a very nice 'representative example': firing rate dipping, then steadily increasing right around the time that quinpirole added to the bath
+#
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results[2]))
+print('isi CoV = ' + str(results[3]))
+# recording block gapFree_with_gabazine_0000.abf
+# mean freq. = 8.132219170611036
+# isi CoV = 0.0982240449380012
+
+# %% recording condition: gabazine applied, quinpirole wash in
+block_idx = 14
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=0.8,
+                                                tracelength_30s=False,
+                                                getbaseline_lpfilter_freq=10,
+                                                plot='on')
+qad_scatter_isis_fromdict(results[0])
+plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# doesn't really look like there's a trend up; if anything, a trend down...
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 
 # %% recording condition: gabazine and quinpirole applied
-block_idx = 9
+block_idx = 15
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_end_inms = 192000  # cutting off switch to VC
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=1.2,
                                                 tracelength_30s=False,
+                                                t_end_inms=t_end_inms,
+                                                getbaseline_lpfilter_freq=10,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
-# that looks like a pretty nice steady state.
+#
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
 # recording block gapFree_with_gabazine_with_quinpirole_0000.abf
-# mean freq. = 8.233520458351324
-# isi CoV = 0.14133641281931433
-# %% recording condition: washout
-block_idx = 5
+# mean freq. = 8.881409197499751
+# isi CoV = 0.07233330063849765
+
+block_idx = 16
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
-t_start_inms = 399000  # post tuning pulses etc.; NOTE neuron held at -70mV for most of the time in this recording block
-# t_start_inms = 330000   # this way we get the last ~100s of almost 15 minutes washing
-# t_start_inms = 340000  # in those 10s things seem to have really slowed down
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                t_start_inms=t_start_inms,
+                                                detection_threshold=50,
                                                 tracelength_30s=False,
-                                                detection_threshold=40,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
 spikes_df = pd.DataFrame(results[0])
 plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# from the start of this recording to the end (5 minutes), there's a trend down by ~1Hz (11 down to 10)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
-# recording block gapFree_drugsWashOut_0001.abf
-# mean freq. = 20.021911345902144
-# isi CoV = 0.1312281998564423
+# recording block gapFree_with_gabazine_with_quinpirole_0001.abf
+# mean freq. = 9.822979048499821
+# isi CoV = 0.07267799989750291
 
-# As much as it looks like this makes no sense, this is very much what happened:
-# over the course of washing, spiking frequency first dropped way down, then steadily increased for a few minutes;
-# steadied again, then increased some more to reach highest (recorded) steady state after almost 15 min. of washing.
+# %% recording condition: drugs washout
+block_idx = 7
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_start_inms = 1000000
+results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                detection_threshold=50,
+                                                t_start_inms=t_start_inms,
+                                                tracelength_30s=False,
+                                                plot='on')
+qad_scatter_isis_fromdict(results[0])
+plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# that's 20 minutes worth of recording while washing; no significant change in frequency at all.
+# Same seemed to be true in the other 3 minutes' worth of washout recording.
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results[2]))
+print('isi CoV = ' + str(results[3]))
+# recording block gapFree_drugsWashOut_0000.abf
+# mean freq. = 9.846398276410158
+# isi CoV = 0.07284272378464986
+

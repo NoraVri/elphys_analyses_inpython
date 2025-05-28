@@ -2,6 +2,7 @@
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
 from singleneuron_plotting_functions import qad_scatter_isis_fromdict
+from singleneuron_plotting_functions import plot_cellattachedspikes_instantaneous_frequency
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
@@ -44,9 +45,14 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# recording block gapFree_0000.abf
+# mean freq. = 11.115750673136452
+# isi CoV = 0.06047706968936245
 #
 block_idx = 1
 segment = neuron_data.blocks[block_idx].segments[0]
@@ -57,10 +63,14 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
-
+# recording block gapFree_0001.abf
+# mean freq. = 11.40272161630857
+# isi CoV = 0.0683477225417514
 # %% recording condition: quinpirole wash in
 block_idx = 4
 segment = neuron_data.blocks[block_idx].segments[0]
@@ -71,6 +81,8 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
@@ -85,10 +97,15 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
+# the slight increase in overall firing rate seems to be due to a period of ~15s where spiking kicked up to ~25Hz (inst.freq. up to 80Hz), then slowed back down to the baseline freq
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
-
+# recording block gapFree_quinpirole_0000.abf
+# mean freq. = 12.611737723378592
+# isi CoV = 0.13757151485195374
 # %% recording condition: with quinpirole, gabazine wash in
 block_idx = 6
 segment = neuron_data.blocks[block_idx].segments[0]
@@ -99,6 +116,8 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
@@ -115,9 +134,14 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# recording block gapFree_quinpirole_Gabazine_0000.abf
+# mean freq. = 13.445681580072746
+# isi CoV = 0.06382512895104837
 
 # %% recording condition: drugs washout
 block_idx = 3
@@ -132,6 +156,11 @@ results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 plot='on')
 qad_scatter_isis_fromdict(results[0])
 plt.title(segment.file_origin)
+spikes_df = pd.DataFrame(results[0])
+plot_cellattachedspikes_instantaneous_frequency(spikes_df, 20000)
 print('recording block ' + segment.file_origin)
 print('mean freq. = ' + str(results[2]))
 print('isi CoV = ' + str(results[3]))
+# recording block gapFree_drugsWashOut_0001.abf
+# mean freq. = 18.311921308230062
+# isi CoV = 0.09774394727429134

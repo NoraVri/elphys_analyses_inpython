@@ -2961,9 +2961,35 @@ cell20250217A1.write_results()
 #     cell20250401D2.rawdata_remove_nonrecordingchannel(block, 1, pairedrecording=True)
 # cell20250401D2.write_results()
 
+# %%
+cell20250424B = SingleNeuron('20250424B')
+cell20250424B.plot_rawdatablocks()
+# spiking, very irregularly, for a few min. then stops doing so.
 
+# %%
+cell20250428A = SingleNeuron('20250428A')
+cell20250428A.plot_rawdatablocks()
+# entire recording basically just of attempts at seal formation. Cell may have fired off a few spikes, but seal never formed properly and recording never got good.
 
+# %%
+cell20250428B = SingleNeuron('20250428B')
+cell20250428B.plot_rawdatablocks()
+# cell spiking lustily for a few min. then suddenly stops.
 
+# %%
+cell20250429A = SingleNeuron('20250429A')
+cell20250429A.plot_rawdatablocks()
+# cell spiking lustily for a few minutes then stops rather suddenly, firing off spikes highly irregularly with long pauses in between
+
+# %%
+cell20250429B = SingleNeuron('20250429B')
+cell20250429B.plot_rawdatablocks()
+# just a record of attempted seal formation, nothing in there that would indicate this is good data (quite the contrary)
+
+# %%
+cell20250429C = SingleNeuron('20250429C')
+cell20250429C.plot_rawdatablocks()
+# proper recording - for a little while, signal disappeared completely by the time gabazine washed on
 
 # %% raw data import/cleanup template
 

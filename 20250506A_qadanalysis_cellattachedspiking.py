@@ -1,6 +1,8 @@
 # %% imports
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
+from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictionary
+from singleneuron_plotting_functions import plot_cellattachedspikes_instantaneous_frequency
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
@@ -42,3 +44,53 @@ neuron_data.plot_rawdatablocks()
 # t_start: 0, mean freq.=9.703193462473406, CoV=0.08699698751697238 (start of this recording file - temp.still low)
 # t_start: 180000, mean freq.=2.4548192250377747, CoV=0.6104429809525118 (time where temp.reached 30C; also time where spiking slows down quite suddenly)
 
+# %% comparing temperature conditions directly
+block_idx = 1  # starting condition, PT
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_start_inms = 88000  # cutting off part of recording where tuning pulses still on
+results1 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                t_start_inms=t_start_inms,
+                                                 tracelength_30s=False,
+                                                plot='on')
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results1[2]))
+print('isi CoV = ' + str(results1[3]))
+# recording block gapFree_0001.abf
+# mean freq. = 7.618229496337825
+# isi CoV = 0.6555462576506176
+
+block_idx = 2  # cool down to RT
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_start_inms = 500000  # taking just the last ~100s, where temp. presumably at its coolest (and S/N most decent)
+results2 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                t_start_inms=t_start_inms,
+                                                 tracelength_30s=False,
+                                                plot='on')
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results2[2]))
+print('isi CoV = ' + str(results2[3]))
+# recording block gapFree_tempDown_0000.abf
+# mean freq. = 9.067214491483172
+# isi CoV = 0.16421220175336387
+
+block_idx = 3  # warming back up to PT
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_end_inms = 240000  # cell stops spiking after that anyway
+results3 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                t_end_inms=t_end_inms,
+                                                 tracelength_30s=False,
+                                                plot='on')
+
+results_list = [results1, results2, results3]
+allresults_dict = make_cellattachedspikepeaks_dictionary()
+
+for results in results_list:
+    spikes_dict = results[0]
+    for key in allresults_dict.keys():
+        allresults_dict[key] += list(spikes_dict[key])
+results_df = pd.DataFrame(allresults_dict)
+
+figure2 = plot_cellattachedspikes_instantaneous_frequency(results_df, 20000)

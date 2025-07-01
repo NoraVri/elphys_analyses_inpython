@@ -1,6 +1,8 @@
 # %% imports
 from singleneuron_class import SingleNeuron
 from singleneuron_analyses_functions import get_spikes_from_cellattachedrecording
+from singleneuron_plotting_functions import plot_cellattachedspikes_instantaneous_frequency
+from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictionary
 import matplotlib.pyplot as plt
 import quantities as pq
 import pandas as pd
@@ -46,29 +48,23 @@ neuron_data = SingleNeuron(neuron_name)
 
 
 
-# %%
+# %% @PT, comparing gabazine conditions (before, wash-on, applied, wash-off)
 block_idx = 1
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                # detection_threshold=75,  # have to set threshold closer to peaks, otherwise many of them get picked up twice (spikes all seem to have a double up-stroke)
-                                                # t_start_inms=segment_30s_start_inms,
                                                 plot='on')
 
 block_idx = 2
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results1 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                # detection_threshold=75,  # have to set threshold closer to peaks, otherwise many of them get picked up twice (spikes all seem to have a double up-stroke)
-                                                # t_start_inms=segment_30s_start_inms,
                                                 plot='on')
 
 block_idx = 3
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results2 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                # detection_threshold=75,  # have to set threshold closer to peaks, otherwise many of them get picked up twice (spikes all seem to have a double up-stroke)
-                                                # t_start_inms=segment_30s_start_inms,
                                                 plot='on')
 
 block_idx = 4
@@ -76,20 +72,16 @@ segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results3 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
                                                 getnoise_hpfilterfreq=3000,
-                                                detection_threshold=60,  # have to set threshold closer to peaks, otherwise many of them get picked up twice (spikes all seem to have a double up-stroke)
-                                                # t_start_inms=segment_30s_start_inms,
+                                                detection_threshold=60,
                                                 plot='on')
 
 block_idx = 5
 segment = neuron_data.blocks[block_idx].segments[0]
 segment_file_origin = neuron_data.blocks[block_idx].file_origin
 results4 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
-                                                # detection_threshold=75,  # have to set threshold closer to peaks, otherwise many of them get picked up twice (spikes all seem to have a double up-stroke)
-                                                # t_start_inms=segment_30s_start_inms,
                                                 plot='on')
 
 results_list = [results, results1, results2, results3, results4]
-from singleneuron_analyses_functions import make_cellattachedspikepeaks_dictionary
 allresults_dict = make_cellattachedspikepeaks_dictionary()
 
 for results in results_list:
@@ -98,9 +90,74 @@ for results in results_list:
         allresults_dict[key] += list(spikes_dict[key])
 results_df = pd.DataFrame(allresults_dict)
 
-from singleneuron_plotting_functions import plot_cellattachedspikes_instantaneous_frequency
 figure = plot_cellattachedspikes_instantaneous_frequency(results_df, 20000)
 
 # seems like neuron may slow down slightly with gabazine application; but then it slows down more with gabazine washoff,
 # so that could easily be an artefact of the neuron slowing down overall w/o there being any gabazine effect
 
+# %% comparing PT and RT conditions
+block_idx = 5
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results4 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                plot='on')
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results4[2]))
+print('isi CoV = ' + str(results4[3]))
+# recording block gapFree_PT_with_gabazine_0000.abf
+# mean freq. = 2.1735967184633984
+# isi CoV = 0.17137057816120158
+
+block_idx = 4
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results1 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                getnoise_hpfilterfreq=3000,
+                                                detection_threshold=60,
+                                                plot='on')
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results1[2]))
+print('isi CoV = ' + str(results1[3]))
+# recording block gapFree_PT_gabazineWashOff_0000.abf
+# mean freq. = 1.3761967290039165
+# isi CoV = 0.5828689411165499
+
+block_idx = 6
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+results2 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                getnoise_hpfilterfreq=1000,
+                                                detection_threshold=50,
+                                                plot='on')
+print('recording block ' + segment.file_origin)
+print('mean freq. = ' + str(results2[2]))
+print('isi CoV = ' + str(results2[3]))
+# recording block gapFree_RT_gabazineWashOff_0000.abf
+# mean freq. = 5.266582732171857
+# isi CoV = 0.08089025926239171
+
+block_idx = 7
+segment = neuron_data.blocks[block_idx].segments[0]
+segment_file_origin = neuron_data.blocks[block_idx].file_origin
+t_end_inms = 272000  # cutting off switch to CC mode
+results3 = get_spikes_from_cellattachedrecording(segment, segment_file_origin, 0,
+                                                getnoise_hpfilterfreq=2000,
+                                                 t_end_inms=t_end_inms,
+                                                 tracelength_30s=False,
+                                                plot='on')
+
+results_list = [results1, results2, results3, results4]
+allresults_dict = make_cellattachedspikepeaks_dictionary()
+
+for results in results_list:
+    spikes_dict = results[0]
+    for key in allresults_dict.keys():
+        allresults_dict[key] += list(spikes_dict[key])
+results_df = pd.DataFrame(allresults_dict)
+
+figure2 = plot_cellattachedspikes_instantaneous_frequency(results_df, 20000)
+
+# So, clearly in these recordings the neuron's spiking frequency peters out to 0Hz once temperature turned back up.
+# Still, from plotting inst.freq vs time it just looks so obvious that freq goes down when temperature goes up, and I
+# think the recordings are plenty long to say that with certainty, so I'm gonna say these numbers are good.
+# That does leave the question: how come spiking isn't faster at PT with gabazine?

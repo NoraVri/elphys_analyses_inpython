@@ -21,5 +21,7 @@ neuron_data = SingleNeuron(neuron_name)
 neuron_data.plot_rawdatablocks()
 
 ## notes on raw data
-# cell fired off a few individual spikes while I was trying to seal (unsuccessfully);
+# cell fired off three individual spikes while I was trying to seal (unsuccessfully);
 # no real data in there at all.
+
+

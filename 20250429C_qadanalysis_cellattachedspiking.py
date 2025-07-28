@@ -34,3 +34,4 @@ neuron_data.plot_rawdatablocks()
 
 # use file gapFree_gabazineWashIn_0000
 # t_start: 0; mean freq.=41.06934001670843, CoV=0.1558378812631731 (start of this file, definitely no gabazine in the bath yet)
+

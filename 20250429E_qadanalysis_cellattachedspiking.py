@@ -25,3 +25,4 @@ neuron_data.plot_rawdatablocks()
 # I did see a short stretch at t=27s into gapFree_0000 where cell fires 8 spikes in 400ms (-->freq.20Hz)
 
 # no point in trying to extract spikes, there's way too few of them anyway
+

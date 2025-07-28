@@ -22,5 +22,5 @@ neuron_data.plot_rawdatablocks()
 
 ## raw data cleanups
 # nothing to detect really, in any of this data.
-# There's definitely a handful of spikes occurring during seal formation (maybe 5 spikes altogether over the course of 2 minutes),
+# There's a handful of spikes occurring during seal formation (maybe 5 spikes altogether over the course of 2 minutes),
 # then nothing for minutes until recording terminated.
